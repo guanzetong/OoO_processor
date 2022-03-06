@@ -151,3 +151,7 @@ clean:
 nuke:	clean
 	rm -rf synth/*.vg synth/*.rep synth/*.ddc synth/*.chk synth/*.log synth/*.syn
 	rm -rf synth/*.out command.log synth/*.db synth/*.svf synth/*.mr synth/*.pvl
+
+Robin:
+	git config user.name "xiongrob"
+	git config user.email "62448777+xiongrob@users.noreply.github.com"

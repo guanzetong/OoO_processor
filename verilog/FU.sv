@@ -6,12 +6,12 @@
 //                 given the instruction command code CMD, select the   //
 //                 proper input A and B for the FU, compute the result, // 
 //                 and compute the condition for branches, and pass all //
-//                 the results down the pipeline. MWB                   // 
+//                 the results down the pipeline. WCR                   // 
 //                                                                      //
 //                                                                      //
 //////////////////////////////////////////////////////////////////////////
-`ifndef __EX_STAGE_V__
-`define __EX_STAGE_V__
+`ifndef __FU_MODULE_V__
+`define __FU_MODULE_V__
 
 `timescale 1ns/100ps
 
@@ -175,5 +175,5 @@ module ex_stage(
 	assign ex_packet_out.take_branch = id_ex_packet_in.uncond_branch
 		                          | (id_ex_packet_in.cond_branch & brcond_result);
 
-endmodule // module ex_stage
-`endif // __EX_STAGE_V__
+endmodule // module fu_module
+`endif // __FU_MODULE_V__
