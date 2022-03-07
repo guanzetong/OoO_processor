@@ -10,12 +10,13 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`define DISPATCH_WIDTH  2   //The width of Dispatch.
+`define DP_WIDTH        2   //The width of Dispatch.
 `define CDB_WIDTH       2   //The number of entries on CDB, or the width of Complete
-`define RETIRE_WIDTH    2   //The width of Retire.
+`define RT_WIDTH        2   //The width of Retire.
 `define ROB_ENTRY_NUM   32  //The number of ROB entries.
 `define ARCH_REG_NUM    32  //The number of Architectural registers.
 `define PHY_REG_NUM     64  //The number of Physical registers.
+`define BR_NUM          1   //The number of Branch Resolver
 
 
 `define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
@@ -26,76 +27,194 @@
 
 // Grouping of signals going to ( and from ) a specific module?
 typedef struct packed {
-    logic   [`DISPATCH_WIDTH-1:0]                       dispatch_en_i           ,
-    logic   [`ARCH_REG_IDX_WIDTH*`DISPATCH_WIDTH-1:0]   dispatch_arch_reg_i     ,
-    logic   [`TAG_WIDTH*`DISPATCH_WIDTH-1:0]            dispatch_tag_i          ,
-    logic   [`TAG_WIDTH*`DISPATCH_WIDTH-1:0]            dispatch_tag_old_i      ,
-    logic   [`DISPATCH_WIDTH-1:0]                       dispatch_br_predict_i   
-} DISPATCH_ROB;
+    logic   [`DP_WIDTH-1:0]                       dp_en         ;
+    logic   [`ARCH_REG_IDX_WIDTH*`DP_WIDTH-1:0]   arch_reg      ;
+    logic   [`TAG_WIDTH*`DP_WIDTH-1:0]            tag           ;
+    logic   [`TAG_WIDTH*`DP_WIDTH-1:0]            tag_old       ;
+    logic   [`DP_WIDTH-1:0]                       br_predict    ;
+} DP_ROB;
 
 typedef struct packed {
-    logic  update_en;
-
-} ROB_ARCH_MAP_TABLE; // 
-
-typedef struct packed {
-    bit valid;
-    bit [`TAG_IDX_WIDTH] arch_reg;
-    bit [`TAG_IDX_WIDTH] phy_reg;
-} MAP_TABLE_ENTRY;
+    logic [`RT_WIDTH-1:0] MT_key_val rob_amt_o;
+} ROB_AMT; // 
 
 typedef struct packed {
-    bit valid;
-    bit [`TAG_IDX_WIDTH] phy_reg;
-} FREED_REG;
-// ROB_FREE_LIST rob_free.data[ 0 ].valid;
+    logic valid;
+    logic [`ARCH_REG_IDX_WIDTH] arch_reg; // Key
+    logic [`TAG_IDX_WIDTH] phy_reg;       // Value
+} MT_key_val;
 
+typedef struct packed {
+    logic ready;
+    logic [`ARCH_REG_IDX_WIDTH] arch_reg;
+    logic [`TAG_IDX_WIDTH] phy_reg      ;
+} MT_ENTRY;
+
+typedef struct packed {
+    logic valid;
+    logic [`TAG_IDX_WIDTH] phy_reg;
+} ROB_FL;
+
+// Signal coming from complete stage
 typedef struct packed{
-    logic                       cdb_valid   ,   // Is this signal valid?
-    logic [`TAG_IDX_WIDTH-1:0]  cdb_tag     ,   // Physical Register
-    logic [`ROB_IDX_WIDTH-1:0]  rob_index       // Used to locate rob entry
-} CDB_PACKET;
+    logic                       valid   ;   // Is this signal valid?
+    logic [`TAG_IDX_WIDTH-1:0]  tag     ;   // Physical Register
+    logic [`ROB_IDX_WIDTH-1:0]  rob_idx ;   // Used to locate rob entry
+} CDB;
 
 typedef struct packed {
-    // logic [`XLEN-1:0] PC, 
+    logic [`XLEN-1:0]           PC ;
     // logic [`XLEN-1:0] NPC, 
-    logic [`TAG_IDX_WIDTH-1:0] T_old,
-    logic [`TAG_IDX_WIDTH-1:0] T_new,
- 
-    logic [`ROB_IDX_WIDTH-1:0] arch_reg,
-    logic           complete,
+    logic                       valid;
+    logic [`ROB_IDX_WIDTH-1:0]  arch_reg;
+    logic [`TAG_IDX_WIDTH-1:0]  tag_old;
+    logic [`TAG_IDX_WIDTH-1:0]  tag;
+    logic                       complete;
+    logic                       br_predict;
 } ROB_ENTRY; // 
 
 typedef struct packed {
-    logic branch_valid,
-    logic branch_result,
-    logic branch_rob_num,
-} branch_rob;
+    logic br_valid  ;
+    logic br_result ;
+    logic br_rob_idx;
+} BR_ROB;
+
+module ROB # ( 
+    parameter   C_DP_WIDTH          =   `DP_WIDTH       ,
+    parameter   C_CDB_WIDTH         =   `CDB_WIDTH      ,
+    parameter   C_RT_WIDTH          =   `RT_WIDTH       ,
+    parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM  ,
+    parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM   ,
+    parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    ,
+    parameter   C_BR_NUM            =   `BR_NUM         
+) (
+    input   logic                           clk_i               ,   // Clock
+    input   logic                           rst_i               ,   // Reset
+    output  logic   [C_DP_WIDTH-1:0 ]       rob_ready_o         ,   // To Dispatcher, Entry readiness for structural hazard detection
+    input   CDB     [C_CDB_WIDTH-1:0]       cdb_i               ,   // From Complete stage - CDB
+    input   DP_ROB                          dp_rob_i            ,   // From Dispatcher - DP_ROB
+    output  ROB_AMT                         rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
+    output  ROB_FL  [C_RT_WIDTH-1:0]        rob_fl_o            ,   // To Free List - ROB_FL
+    input   BR_ROB  [C_BR_NUM-1:0]          br_rob_i            ,   // From Branch Resolver - BR_ROB
+    input   logic                           precise_state_en_i      // From Exception Controller
+);
 
 
-module ROB # 
-    ( 
-    parameter   C_DISPATCH_WIDTH    =   `DISPATCH_WIDTH   ,
-    parameter   C_CDB_WIDTH         =   `CDB_WIDTH        ,
-    parameter   C_RETIRE_WIDTH      =   `RETIRE_WIDTH     ,
-    parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM    ,
-    parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM     ,
-    parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM      
-    ) 
-    (
-    input                              clk_i, rst_i, // Clock and reset respectively
-    input  [ C_DISPATCH_WIDTH ]       dispatch_en_i, // Dispatch enable. Used to tell how many ROB entries to allocate
-    input  [ C_DISPATCH_WIDTH ] dispatch_arch_reg_i,
-    input                            dispatch_tag_i,
-    input                        dispatch_tag_old_i,
-    input                        precise_state_en_i,
-    input                            branch_valid_i,
+// Local Parameters Declarations Start
+    parameter   C_ARCH_REG_IDX_WIDTH    =   $clog2(C_ARCH_REG_NUM);
+    parameter   C_TAG_IDX_WIDTH         =   $clog2(C_PHY_REG_NUM);
+    parameter   C_ROB_IDX_WIDTH         =   $clog2(C_ROB_ENTRY_NUM);
+// Local Parameters Declarations End
 
-    output         [ C_DISPATCH_WIDTH ] rob_ready_o
-    output   [C_RETIRE_WIDTH-1:0] FREED_REG phy_reg_freed_o,
-    output   [C_RETIRE_WIDTH-1:0] MAP_TABLE_ENTRY arch_map_entry_update_o,
-    );
+
+// Signal Declarations Start
+    logic       [ROB_IDX_WIDTH:0]       head        ;
+    logic       [ROB_IDX_WIDTH:0]       tail        ;
+    logic       [ROB_IDX_WIDTH:0]       next_head   ; 
+    logic       [ROB_IDX_WIDTH:0]       next_tail   ;
+    ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_arr     ;
+    logic       [C_RT_WIDTH:0]          retire_and  ;
+    logic       [C_ROB_IDX_WIDTH-1:0]   
+    
+    logic                               full        ;
+    logic                               empty       ;
+
+    logic       [ROB_IDX_WIDTH:0]       avail_num   ;
+// Signal Declarations End
+
+
+// RTL Logic Start
+
+//      Calculate the number of available entries
+    always_comb begin
+        // Head and tail on the same page -> Substract directly
+        if (tail[ROB_IDX_WIDTH-1:0] > next_head[ROB_IDX_WIDTH-1:0]) begin
+            avail_num   =   tail[ROB_IDX_WIDTH-1:0] - next_head[ROB_IDX_WIDTH-1:0];
+        // Head and tail not on the same page -> Add C_ROB_ENTRY_NUM before substraction
+        end else if (tail[ROB_IDX_WIDTH-1:0] < next_head[ROB_IDX_WIDTH-1:0]) begin
+            avail_num   =   tail[ROB_IDX_WIDTH-1:0] + C_ROB_ENTRY_NUM - next_head[ROB_IDX_WIDTH-1:0];
+        // Head and tail meet -> Full or Empty
+        end else begin
+            //  Head and tail on the same page -> ROB is empty
+            if (tail[ROB_IDX_WIDTH] == next_head[ROB_IDX_WIDTH]) begin
+                avail_num   =   C_ROB_ENTRY_NUM;
+            //  Head and tail not on the same page -> ROB is full
+            end else begin
+                avail_num   =   0;
+            end
+        end
+    end
+
+//      Configure the rob ready signal.
+    always_comb begin
+        // All signals are high as long as there are more than enough entries.
+        if (avail_num >= C_DP_WIDTH) begin
+            rob_ready_o =   {C_DP_WIDTH{1'b1}};
+        // If there's no available entires, everything is low.
+        //! The reason why this is extra is that the {{avail_num{1'b0}}{1'b0}} syntax cannot work when avail_num == 0.
+        end else if (avail_num == 0) begin
+            rob_ready_o =   {C_DP_WIDTH{1'b0}};
+        end else begin
+            // LSB refers to the lowest index available.
+            // Make a 0*1* signal (where the lowest bits indicates possible signals to dispatch).
+            rob_ready_o =   {{(C_DP_WIDTH-avail_num){1'b0}},{avail_num{1'b1}}};
+        end
+    end
+
+//      Head pointer
+    always_ff @( posedge clk_i ) begin
+        if (rst_i == 1'b1 || precise_state_en_i == 1'b1) begin
+            head <= 0;
+        end else begin
+            head <= next_head;
+        end 
+    end
+
+    always_comb begin
+        next_head = head;
+        retire_and[0] = 1'b1;
+        for (integer index = 0; index < C_RT_WIDTH; index++) begin
+            if (rob_arr[head[ROB_IDX_WIDTH-1:0] + index].complete == 1) begin 
+                next_head = next_head + retire_and[index];
+                retire_and[index+1] = retire_and[index] & 1'b1;
+            end else begin
+                retire_and[index+1] = retire_and[index] & 1'b0;
+            end
+        end
+    end
+
+//      Tail pointer
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i == 1'b1 || precise_state_en_i == 1'b1) begin
+            tail <= 1'b0;
+        end else begin
+            tail <= next_tail;
+        end
+
+    always_comb begin
+        next_tail = tail;
+        for (integer index = 0; index < C_DP_WIDTH; index++) begin
+            if (dp_en_i[index] == 1'b1) begin 
+                next_tail = next_tail + 1;
+            end
+        end
+    end
+// RTL Logic End
 
 endmodule
 
+// START -> 0
 
+// tail -> 1'b0, 5'd0
+// head -> 1'b0, 5'd0
+
+// XOR tail[MSB], head[MSB]
+
+// END -> 11
+
+casez (rob_arr[head:head+C_RT_WIDTH].complete)
+    'bXX01: 
+    'bX011: 
+    default: 
+endcase
