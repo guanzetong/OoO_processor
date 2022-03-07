@@ -113,9 +113,9 @@ module ROB # (
     logic       [ROB_IDX_WIDTH:0]       next_head   ; 
     logic       [ROB_IDX_WIDTH:0]       next_tail   ;
     ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_arr     ;
-    logic       [C_RT_WIDTH:0]          retire_and  ;
+    logic       [C_RT_WIDTH:0]          retire_and  ; // Used for next_head
     logic       [C_ROB_IDX_WIDTH-1:0]   
-    
+
     logic                               full        ;
     logic                               empty       ;
 
@@ -162,19 +162,23 @@ module ROB # (
     end
 
 //      Head pointer
+//      Tail pointer
     always_ff @( posedge clk_i ) begin
         if (rst_i == 1'b1 || precise_state_en_i == 1'b1) begin
             head <= 0;
+            tail <= 0;
         end else begin
             head <= next_head;
+            tail <= next_tail;
         end 
     end
 
+//      Header pointer Next-state Logic
     always_comb begin
         next_head = head;
         retire_and[0] = 1'b1;
         for (integer index = 0; index < C_RT_WIDTH; index++) begin
-            if (rob_arr[head[ROB_IDX_WIDTH-1:0] + index].complete == 1) begin 
+            if (rob_arr[head[ROB_IDX_WIDTH-1:0] + index].complete == 1'b1) begin 
                 next_head = next_head + retire_and[index];
                 retire_and[index+1] = retire_and[index] & 1'b1;
             end else begin
@@ -183,14 +187,7 @@ module ROB # (
         end
     end
 
-//      Tail pointer
-
-    always_ff @(posedge clk_i) begin
-        if (rst_i == 1'b1 || precise_state_en_i == 1'b1) begin
-            tail <= 1'b0;
-        end else begin
-            tail <= next_tail;
-        end
+//      Tail pointer Next-state Logic
 
     always_comb begin
         next_tail = tail;
