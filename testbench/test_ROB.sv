@@ -16,3 +16,10 @@
 3. Retire, empty all entries,
 4. Dispatch, Complete some, retire some
 */
+
+module testbench;
+    logic clk;
+    logic rst;
+    logic en;
+
+    logic 
