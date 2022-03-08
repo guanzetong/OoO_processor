@@ -261,13 +261,18 @@ module ROB # (
     //         end
     //     end
     // end
-
+    //! We should also consider the tail bound (where the tail ends) -> This may be OK if we ensure that non-valid entries aren't considered (use complete bit to ensure this doesn't happen and/or valid bit).
+    //! Consider seperating next_state and current state (for ROB) -> Make it edge-triggered. (Otherwise it may complicate how ROB is updated).
+    //! This provides an oppurtunity to simply add up the signals that are high (in this one high) to determine how much to increment head pointer. May lead to simpler harwdware.
+    //! We can also use this to piggy back off to set how the retire signals
+    //should be set.
+    
     assign  head_one_hot    =   1'b1 << head[C_ROB_IDX_WIDTH-1:0];
 
     always_comb begin
         // Retire bit in each entry
         //      Index == 0
-        assign  rob_arr[0].retire   =   head_one_hot[0] ?
+        assign   [0].retire   =   head_one_hot[0] ?
                                         rob_arr[0].complete : 
                                         rob_arr[C_ROB_ENTRY_NUM-1].retire & rob_arr[0].complete;
 
