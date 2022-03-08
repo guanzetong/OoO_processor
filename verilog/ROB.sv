@@ -108,6 +108,8 @@ module ROB # (
     localparam  C_TAG_IDX_WIDTH         =   $clog2(C_PHY_REG_NUM);
     localparam  C_ROB_IDX_WIDTH         =   $clog2(C_ROB_ENTRY_NUM);
     localparam  C_RT_NUM_WIDTH          =   $clog2(C_RT_WIDTH);
+    localparam  C_DP_NUM_WIDTH          =   $clog2(C_DP_WIDTH);
+
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -122,9 +124,13 @@ module ROB # (
     logic       [C_ROB_IDX_WIDTH:0]     next_tail   ;
     ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_arr     ;
     logic       [C_RT_WIDTH:0]          retire_and  ; // Used for next_head
-
+    logic       [C_ROB_ENTRY_NUM-1:0]   complete_en ;
     logic       [C_ROB_IDX_WIDTH:0]     avail_num   ;
 
+    //logic       [C_ROB_ENTRY_NUM-1:0]   dp_one_hot;
+    logic       [C_DP_WIDTH-1:0]        dp_en_tmp;
+    logic       [C_DP_NUM_WIDTH-1:0]    dp_rob_idx      [C_ROB_ENTRY_NUM-1:0];       
+    logic       [C_ROB_ENTRY_NUM-1:0]   dp_en_concat;
     logic       [C_ROB_ENTRY_NUM-1:0]   head_one_hot;
     logic       [C_RT_WIDTH-1:0]        retire_valid;
     logic       [C_RT_NUM_WIDTH-1:0]    retire_num  ;
@@ -139,60 +145,55 @@ module ROB # (
 // --------------------------------------------------------------------
 // ROB entry from dispatcher
 // --------------------------------------------------------------------
-    always_comb begin
-        for (integer index = 0; index<C_DP_WIDTH; index++) begin 
-            rob_arr[tail[ROB_IDX_WIDTH-1:0]].valid = dp_rob_i[index].dp_en;
-            rob_arr[tail[ROB_IDX_WIDTH-1:0]].arch_reg = dp_rob_i[index].
+
+    always_comb begin 
+        for (integer index = 0; index < C_DP_WIDTH; index++) begin 
+            dp_en_tmp[index] = dp_rob_i[index].dp_en;
         end
-        
+        dp_en_concat = dp_en_tmp << tail || dp_en_tmp >> (C_ROB_NUM_WIDTH - tail);
     end
 
-    always_ff @(posedge clk_i) begin 
-        if (rst_i) begin 
-            rob_arr[tail[ROB_IDX_WIDTH-1:0]].valid    <= `SD 0;
-            rob_arr[tail[ROB_IDX_WIDTH-1:0]].complete <= `SD 0;
-        end else begin 
-            for (integer index = 0; index<C_DP_WIDTH; index++) begin 
-                rob_arr[tail[ROB_IDX_WIDTH-1:0]+index].valid = dp_rob_i[index].dp_en;
-
-                rob_arr[tail[ROB_IDX_WIDTH-1:0]].arch_reg = dp_rob_i[index].arch_reg;
-                rob_arr[tail[ROB_IDX_WIDTH-1:0]].tag = dp_rob_i[index].tag;
-                rob_arr[tail[ROB_IDX_WIDTH-1:0]].tag_old = dp_rob_i[index].tag_old;
-                rob_arr[tail[ROB_IDX_WIDTH-1:0]].br_predict = dp_rob_i[index].br_predict;
-        end
-        end
-    end
-
-    always_ff @(posedge clk_i) begin 
-        for (integer index = 0; index<C_DP_WIDTH; index++) begin 
-            if (rst_i) begin 
-                rob_arr[tail[ROB_IDX_WIDTH-1:0]+index].valid    <= `SD 0;
-                rob_arr[tail[ROB_IDX_WIDTH-1:0]+index].complete <= `SD 0;
-            end else begin
-                
+    always_comb begin 
+        for (integer entry_index = 0; entry_index < C_ROB_ENTRY_NUM; entry_index++) begin
+            complete_en[entry_index]    =   0;
+            for (integer index = 0; index < C_CDB_WIDTH; index++) begin 
+                if (entry_index == cdb_i[index].rob_idx && cdb_i[index].valid)begin
+                    complete_en[entry_index]    =   1;
+                end
             end
         end
     end
 
-// 
-//      for (0 ~ ROB_ENTRY_NUM-1)
-//          if rst_i
-// 
-//          else if (dp_en == 1 & dp_one_hot[index])
-//              ASSIGN tail entry
-//          else if (retire_valid == 1 & entry.retire)
-//              clear valid complete
-//          else
-//              entry <= entry
-//  dp_one_hot = {DP_WIDTH{1'b1}} << tail[C_ROB_IDX_WIDTH-1:0]
-// 
-// 
-// 0001110
-// 0011100
-// 0111000
-// 1110000
-// retire_one_hot = {}
+    always_comb begin
+        for (integer index = 0; index < C_ROB_ENTRY_NUM; index++) begin
+            if (index < tail[C_ROB_IDX_WIDTH-1:0]) begin
+                dp_rob_idx[index]   =   index + C_ROB_ENTRY_NUM - tail[C_ROB_IDX_WIDTH-1:0];
+            end else begin
+                dp_rob_idx[index]   =   index - tail[C_ROB_ENTRY_NUM-1:0];
+            end
+        end
+    end
 
+    always_ff @(posedge clk_i) begin
+        for (integer index = 0; index < C_ROB_ENTRY_NUM; index++) begin
+            if (rst_i) begin
+                rob_arr[index].valid    <=  `SD 1'b0;
+                rob_arr[index].complete <=  `SD 1'b0;
+            end else if (dp_en_concat[index]) begin
+                rob_arr[index].complete   <= `SD 1'b0; 
+                rob_arr[index].valid      <= `SD 1'b1;
+                rob_arr[index].arch_reg   <= dp_rob_i[dp_rob_idx[index]].arch_reg;
+                rob_arr[index].tag        <= dp_rob_i[dp_rob_idx[index]].tag;
+                rob_arr[index].tag_old    <= dp_rob_i[dp_rob_idx[index]].tag_old;
+                rob_arr[index].br_predict <= dp_rob_i[dp_rob_idx[index]].br_predict;
+            end else if (rob_arr[index].retire) begin 
+                rob_arr[index].complete   <= `SD 1'b0; 
+                rob_arr[index].valid      <= `SD 1'b0;
+            end else if (complete_en[index]) begin
+                rob_arr[index].complete   <= `SD 1'b1; 
+            end
+        end
+    end
 
 // --------------------------------------------------------------------
 // Calculate the number of available entries
@@ -322,12 +323,3 @@ module ROB # (
 // ====================================================================
 
 endmodule
-
-// START -> 0
-
-// tail -> 1'b0, 5'd0
-// head -> 1'b0, 5'd0
-
-// XOR tail[MSB], head[MSB]
-
-// END -> 11
