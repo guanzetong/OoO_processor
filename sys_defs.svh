@@ -311,3 +311,78 @@ typedef struct packed {
 } EX_MEM_PACKET;
 
 `endif // __SYS_DEFS_VH__
+
+//////////////////////////////////////////////
+// 
+// Architecture Parameters
+// 
+//////////////////////////////////////////////
+`define DP_NUM          2   // The number of Dispatch channels.
+`define CDB_NUM         2   // The number of CDB/Complete channels.
+`define RT_NUM          2   // The number of Retire channels.
+`define ROB_ENTRY_NUM   32  // The number of ROB entries.
+`define ARCH_REG_NUM    32  // The number of Architectural registers.
+`define PHY_REG_NUM     64  // The number of Physical registers.
+`define BR_NUM          1   // The number of Branch Resolvers.
+
+//////////////////////////////////////////////
+// 
+// Interfaces between modules
+// 
+//////////////////////////////////////////////
+
+`define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
+`define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
+`define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
+
+typedef struct packed {
+    logic   [`XLEN-1:0]                 pc          ;
+    logic                               valid       ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
+    logic   [`TAG_IDX_WIDTH-1:0]        tag_old     ;
+    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
+    logic                               br_predict  ;
+    logic                               br_result   ;
+    logic                               complete    ;
+} ROB_ENTRY;
+
+typedef struct packed {
+    logic                               ready       ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
+    logic   [`TAG_IDX_WIDTH-1:0]        phy_reg     ;
+} MT_ENTRY;
+
+typedef struct packed {
+    logic                               dp_en       ;
+    logic   [`XLEN-1:0]                 pc          ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
+    logic   [`TAG_IDX_WIDTH-1:0]        tag_old     ;
+    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
+    logic                               br_predict  ;
+} DP_ROB;
+
+typedef struct packed {
+    logic                               rob_ready   ;
+} ROB_DP;
+
+typedef struct packed {
+    logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;
+} ROB_RS;
+
+typedef struct packed {
+    logic                               valid       ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;   // Key
+    logic   [`TAG_IDX_WIDTH-1:0]        phy_reg     ;   // Value
+} ROB_AMT;
+
+typedef struct packed {
+    logic                               valid       ;
+    logic   [`TAG_IDX_WIDTH-1:0]        phy_reg     ;
+} ROB_FL;
+
+typedef struct packed{
+    logic                               valid       ;   // Is this signal valid?
+    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;   // Physical Register
+    logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;   // Used to locate rob entry
+    logic                               br_result   ;   // Branch result
+} CDB;

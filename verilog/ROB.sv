@@ -4,86 +4,17 @@
 //                                                                     //
 //  Description :  ROB MODULE of the pipeline;                         // 
 //                 Reorders out of order instructions                  //
-//                 and update state (as if) in the archiectural        //
+//                 and update state (as if) in the program             //
 //                 order.                                              //
-//                                                                     //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
 `timescale 1ns/100ps
 
-`define DP_WIDTH        2   //The width of Dispatch.
-`define CDB_WIDTH       2   //The number of entries on CDB, or the width of Complete
-`define RT_WIDTH        2   //The width of Retire.
-`define ROB_ENTRY_NUM   32  //The number of ROB entries.
-`define ARCH_REG_NUM    32  //The number of Architectural registers.
-`define PHY_REG_NUM     64  //The number of Physical registers.
-`define BR_NUM          1   //The number of Branch Resolver
-
-
-`define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
-`define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
-`define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
-
-// Grouping of signals going to ( and from ) a specific module?
-
-typedef struct packed {
-    logic   [`XLEN-1:0]                 PC          ;
-    logic                               valid       ;
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
-    logic   [`TAG_IDX_WIDTH-1:0]        tag_old     ;
-    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
-    logic                               br_predict  ;
-    logic                               complete    ;
-    logic                               retire      ;
-} ROB_ENTRY;
-
-typedef struct packed {
-    logic                               ready       ;
-    logic   [`ARCH_REG_IDX_WIDTH]       arch_reg    ;
-    logic   [`TAG_IDX_WIDTH]            phy_reg     ;
-} MT_ENTRY;
-
-typedef struct packed {
-    logic                               dp_en       ;
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
-    logic   [`TAG_IDX_WIDTH-1:0]        tag_old     ;
-    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
-    logic                               br_predict  ;
-} DP_ROB;
-
-typedef struct packed {
-    logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;
-} ROB_RS;
-
-typedef struct packed {
-    logic                               valid       ;
-    logic   [`ARCH_REG_IDX_WIDTH]       arch_reg    ;   // Key
-    logic   [`TAG_IDX_WIDTH]            phy_reg     ;   // Value
-} ROB_AMT;
-
-typedef struct packed {
-    logic                               valid       ;
-    logic   [`TAG_IDX_WIDTH]            phy_reg     ;
-} ROB_FL;
-
-// Signal coming from complete stage
-typedef struct packed{
-    logic                               valid       ;   // Is this signal valid?
-    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;   // Physical Register
-    logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;   // Used to locate rob entry
-} CDB;
-
-typedef struct packed {
-    logic br_valid  ;
-    logic br_result ;
-    logic br_rob_idx;
-} BR_ROB;
-
 module ROB # ( 
-    parameter   C_DP_WIDTH          =   `DP_WIDTH       ,
-    parameter   C_CDB_WIDTH         =   `CDB_WIDTH      ,
-    parameter   C_RT_WIDTH          =   `RT_WIDTH       ,
+    parameter   C_DP_NUM            =   `DP_NUM         ,
+    parameter   C_CDB_NUM           =   `CDB_NUM        ,
+    parameter   C_RT_NUM            =   `RT_NUM         ,
     parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM  ,
     parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM   ,
     parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    ,
@@ -91,24 +22,24 @@ module ROB # (
 ) (
     input   logic                           clk_i               ,   // Clock
     input   logic                           rst_i               ,   // Reset
-    output  logic   [C_DP_WIDTH-1:0 ]       rob_ready_o         ,   // To Dispatcher, Entry readiness for structural hazard detection
-    input   DP_ROB  [C_DP_WIDTH-1:0]        dp_rob_i            ,   // From Dispatcher - DP_ROB
-    output  ROB_RS  [C_DP_WIDTH-1:0]        rob_rs_o            ,   // To Reservation Station - ROB_RS   
-    input   CDB     [C_CDB_WIDTH-1:0]       cdb_i               ,   // From Complete stage - CDB
-    output  ROB_AMT [C_RT_WIDTH-1:0]        rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
-    output  ROB_FL  [C_RT_WIDTH-1:0]        rob_fl_o            ,   // To Free List - ROB_FL
-    input   BR_ROB  [C_BR_NUM-1:0]          br_rob_i            ,   // From Branch Resolver - BR_ROB
-    input   logic                           precise_state_en_i      // From Exception Controller
+    output  ROB_DP  [C_DP_NUM-1:0]          rob_dp_o            ,   // To Dispatcher - ROB_DP, Entry readiness for structural hazard detection
+    input   DP_ROB  [C_DP_NUM-1:0]          dp_rob_i            ,   // From Dispatcher - DP_ROB
+    output  ROB_RS  [C_DP_NUM-1:0]          rob_rs_o            ,   // To Reservation Station - ROB_RS   
+    input   CDB     [C_CDB_NUM-1:0]         cdb_i               ,   // From Complete stage - CDB
+    output  ROB_AMT [C_RT_NUM-1:0]          rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
+    output  ROB_FL  [C_RT_NUM-1:0]          rob_fl_o            ,   // To Free List - ROB_FL
+    input   logic                           exception_i             // From Exception Controller
 );
 
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_ARCH_REG_IDX_WIDTH    =   $clog2(C_ARCH_REG_NUM);
-    localparam  C_TAG_IDX_WIDTH         =   $clog2(C_PHY_REG_NUM);
-    localparam  C_ROB_IDX_WIDTH         =   $clog2(C_ROB_ENTRY_NUM);
-    localparam  C_RT_NUM_WIDTH          =   $clog2(C_RT_WIDTH);
-    localparam  C_DP_NUM_WIDTH          =   $clog2(C_DP_WIDTH);
+    localparam  C_ARCH_REG_IDX_WIDTH    =   $clog2(C_ARCH_REG_NUM)  ;
+    localparam  C_TAG_IDX_WIDTH         =   $clog2(C_PHY_REG_NUM)   ;
+    localparam  C_ROB_IDX_WIDTH         =   $clog2(C_ROB_ENTRY_NUM) ;
+    localparam  C_RT_IDX_WIDTH          =   $clog2(C_RT_NUM)        ;
+    localparam  C_DP_IDX_WIDTH          =   $clog2(C_DP_NUM)        ;
+    localparam  C_CDB_IDX_WIDTH         =   $clog2(C_CDB_NUM)       ;
 
 // ====================================================================
 // Local Parameters Declarations End
@@ -117,23 +48,36 @@ module ROB # (
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-    //  Pointer
-    logic       [C_ROB_IDX_WIDTH:0]     head        ;
-    logic       [C_ROB_IDX_WIDTH:0]     tail        ;
-    logic       [C_ROB_IDX_WIDTH:0]     next_head   ; 
-    logic       [C_ROB_IDX_WIDTH:0]     next_tail   ;
-    ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_arr     ;
-    logic       [C_RT_WIDTH:0]          retire_and  ; // Used for next_head
-    logic       [C_ROB_ENTRY_NUM-1:0]   complete_en ;
-    logic       [C_ROB_IDX_WIDTH:0]     avail_num   ;
+    // Pointers
+    logic       [C_ROB_IDX_WIDTH:0]     head                                ;
+    logic       [C_ROB_IDX_WIDTH:0]     tail                                ;
+    logic       [C_ROB_IDX_WIDTH:0]     next_head                           ; 
+    logic       [C_ROB_IDX_WIDTH:0]     next_tail                           ;
+    logic       [C_ROB_ENTRY_NUM-1:0]   head_sel                            ;
 
-    //logic       [C_ROB_ENTRY_NUM-1:0]   dp_one_hot;
-    logic       [C_DP_WIDTH-1:0]        dp_en_tmp;
-    logic       [C_DP_NUM_WIDTH-1:0]    dp_rob_idx      [C_ROB_ENTRY_NUM-1:0];       
-    logic       [C_ROB_ENTRY_NUM-1:0]   dp_en_concat;
-    logic       [C_ROB_ENTRY_NUM-1:0]   head_one_hot;
-    logic       [C_RT_WIDTH-1:0]        retire_valid;
-    logic       [C_RT_NUM_WIDTH-1:0]    retire_num  ;
+    // ROB array
+    ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_arr                             ;
+
+    // Dispatch
+    logic       [C_DP_NUM-1:0]          rob_ready                           ;
+    logic       [C_DP_NUM-1:0]          dp_en_concat                        ;
+    // logic       [C_DP_IDX_WIDTH-1:0]    tail_dist   [C_ROB_ENTRY_NUM-1:0]   ;
+    logic       [C_ROB_ENTRY_NUM-1:0]   dp_sel                              ;
+
+    // Complete
+    logic       [C_ROB_ENTRY_NUM-1:0]   cp_sel                              ;
+    logic       [C_CDB_IDX_WIDTH-1:0]   cp_idx      [C_ROB_ENTRY_NUM-1:0]   ;
+
+    // Branch mispredict
+    logic       [C_ROB_ENTRY_NUM-1:0]   br_mispredict                       ;
+    logic                               br_flush                            ;
+
+    // Retire
+    logic       [C_ROB_ENTRY_NUM-1:0]   rt_sel                              ;
+    logic       [C_RT_NUM-1:0]          rt_valid                            ;
+
+    logic       [C_ROB_IDX_WIDTH:0]     avail_num                           ;
+    logic       [C_RT_IDX_WIDTH:0]      rt_num                              ;
 // ====================================================================
 // Signal Declarations End
 // ====================================================================
@@ -143,54 +87,135 @@ module ROB # (
 // ====================================================================
 
 // --------------------------------------------------------------------
-// ROB entry from dispatcher
+// Head entry selector
 // --------------------------------------------------------------------
+    assign  head_sel    =   1'b1 << head[C_ROB_IDX_WIDTH-1:0];
 
-    always_comb begin 
-        for (integer index = 0; index < C_DP_WIDTH; index++) begin 
-            dp_en_tmp[index] = dp_rob_i[index].dp_en;
+// --------------------------------------------------------------------
+// Dispatch entry selector
+// --------------------------------------------------------------------
+    always_comb begin
+        // Concatenate dp_en from the dispatch channels
+        for (integer idx = 0; idx < C_DP_NUM; idx++) begin
+            dp_en_concat[idx] =   dp_rob_i[idx].dp_en;
         end
-        dp_en_concat = dp_en_tmp << tail || dp_en_tmp >> (C_ROB_NUM_WIDTH - tail);
+
+        // Circular left shift to assert the selected entries
+        // e.g. 8'b00001111 << 5 => 8'b11100001
+        dp_sel  =   (dp_en_concat << tail[C_ROB_IDX_WIDTH-1:0]) ||
+                    (dp_en_concat >> (C_ROB_NUM_WIDTH - tail[C_ROB_IDX_WIDTH-1:0]));
+
+        // Output dispatched entries index to Reservation Station
+        for (integer idx = 0; idx < C_DP_NUM; idx++) begin
+            rob_rs_o[idx].rob_idx   =   tail[C_ROB_IDX_WIDTH-1:0] + idx;
+        end
     end
 
+// --------------------------------------------------------------------
+// Complete entry selector
+// --------------------------------------------------------------------
     always_comb begin 
-        for (integer entry_index = 0; entry_index < C_ROB_ENTRY_NUM; entry_index++) begin
-            complete_en[entry_index]    =   0;
-            for (integer index = 0; index < C_CDB_WIDTH; index++) begin 
-                if (entry_index == cdb_i[index].rob_idx && cdb_i[index].valid)begin
-                    complete_en[entry_index]    =   1;
+        for (integer entry_idx = 0; entry_idx < C_ROB_ENTRY_NUM; entry_idx++) begin
+            cp_sel[entry_idx]   =   0;
+            cp_idx[entry_idx]   =   0;
+            // Check if any rob_idx from valid CDB channels
+            // matches the current entry idx
+            for (integer cdb_idx = 0; cdb_idx < C_CDB_NUM; cdb_idx++) begin 
+                if ((entry_idx == cdb_i[cdb_idx].rob_idx) && cdb_i[cdb_idx].valid)begin
+                    cp_sel[entry_idx]   =   1'b1;
+                    cp_idx[entry_idx]   =   cdb_idx;
                 end
             end
         end
     end
 
+// --------------------------------------------------------------------
+// Retire entry selector
+// --------------------------------------------------------------------
     always_comb begin
-        for (integer index = 0; index < C_ROB_ENTRY_NUM; index++) begin
-            if (index < tail[C_ROB_IDX_WIDTH-1:0]) begin
-                dp_rob_idx[index]   =   index + C_ROB_ENTRY_NUM - tail[C_ROB_IDX_WIDTH-1:0];
-            end else begin
-                dp_rob_idx[index]   =   index - tail[C_ROB_ENTRY_NUM-1:0];
+        // Whether an entry can be retired depends on:
+        // 1. If consecutive entries between the head entry and itself
+        // are all completed.
+        // 2. Its own complete bit.
+
+        // idx == 0
+        rt_sel[0]   =   head_sel[0] ?
+                        rob_arr[0].complete : 
+                        rob_arr[C_ROB_ENTRY_NUM-1].retire & rob_arr[0].complete;
+
+        // idx == 1 ~ (C_ROB_ENTRY_NUM-1)
+        for (integer idx = 1; idx < C_ROB_ENTRY_NUM; idx++) begin
+            rt_sel[idx] =   head_sel[idx] ?
+                            rob_arr[idx].complete : 
+                            rob_arr[idx-1].retire & rob_arr[idx].complete;
+        end
+
+        // Output retire valid signal to Architectural Map Table 
+        // & Free List
+        for (integer idx = 0; idx < RT_NUM; idx++) begin
+            rt_valid[idx]   =   rt_sel[head[C_ROB_IDX_WIDTH-1:0]+idx];
+        end
+    end
+
+// --------------------------------------------------------------------
+// Branch miprediction detection & flush
+// --------------------------------------------------------------------
+    always_comb begin
+        br_flush    =   0;
+        for (integer idx = 0; idx < C_ROB_NUM_WIDTH; idx++) begin
+            br_mispredict[idx]  =   (rob_arr[idx].br_predict 
+                                    != rob_arr[idx].br_result);
+            if (rt_sel[idx] && br_mispredict[idx]) begin
+                br_flush    =   1;
             end
         end
     end
 
+// --------------------------------------------------------------------
+// Entry content manipulation
+// --------------------------------------------------------------------
+    // Calculate the distance between an entry to the tail entry.
+    // always_comb begin
+    //    for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+    //        if (idx < tail[C_ROB_IDX_WIDTH-1:0]) begin
+    //            tail_dist[idx]   =   idx + C_ROB_ENTRY_NUM - tail[C_ROB_IDX_WIDTH-1:0];
+    //        end else begin
+    //            tail_dist[idx]   =   idx - tail[C_ROB_ENTRY_NUM-1:0];
+    //        end
+    //    end
+    // end
+
     always_ff @(posedge clk_i) begin
-        for (integer index = 0; index < C_ROB_ENTRY_NUM; index++) begin
+        for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+            // System synchronous reset
             if (rst_i) begin
-                rob_arr[index].valid    <=  `SD 1'b0;
-                rob_arr[index].complete <=  `SD 1'b0;
-            end else if (dp_en_concat[index]) begin
-                rob_arr[index].complete   <= `SD 1'b0; 
-                rob_arr[index].valid      <= `SD 1'b1;
-                rob_arr[index].arch_reg   <= dp_rob_i[dp_rob_idx[index]].arch_reg;
-                rob_arr[index].tag        <= dp_rob_i[dp_rob_idx[index]].tag;
-                rob_arr[index].tag_old    <= dp_rob_i[dp_rob_idx[index]].tag_old;
-                rob_arr[index].br_predict <= dp_rob_i[dp_rob_idx[index]].br_predict;
-            end else if (rob_arr[index].retire) begin 
-                rob_arr[index].complete   <= `SD 1'b0; 
-                rob_arr[index].valid      <= `SD 1'b0;
-            end else if (complete_en[index]) begin
-                rob_arr[index].complete   <= `SD 1'b1; 
+                rob_arr[idx].valid      <=  `SD 1'b0;
+                rob_arr[idx].complete   <=  `SD 1'b0;
+            // Precise state by exception
+            end else if (exception_i) begin
+                rob_arr[idx].valid      <=  `SD 1'b0;
+                rob_arr[idx].complete   <=  `SD 1'b0;
+            // Flush by branch misprediction
+            end else if (br_flush) begin
+                rob_arr[idx].valid      <=  `SD 1'b0;
+                rob_arr[idx].complete   <=  `SD 1'b0;
+            // Dispatch
+            end else if (dp_sel[idx]) begin
+                rob_arr[idx].valid      <=  `SD 1'b1;
+                rob_arr[idx].complete   <=  `SD 1'b0;
+                rob_arr[idx].pc         <=  `SD dp_rob_i[idx-tail[C_ROB_ENTRY_NUM-1:0]].pc;
+                rob_arr[idx].arch_reg   <=  `SD dp_rob_i[idx-tail[C_ROB_ENTRY_NUM-1:0]].arch_reg;
+                rob_arr[idx].tag        <=  `SD dp_rob_i[idx-tail[C_ROB_ENTRY_NUM-1:0]].tag;
+                rob_arr[idx].tag_old    <=  `SD dp_rob_i[idx-tail[C_ROB_ENTRY_NUM-1:0]].tag_old;
+                rob_arr[idx].br_predict <=  `SD dp_rob_i[idx-tail[C_ROB_ENTRY_NUM-1:0]].br_predict;
+            // Retire
+            end else if (rt_sel[idx]) begin
+                rob_arr[idx].complete   <=  `SD 1'b0; 
+                rob_arr[idx].valid      <=  `SD 1'b0;
+            // Complete
+            end else if (cp_sel[idx] && rob_arr[idx].valid) begin
+                rob_arr[idx].complete   <=  `SD 1'b1;
+                rob_arr[idx].br_result  <=  `SD cdb_i[cp_idx].br_result;
             end
         end
     end
@@ -207,10 +232,10 @@ module ROB # (
             avail_num   =   tail[ROB_IDX_WIDTH-1:0] + C_ROB_ENTRY_NUM - next_head[ROB_IDX_WIDTH-1:0];
         // Head and tail meet -> Full or Empty
         end else begin
-            //  Head and tail on the same page -> ROB is empty
+            // Head and tail on the same page -> ROB is empty
             if (tail[ROB_IDX_WIDTH] == next_head[ROB_IDX_WIDTH]) begin
                 avail_num   =   C_ROB_ENTRY_NUM;
-            //  Head and tail not on the same page -> ROB is full
+            // Head and tail not on the same page -> ROB is full
             end else begin
                 avail_num   =   0;
             end
@@ -222,24 +247,35 @@ module ROB # (
 // --------------------------------------------------------------------
     always_comb begin
         // All signals are high as long as there are more than enough entries.
-        if (avail_num >= C_DP_WIDTH) begin
-            rob_ready_o =   {C_DP_WIDTH{1'b1}};
+        if (avail_num >= C_DP_NUM) begin
+            rob_ready   =   {C_DP_NUM{1'b1}};
         // If there's no available entires, everything is low.
         //! The reason why this is extra is that the {{avail_num{1'b0}}{1'b0}} syntax cannot work when avail_num == 0.
         end else if (avail_num == 0) begin
-            rob_ready_o =   {C_DP_WIDTH{1'b0}};
+            rob_ready   =   {C_DP_NUM{1'b0}};
+        // LSB refers to the lowest idx available.
+        // Make a 0*1* signal (where the lowest bits indicates possible signals to dispatch).
         end else begin
-            // LSB refers to the lowest index available.
-            // Make a 0*1* signal (where the lowest bits indicates possible signals to dispatch).
-            rob_ready_o =   {{(C_DP_WIDTH-avail_num){1'b0}},{avail_num{1'b1}}};
+            rob_ready   =   {{(C_DP_NUM-avail_num){1'b0}},{avail_num{1'b1}}};
+        end
+
+        // Output to dispatcher
+        for (integer idx = 0; idx < C_DP_NUM; idx++) begin
+            rob_dp_o[idx].rob_ready =   rob_ready[idx];
         end
     end
 
 // --------------------------------------------------------------------
 // Head and Tail pointers
 // --------------------------------------------------------------------
-    always_ff @( posedge clk_i ) begin
-        if (rst_i == 1'b1 || precise_state_en_i == 1'b1) begin
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            head    <=  `SD 0;
+            tail    <=  `SD 0;
+        end else if (exception_i) begin
+            head    <=  `SD 0;
+            tail    <=  `SD 0;
+        end else if (br_flush) begin
             head    <=  `SD 0;
             tail    <=  `SD 0;
         end else begin
@@ -248,61 +284,25 @@ module ROB # (
         end 
     end
 
-// Header pointer Next-state Logic
-    // always_comb begin
-    //     next_head = head;
-    //     retire_and[0] = 1'b1;
-    //     for (integer index = 0; index < C_RT_WIDTH; index++) begin
-    //         if (rob_arr[head[ROB_IDX_WIDTH-1:0] + index].complete == 1'b1) begin 
-    //             next_head = next_head + retire_and[index];
-    //             retire_and[index+1] = retire_and[index] & 1'b1;
-    //         end else begin
-    //             retire_and[index+1] = retire_and[index] & 1'b0;
-    //         end
-    //     end
-    // end
-    //! We should also consider the tail bound (where the tail ends) -> This may be OK if we ensure that non-valid entries aren't considered (use complete bit to ensure this doesn't happen and/or valid bit).
-    //! Consider seperating next_state and current state (for ROB) -> Make it edge-triggered. (Otherwise it may complicate how ROB is updated).
-    //! This provides an oppurtunity to simply add up the signals that are high (in this one high) to determine how much to increment head pointer. May lead to simpler harwdware.
-    //! We can also use this to piggy back off to set how the retire signals
-    //should be set.
-    
-    assign  head_one_hot    =   1'b1 << head[C_ROB_IDX_WIDTH-1:0];
-
+    // Header pointer Next-state Logic
     always_comb begin
-        // Retire bit in each entry
-        //      Index == 0
-        assign   [0].retire   =   head_one_hot[0] ?
-                                        rob_arr[0].complete : 
-                                        rob_arr[C_ROB_ENTRY_NUM-1].retire & rob_arr[0].complete;
-
-        //      Index == 1 ~ (C_ROB_ENTRY_NUM-1)
-        for (integer index = 1; index < C_ROB_ENTRY_NUM; index++) begin
-            assign  rob_arr[index].retire   =   head_one_hot[index] ?
-                                                rob_arr[index].complete : 
-                                                rob_arr[index-1].retire & rob_arr[index].complete;
-        end
-
-        // Retire channels' valid
-        for (integer offset = 0; offset < C_RT_WIDTH; offset++) begin
-            assign  retire_valid[offset]    =   rob_arr[head[C_ROB_IDX_WIDTH-1:0]+offset].retire;
-        end
-
-        // Next Head. A thermometer code to binary encoder is needed to calculate the number
-        // of retire entries.
+        // A thermometer code to binary encoder
+        // calculates the number of retire entries.
         next_head   =   head;
-        for (integer pos = 0; pos < C_RT_WIDTH; pos++) begin
-            next_head   =   next_head + retire_valid[pos];
+        for (integer idx = 0; idx < C_RT_NUM; idx++) begin
+            // next_head   =   next_head + rt_valid[idx];
+            if (rt_valid[idx]) begin
+                next_head   =   head + idx + 'd1;
+            end
         end
     end
 
-// Tail pointer Next-state Logic
-
+    // Tail pointer Next-state Logic
     always_comb begin
         next_tail = tail;
-        for (integer index = 0; index < C_DP_WIDTH; index++) begin
-            if (dp_en_i[index] == 1'b1) begin 
-                next_tail = next_tail + 1;
+        for (integer idx = 0; idx < C_DP_NUM; idx++) begin
+            if (dp_en_i[idx]) begin 
+                next_tail = tail + idx + 'd1;
             end
         end
     end
@@ -311,18 +311,21 @@ module ROB # (
 // ROB update to free list and architecture map table
 // --------------------------------------------------------------------
     always_comb begin
-        for (integer index = 0; index < C_RT_WIDTH; index++) begin
-            if (retire_valid[index] == 1'b1) begin
-                rob_fl_o[index].valid    = 1'b1;
-                rob_amt_o[index].valid   = 1'b1;
-            end else begin 
-                rob_fl_o[index].valid    = 1'b0;
-                rob_amt_o[index].valid   = 1'b0;
-            end
-            rob_fl_o[index].phy_reg  = rob_arr[head].tag_old;
-            rob_amt_o[index].phy_reg = rob_arr[head].tag;
+        for (integer idx = 0; idx < C_RT_NUM; idx++) begin
+            // if (rt_valid[idx]) begin
+            //     rob_fl_o[idx].valid    =    1'b1;
+            //     rob_amt_o[idx].valid   =    1'b1;
+            // end else begin 
+            //     rob_fl_o[idx].valid    =    1'b0;
+            //     rob_amt_o[idx].valid   =    1'b0;
+            // end
+            rob_fl_o[idx].valid    =    rt_valid[idx];
+            rob_amt_o[idx].valid   =    rt_valid[idx];
+            rob_fl_o[idx].phy_reg  =    rob_arr[head+idx].tag_old;
+            rob_amt_o[idx].phy_reg =    rob_arr[head+idx].tag;
         end
     end
+
 // ====================================================================
 // RTL Logic End
 // ====================================================================
