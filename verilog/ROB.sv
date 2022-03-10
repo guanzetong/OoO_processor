@@ -216,6 +216,8 @@ module ROB # (
             end else if (cp_sel[idx] && rob_arr[idx].valid) begin
                 rob_arr[idx].complete   <=  `SD 1'b1;
                 rob_arr[idx].br_result  <=  `SD cdb_i[cp_idx].br_result;
+            end else begin
+                rob_arr[idx] <= `SD rob_arr[idx]; // Maintain value.
             end
         end
     end
