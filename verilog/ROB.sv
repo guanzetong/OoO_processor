@@ -61,7 +61,6 @@ module ROB # (
     // Dispatch
     logic       [C_DP_NUM-1:0]          rob_ready                           ;
     logic       [C_DP_NUM-1:0]          dp_en_concat                        ;
-    // logic       [C_DP_IDX_WIDTH-1:0]    tail_dist   [C_ROB_ENTRY_NUM-1:0]   ;
     logic       [C_ROB_ENTRY_NUM-1:0]   dp_sel                              ;
 
     // Complete
@@ -165,6 +164,7 @@ module ROB # (
         for (integer idx = 0; idx < C_ROB_NUM_WIDTH; idx++) begin
             br_mispredict[idx]  =   (rob_arr[idx].br_predict 
                                     != rob_arr[idx].br_result);
+            // Once the mispredicted branch retires, flush the ROB entries
             if (rt_sel[idx] && br_mispredict[idx]) begin
                 br_flush    =   1;
             end
@@ -174,17 +174,6 @@ module ROB # (
 // --------------------------------------------------------------------
 // Entry content manipulation
 // --------------------------------------------------------------------
-    // Calculate the distance between an entry to the tail entry.
-    // always_comb begin
-    //    for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
-    //        if (idx < tail[C_ROB_IDX_WIDTH-1:0]) begin
-    //            tail_dist[idx]   =   idx + C_ROB_ENTRY_NUM - tail[C_ROB_IDX_WIDTH-1:0];
-    //        end else begin
-    //            tail_dist[idx]   =   idx - tail[C_ROB_ENTRY_NUM-1:0];
-    //        end
-    //    end
-    // end
-
     always_ff @(posedge clk_i) begin
         for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             // System synchronous reset
@@ -215,7 +204,7 @@ module ROB # (
             // Complete
             end else if (cp_sel[idx] && rob_arr[idx].valid) begin
                 rob_arr[idx].complete   <=  `SD 1'b1;
-                rob_arr[idx].br_result  <=  `SD cdb_i[cp_idx].br_result;
+                rob_arr[idx].br_result  <=  `SD cdb_i[cp_idx[idx]].br_result;
             end
         end
     end
@@ -290,7 +279,6 @@ module ROB # (
         // calculates the number of retire entries.
         next_head   =   head;
         for (integer idx = 0; idx < C_RT_NUM; idx++) begin
-            // next_head   =   next_head + rt_valid[idx];
             if (rt_valid[idx]) begin
                 next_head   =   head + idx + 'd1;
             end
@@ -299,10 +287,12 @@ module ROB # (
 
     // Tail pointer Next-state Logic
     always_comb begin
-        next_tail = tail;
+        // A thermometer code to binary encoder
+        // calculates the number of dispatched entries.
+        next_tail   =   tail;
         for (integer idx = 0; idx < C_DP_NUM; idx++) begin
-            if (dp_en_i[idx]) begin 
-                next_tail = tail + idx + 'd1;
+            if (dp_rob_i[idx].dp_en) begin 
+                next_tail   =   tail + idx + 'd1;
             end
         end
     end
@@ -312,13 +302,6 @@ module ROB # (
 // --------------------------------------------------------------------
     always_comb begin
         for (integer idx = 0; idx < C_RT_NUM; idx++) begin
-            // if (rt_valid[idx]) begin
-            //     rob_fl_o[idx].valid    =    1'b1;
-            //     rob_amt_o[idx].valid   =    1'b1;
-            // end else begin 
-            //     rob_fl_o[idx].valid    =    1'b0;
-            //     rob_amt_o[idx].valid   =    1'b0;
-            // end
             rob_fl_o[idx].valid    =    rt_valid[idx];
             rob_amt_o[idx].valid   =    rt_valid[idx];
             rob_fl_o[idx].phy_reg  =    rob_arr[head+idx].tag_old;
