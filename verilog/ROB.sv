@@ -72,6 +72,7 @@ module ROB # (
     logic                               br_flush                            ;
 
     // Retire
+    logic       [C_ROB_ENTRY_NUM-1:0]   rt_window                           ;
     logic       [C_ROB_ENTRY_NUM-1:0]   rt_sel                              ;
     logic       [C_RT_NUM-1:0]          rt_valid                            ;
 
@@ -137,16 +138,29 @@ module ROB # (
         // are all completed.
         // 2. Its own complete bit.
 
-        // idx == 0
-        rt_sel[0]   =   head_sel[0] ?
-                        rob_arr[0].complete : 
-                        rob_arr[C_ROB_ENTRY_NUM-1].retire & rob_arr[0].complete;
+        // Select the entries in the retire window.
+        rt_window   =   ({C_RT_NUM{1'b1}} << head[C_ROB_IDX_WIDTH-1:0]) ||
+                        ({C_RT_NUM{1'b1}} >> (C_ROB_NUM_WIDTH - tail[C_ROB_IDX_WIDTH-1:0]));
 
-        // idx == 1 ~ (C_ROB_ENTRY_NUM-1)
-        for (integer idx = 1; idx < C_ROB_ENTRY_NUM; idx++) begin
-            rt_sel[idx] =   head_sel[idx] ?
-                            rob_arr[idx].complete : 
-                            rob_arr[idx-1].retire & rob_arr[idx].complete;
+        // Select the entries that are ready to retire
+        rt_sel  =   {C_ROB_ENTRY_NUM{1'b0}};
+        for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+            // If the entry is in the retire window -> go on to check if it is ready to retire
+            if (rt_window[idx]) begin
+                // idx == 0
+                if (idx == 0) begin
+                    rt_sel[0]   =   head_sel[0] ?
+                                    rob_arr[0].complete : 
+                                    rt_sel[C_ROB_ENTRY_NUM-1] & rob_arr[0].complete;
+                // idx == 1 ~ (C_ROB_ENTRY_NUM-1)
+                end else begin
+                    if (rt_window[idx]) begin
+                        rt_sel[idx] =   head_sel[idx] ?
+                                        rob_arr[idx].complete : 
+                                        rt_sel[idx-1] & rob_arr[idx].complete;
+                    end
+                end
+            end
         end
 
         // Output retire valid signal to Architectural Map Table 
