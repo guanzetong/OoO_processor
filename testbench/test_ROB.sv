@@ -17,14 +17,14 @@
 4. Dispatch, Complete some, retire some
 */
 
-// Tranaction Object
+// Transaction Object
 // ====================================================================
 // Transaction Object Start
 // ====================================================================
-class ROB_io_item;
-    bit                             dp_en        ;
-    rand bit [`DP_IDX_WIDTH-1:0]    dp_idx        ;
-    DP_ROB  [`DP_NUM-1:0]           dp_rob_i      ;
+class ROB_io_item; // for mon ->scb
+    bit                             dp_en      ;
+    bit [`DP_IDX_WIDTH-1:0]         dp_idx     ;
+    DP_ROB  [`DP_NUM-1:0]           dp_rob_i   ;
     ROB_RS  [`DP_NUM-1:0]           rob_rs_o   ;
     CDB     [`CDB_NUM-1:0]          cdb_i      ;
     ROB_AMT [`RT_NUM-1:0]           rob_amt_o  ;
@@ -41,6 +41,16 @@ class ROB_io_item;
             dp_rob_i[n].br_predict = dp_rob[n].br_predict;
         end // for
     endfunction
+endclass
+
+class ROB_trans_obj; // for gen -> driver
+    rand int                        inst_dispatch; // Number of instructions to be dispatched
+    rand int                        inst_complete; // Number of instructions completed
+    rand bit                        has_exception;
+    rand bit                        br_result;
+    rand bit [`ROB_IDX_WIDTH-1:0]   br_rob_idx;
+    rand int                        high;
+    rand int                        low;
 endclass
 
 class DP_ROB_item;
@@ -86,25 +96,85 @@ endinterface
 class driver;
     virtual ROB_if vif;
     event drv_done;
+    event monitor_done;
     mailbox drv_mbx;
-
 
     task run();
         $display("T=%0t [Driver] starting...", $time);
-        
 
         forever begin
-            DP_ROB_item [`DP_NUM-1:0]   dp_item;
+            ROB_trans_obj item;
+            //DP_ROB_item [`DP_NUM-1:0]   dp_item;
 
-            $display("T=%0t [Driver] wating for item...", $time);
+            $display("T=%0t [Driver] waiting for item...", $time);
             drv_mbx.get(item); // Waiting for generator to give item
 
             @(negedge vif.clk);
-            vif.dp_rob_i <= dp_item.dp_rob_i;
-            vif.cdb_i    <= dp_item.dp_
+
+            int rob_ready_concat;
+            // Read rob_ready
+            for ( int n = 0 ; n < `DP_NUM; n++) begin
+                rob_ready_concat[n] = vif.rob_dp_o[n].rob_ready;
+            end
+            vif.dp_rob_i    = dp_rob( rob_ready_num( rob_ready_concat ),  item.inst_dispatch);
+            vif.cdb_i       = cdb_rob( item.inst_complete, item.high, item.low );
+            vif.exception_i = item.exception_i;
+
+            // Now wait until monitor finishes
+            @(monitor_done);
+
+            ->drv_done; // Tell generator to send another item (may be )
         end // forever begin
     endtask
 
+    // Creats a DP_ROB bit array
+    function automatic DP_ROB [`DP_NUM-1:0] dp_rob ( int rob_ready_num, int inst_dispatch  );
+        automatic logic [`DP_NUM-1:0] dp_en = dp_en(rob_ready_num, inst_dispatch);
+        for ( int n = 0; n < `DP_NUM; n++ ) begin
+            dp_rob[n].dp_en = dp_en[n];
+            dp_rob[n].pc = $random;
+            dp_rob[n].arch_reg = $random;
+            dp_rob[n].tag_old = $random;
+            dp_rob[n].tag = $random;
+            dp_rob[n].br_predict = 0;
+        end
+    endfunction
+
+    function logic [`DP_NUM-1:0] dp_en ( int rob_ready_num, int inst_dispatch );
+        for ( int n = 0; n < `DP_NUM; n++ ) begin
+            if ( n < min_int( rob_ready_num, inst_dispatch ) ) begin
+                dp_en[n]    =   1'b1; // Set to one.
+            end // if
+        end // for
+    endfunction // dp_en
+
+    function int rob_ready_num ( int rob_ready );
+        rob_ready_num = 0;
+        for (integer idx = 0; idx < `DP_NUM; idx++) begin
+            if (rob_ready[idx]) begin
+                rob_ready_num   =   idx + 1;
+            end
+        end
+    endfunction
+
+    // [14, 17]
+
+    // [0, 13] + 3
+    // $random % (high - low) + low
+    // 0, 1, 2 + 14 = 14, 15, 16
+
+    function automatic CDB [`CDB_NUM-1:0] cdb_rob( int instr_complete, int high, int low);
+        for ( int n = 0; n < `CDB_NUM; n++ ) begin
+            if ( n < instr_complete ) begin
+                cdb_rob[n].valid = 1'b1;
+                cdb_rob[n].rob_idx = $random % (high - low) + low;
+            end
+        end
+    endfunction
+
+    function int min_int ( int a, int b );
+        min_int = a < b ? a : b;
+    endfunction
 endclass
 
 
@@ -142,22 +212,31 @@ class generator;
             drv_mbx.put(item);
         end // for
         */
-        ROB_io_item item = new;
-        int tag_inc = 0;
-        for ( int n = 0; n < `DP_NUM; n++ ) begin
-            if ( n < dispatch_num ) begin
-                item.dp_rob_i[ n ].dp_en = 1'b1;
-            end else begin
-                item.dp_rob_i[ n ].dp_en = 1'b0;
-            end
-            item.dp_rob_i[ n ].tag_old = tag_inc++;
-            item.dp_rob_i[ n ].tag = item.dp_rob_i[ n ].tag_old + 1;
-            item.dp_rob_i[n].arch_reg = 1;
-            item.dp_rob_i[n].br_predict = 0;
-        end
-        drv_mbx.put(item);
+        // ROB_io_item item = new;
+        // int tag_inc = 0;
+        // for ( int n = 0; n < `DP_NUM; n++ ) begin
+        //     if ( n < dispatch_num ) begin
+        //         item.dp_rob_i[ n ].dp_en = 1'b1;
+        //     end else begin
+        //         item.dp_rob_i[ n ].dp_en = 1'b0;
+        //     end
+        //     item.dp_rob_i[ n ].tag_old = tag_inc++;
+        //     item.dp_rob_i[ n ].tag = item.dp_rob_i[ n ].tag_old + 1;
+        //     item.dp_rob_i[n].arch_reg = 1;
+        //     item.dp_rob_i[n].br_predict = 0;
+        // end
+        // drv_mbx.put(item);
         
-        @(drv_done); // Wait for driver to finish inputting.
+        // @(drv_done); // Wait for driver to finish inputting.
+        int inst_dispatched = 0;
+        for (int i = 0; ; ) begin
+            
+        end
+        ROB_trans_obj item = new;
+        //item.randomize();
+        item.dispatch_num = `ROB_ENTRY_NUM;
+        item.low  = 0;
+        item.high = 15;
         
     endtask
 
@@ -169,6 +248,36 @@ endclass //generator
 // ====================================================================
 // Monitor Start
 // ====================================================================
+class monitor;
+    virtual ROB_if vif;
+    mailbox scb_mbx;
+    semaphore sema_mon;
+    function new();
+        sema_mon = new(?);
+    endfunction //new()
+
+    task run();
+        $display("T=%0 [Monitor] starting ...",$time);
+        fork
+           sample_port("Thread0");
+           sample_port("Thread1");
+        join
+    endtask
+
+    task sample_port(string tag="");
+        forever begin
+            @(posedge vif.clk);
+            if(vif.dp_rob_i && vif.dp_cdb_i)begin
+                ROB_io_item item = new;
+                sema_mon.get();
+
+
+
+            end
+        end
+    endtask
+endclass // monitor
+
 
 // ====================================================================
 // Monitor End
@@ -240,7 +349,7 @@ class env;
 endclass
 
 // ====================================================================
-// Env Class Start
+// Env Class End
 // ====================================================================
 
 
@@ -353,7 +462,7 @@ module testbench;
             dp_rob_i[idx].br_predict    =   br_predict  ;
         end
     endtask //automatic
-
+    
         task dp_channel (
         input   [`DP_IDX_WIDTH-1:0]         dp_idx      ,
         input                               dp_en       ,

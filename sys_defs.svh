@@ -382,7 +382,7 @@ typedef struct packed {
 
 typedef struct packed{
     logic                               valid       ;   // Is this signal valid?
-    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;   // Physical Register
+    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;   // Physical Register (Used for broadcasting to M_T and RS)
     logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;   // Used to locate rob entry
     logic                               br_result   ;   // Branch result
 } CDB;
