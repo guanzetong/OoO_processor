@@ -17,8 +17,7 @@ module ROB # (
     parameter   C_RT_NUM            =   `RT_NUM         ,
     parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM  ,
     parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM   ,
-    parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    ,
-    parameter   C_BR_NUM            =   `BR_NUM         
+    parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    
 ) (
     input   logic                           clk_i               ,   // Clock
     input   logic                           rst_i               ,   // Reset
@@ -33,7 +32,8 @@ module ROB # (
     output  logic   [`ROB_IDX_WIDTH:0]      head_o              ,
     output  logic   [`ROB_IDX_WIDTH:0]      tail_o              ,
     output  logic   [`ROB_ENTRY_NUM-1:0]    entry_valid_o       ,
-    output  logic   [`ROB_ENTRY_NUM-1:0]    entry_complete_o    
+    output  logic   [`ROB_ENTRY_NUM-1:0]    entry_complete_o    ,
+    output  logic   [`ROB_IDX_WIDTH:0]      next_tail_o         
 );
 
 // ====================================================================
@@ -67,7 +67,6 @@ module ROB # (
     logic       [C_DP_NUM-1:0]          rob_ready                           ;
     logic       [C_DP_NUM-1:0]          dp_en_concat                        ;
     logic       [C_ROB_ENTRY_NUM-1:0]   dp_sel                              ;
-    logic       [C_ROB_ENTRY_NUM-1:0]   dp_sel_half                              ;
 
     // Complete
     logic       [C_ROB_ENTRY_NUM-1:0]   cp_sel                              ;
@@ -110,8 +109,6 @@ module ROB # (
         // e.g. 8'b00001111 << 5 => 8'b11100001
         dp_sel  =   (dp_en_concat << tail[C_ROB_IDX_WIDTH-1:0]) |
                     (dp_en_concat >> (C_ROB_ENTRY_NUM - tail[C_ROB_IDX_WIDTH-1:0]));
-
-        dp_sel_half =   (dp_en_concat >> (C_ROB_ENTRY_NUM - tail[C_ROB_IDX_WIDTH-1:0]));
 
         // Output dispatched entries index to Reservation Station
         for (integer idx = 0; idx < C_DP_NUM; idx++) begin
@@ -342,6 +339,7 @@ module ROB # (
 
     assign  head_o  =   head;
     assign  tail_o  =   tail;
+    assign  next_tail_o =   next_tail;
     always_comb begin
         for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             entry_valid_o[idx]      =   rob_arr[idx].valid;

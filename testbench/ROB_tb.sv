@@ -24,6 +24,7 @@ module ROB_tb;
 
     logic   [`ROB_IDX_WIDTH:0]      head_o      ;
     logic   [`ROB_IDX_WIDTH:0]      tail_o      ;
+    logic   [`ROB_IDX_WIDTH:0]      next_tail_o ;
 
     int                             dispatch_num_monitor    ;
     int                             complete_num_monitor    ;
@@ -69,6 +70,7 @@ module ROB_tb;
         .tail_o             (tail_o             ),
         .entry_valid_o      (entry_valid_o      ),
         .entry_complete_o   (entry_complete_o   )
+        // .next_tail_o        (next_tail_o        )
     );
 // ====================================================================
 // Design Under Test (DUT) Instantiation End
@@ -118,6 +120,7 @@ module ROB_tb;
             for (int n = 0 ; n < `DP_NUM; n++) begin
                 rob_ready_concat[n] = rob_dp_o[n].rob_ready;
             end
+            // $display("rob_ready=%b", rob_ready_concat);
 
             // Generate the dp_en in each dispatch channel
             rob_ready_num   =   calc_rob_ready_num(rob_ready_concat);  
@@ -187,7 +190,7 @@ module ROB_tb;
         logic   [`ROB_IDX_WIDTH-1:0]    complete_rob_idx    ;
         bit     [`ROB_ENTRY_NUM-1:0]    picked_flag         ;
 
-        // int                             random_part         ;
+        int                             random_part         ;
 
         begin
             @(negedge clk_i);
@@ -427,15 +430,6 @@ module ROB_tb;
 
     endtask
 
-    task testcase_3;
-        for (int i = 0; i < 31; i++) begin
-            fork
-                dispatch_driver($urandom % 3);
-                complete_driver($urandom % 3, head_o, tail_o, 0);
-            join
-        end
-    endtask
-
 // ====================================================================
 // Stimulus Generator End
 // ====================================================================
@@ -462,9 +456,10 @@ module ROB_tb;
 
         // repeat(40) begin
         //     dispatch_driver(1);
-        //     $display("Dispatched num =%d", dispatch_num_monitor);
+        //     // $display("Dispatched num =%d", dispatch_num_monitor);
+        //     $display("rob_ready: %b, %b, head: %d, tail: %d, next_tail:%d", rob_dp_o[0].rob_ready, rob_dp_o[1].rob_ready, head_o, tail_o, next_tail_o);
         // end
-        // repeat(40) complete_driver(1, head_o, tail_o);
+        // repeat(40) complete_driver(1, head_o, tail_o, 0);
 
         $display("\nENDING TESTBENCH: SUCCESS!\n");
         $display("@@@Passed");
