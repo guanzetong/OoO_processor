@@ -49,9 +49,11 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 # SIMULATION CONFIG
 
 HEADERS     = $(wildcard *.svh)
-TESTBENCH   = $(wildcard testbench/*.sv)
-TESTBENCH  += $(wildcard testbench/*.c)
-PIPEFILES   = $(wildcard verilog/*.sv)
+# TESTBENCH   = $(wildcard testbench/*.sv)
+# TESTBENCH  += $(wildcard testbench/*.c)
+TESTBENCH	= testbench/ROB_tb.sv
+# PIPEFILES   = $(wildcard verilog/*.sv)
+PIPEFILES	= verilog/ROB.sv
 
 SIMFILES    = $(PIPEFILES)
 
@@ -61,7 +63,8 @@ SYNTH_DIR = ./synth
 export HEADERS
 export PIPEFILES
 
-export PIPELINE_NAME = pipeline
+# export PIPELINE_NAME = pipeline
+export PIPELINE_NAME = ROB
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
