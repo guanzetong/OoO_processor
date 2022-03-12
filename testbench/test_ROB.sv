@@ -78,8 +78,8 @@ endclass
 // Interface Start
 // ====================================================================
 interface ROB_if(input bit clk);
-    logic rst_i;
-    ROB_DP  [`DP_NUM-1:0]           rob_dp_o;
+    logic                           rst_i               ;
+    ROB_DP  [`DP_NUM-1:0]           rob_dp_o            ;
     DP_ROB  [`DP_NUM-1:0]           dp_rob_i            ;
     ROB_RS  [`DP_NUM-1:0]           rob_rs_o            ;
     CDB     [`CDB_NUM-1:0]          cdb_i               ;
@@ -114,7 +114,7 @@ class driver;
             $display("T=%0t [Driver] waiting for item...", $time);
             drv_mbx.get(item); // Waiting for generator to give item
 
-            @(negedge vif.clk);
+            @(negedge clk_i);
 
             int rob_ready_concat;
             // Read rob_ready
@@ -258,30 +258,72 @@ class monitor;
     mailbox scb_mbx;
     semaphore sema_mon;
     function new();
-        sema_mon = new(?);
+        sema_mon = new(1);
     endfunction //new()
 
     task run();
-        $display("T=%0 [Monitor] starting ...",$time);
+        $display("T=%0t [Monitor] starting ...",$time);
         fork
            sample_port("Thread0");
            sample_port("Thread1");
         join
     endtask
 
-    task sample_port(string tag="");
+    task sample_port(string notice="");
         forever begin
-            @(posedge vif.clk);
-            if(vif.dp_rob_i && vif.dp_cdb_i)begin
-                ROB_io_item item = new;
-                sema_mon.get();
+            @(posedge clk_i);
 
+            int rob_dp_i_dp_en_concat;  // Read rob_dp_i_dp_en_concat
+            int cdb_i_concat;           // Read cdb_i_valid_concat
+   
+            for (integer index; index < `DP_NUM; index++) begin 
+                rob_dp_i_dp_en_concat[index] = vif.rob_dp_i[index].dp_en;
+                if (rob_dp_i_dp_en_concat[index]) begin 
+                    ROB_io_item item = new;
+                    sema_mon.get();
+                    item.dp_rob_i[index].tag        =   vif.dp_rob_i[index].tag;
+                    item.dp_rob_i[index].tag_old    =   vif.dp_rob_i[index].tag_old;
+                    item.dp_rob_i[index].arch_reg   =   vif.dp_rob_i[index].arch_reg;
+                    item.dp_rob_i[index].br_predict =   vif.dp_rob_i[index].br_predict;
+                end
+            end 
+            $display("T=%0t [Monitor]%s ROB -> Dispatch",$time, notice);
 
-            end
-        end
-    endtask
+            for (integer index; index < `CDB_NUM; index++) begin 
+                cdb_i_valid_concat[index] = vif.cdb_i[index].valid;
+                if (cdb_i_valid_concat[index]) begin 
+                    ROB_io_item item = new;
+                    sema_mon.get();
+                    item.dp_rob_i[index].tag        =   vif.dp_rob_i[index].tag;
+                    item.dp_rob_i[index].tag_old    =   vif.dp_rob_i[index].tag_old;
+                    item.dp_rob_i[index].arch_reg   =   vif.dp_rob_i[index].arch_reg;
+                    item.dp_rob_i[index].br_predict =   vif.dp_rob_i[index].br_predict;
+                end
+            end 
+            $display("T=%0t [Monitor]%s CDB valid -> ROB",$time, notice);
+
+            @(posedge clk_i); 
+            sema_mon.put();
+            for(integer index; index < `RT_NUM; index++) begin
+                item.rob_amt_o[index].arch_reg      =    vif.rob_amt_o[index].arch_reg ;
+                item.rob_amt_o[index].phy_reg       =    vif.rob_amt_o[index].phy_reg  ;
+                item.rob_fl_o[index] .phy_reg       =    vif.rob_fl_o[index] .phy_reg  ;
+                end
+            $display("T=%0t [Monitor]%s Monitor Output",$time, notice);
+            scb_mbx.put(item);
+            item.print({"Monitor_",notice});
+        end// forever begin
+    endtask//sample port
 endclass // monitor
 
+concat_dp_i [dp_nums]
+if 
+for (0 ~ dp_num-1)
+    update tag, tag_old, arch reg, br_predict;
+end
+
+for (0 ~ CDB_num-1)
+    update tag, 
 
 // ====================================================================
 // Monitor End
