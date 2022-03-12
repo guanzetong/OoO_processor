@@ -56,8 +56,8 @@ module ROB # (
     // Pointers
     logic       [C_ROB_IDX_WIDTH:0]     head                                ;
     logic       [C_ROB_IDX_WIDTH:0]     tail                                ;
-    logic       [C_ROB_IDX_WIDTH:0]     next_head                           ; 
-    logic       [C_ROB_IDX_WIDTH:0]     next_tail                           ;
+    logic       [C_ROB_IDX_WIDTH:0]     next_head                           ;   
+    logic       [C_ROB_IDX_WIDTH:0]     next_tail                           ;   
     logic       [C_ROB_ENTRY_NUM-1:0]   head_sel                            ;
 
     // ROB array
@@ -67,7 +67,7 @@ module ROB # (
     logic       [C_DP_NUM-1:0]          rob_ready                           ;
     logic       [C_DP_NUM-1:0]          dp_en_concat                        ;
     logic       [C_ROB_ENTRY_NUM-1:0]   dp_sel                              ;
-    logic       [C_ROB_ENTRY_NUM-1:0]   dp_sel_half                              ;
+    logic       [C_ROB_ENTRY_NUM-1:0]   dp_sel_half                         ;
 
     // Complete
     logic       [C_ROB_ENTRY_NUM-1:0]   cp_sel                              ;
@@ -100,6 +100,8 @@ module ROB # (
 // --------------------------------------------------------------------
 // Dispatch entry selector
 // --------------------------------------------------------------------
+
+
     always_comb begin
         // Concatenate dp_en from the dispatch channels
         for (integer idx = 0; idx < C_DP_NUM; idx++) begin
@@ -353,3 +355,6 @@ module ROB # (
 // ====================================================================
 
 endmodule
+
+
+

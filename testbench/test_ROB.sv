@@ -338,7 +338,7 @@ class scoreboard;
 
     int head; // Indices for head and tail ()
     int tail;
-    int entries_avail; // Should be max
+    int entries_avail; // Used to represent that state -> Which based off the input provided by the transactional object.
 
     function new();
         this.head = 0;

@@ -31,7 +31,8 @@ module ROB_tb;
     int                             retire_fl_num_monitor   ;
 
     // Scoreboard
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]   dispatch_arch_reg_seq   [C_SCB_NUM-1:0]    ;
+    // Logically, it's 128 entries that records each transaction I/O and compares against.
+
     logic   [`TAG_IDX_WIDTH-1:0]        dispatch_tag_seq        [C_SCB_NUM-1:0]    ;
     logic   [`TAG_IDX_WIDTH-1:0]        dispatch_tag_old_seq    [C_SCB_NUM-1:0]    ;
     logic   [`ROB_IDX_WIDTH-1:0]        dispatch_rob_idx_seq    [C_SCB_NUM-1:0]    ;
