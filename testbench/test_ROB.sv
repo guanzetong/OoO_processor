@@ -97,13 +97,18 @@ class driver;
     virtual ROB_if vif;
     event drv_done;
     event monitor_done;
+    semaphore sema_drv_mon;
     mailbox drv_mbx;
+
+    function new(semaphore sema);
+        seam_drv_mon = sema;
+    endfunction
 
     task run();
         $display("T=%0t [Driver] starting...", $time);
 
         forever begin
-            ROB_trans_obj item;
+            ROB_trans_obj item; // High level abstraction of transaction
             //DP_ROB_item [`DP_NUM-1:0]   dp_item;
 
             $display("T=%0t [Driver] waiting for item...", $time);
@@ -128,14 +133,14 @@ class driver;
     endtask
 
     // Creats a DP_ROB bit array
-    function automatic DP_ROB [`DP_NUM-1:0] dp_rob ( int rob_ready_num, int inst_dispatch  );
+    function automatic DP_ROB [`DP_NUM-1:0] dp_rob ( int rob_ready_num, int inst_dispatch );
         automatic logic [`DP_NUM-1:0] dp_en = dp_en(rob_ready_num, inst_dispatch);
         for ( int n = 0; n < `DP_NUM; n++ ) begin
-            dp_rob[n].dp_en = dp_en[n];
-            dp_rob[n].pc = $random;
-            dp_rob[n].arch_reg = $random;
-            dp_rob[n].tag_old = $random;
-            dp_rob[n].tag = $random;
+            dp_rob[n].dp_en      = dp_en[n];
+            dp_rob[n].pc         = $random;
+            dp_rob[n].arch_reg   = $random;
+            dp_rob[n].tag_old    = $random;
+            dp_rob[n].tag        = $random;
             dp_rob[n].br_predict = 0;
         end
     endfunction
@@ -327,6 +332,37 @@ for (0 ~ CDB_num-1)
 // ====================================================================
 // Scoreboard Start
 // ====================================================================
+
+// High-level discription of ROB which minimally discribes sucha a structure.
+class scoreboard;
+
+    int head; // Indices for head and tail ()
+    int tail;
+    int entries_avail; // Used to represent that state -> Which based off the input provided by the transactional object.
+
+    function new();
+        this.head = 0;
+        this.tail = 0;
+    endfunction
+
+    // Modifies its state based on the transaction object.
+    // This is fine since it 
+    function update_state( ROB_trans_obj item );
+
+    endfunction
+
+    // Uses the current transaction object to verify that state matches appropriately.
+    task verify_correctness( input ROB_trans_obj item );
+
+    endtask
+
+endclass
+
+class rob_sim;
+
+
+endclass
+
 
 // ====================================================================
 // Scoreboard End
