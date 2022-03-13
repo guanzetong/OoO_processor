@@ -51,7 +51,7 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 HEADERS     = $(wildcard *.svh)
 # TESTBENCH   = $(wildcard testbench/*.sv)
 # TESTBENCH  += $(wildcard testbench/*.c)
-TESTBENCH	= testbench/ROB_tb.sv
+TESTBENCH	= testbench/ROB_tb_2.sv
 # PIPEFILES   = $(wildcard verilog/*.sv)
 PIPEFILES	= verilog/ROB.sv
 
@@ -70,8 +70,9 @@ PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
 # Passed through to .tcl scripts:
-export CLOCK_NET_NAME = clock
-export RESET_NET_NAME = reset
+# export CLOCK_NET_NAME = clock
+export CLOCK_NET_NAME = clk_i
+export RESET_NET_NAME = rst_i
 export CLOCK_PERIOD   = 10	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 

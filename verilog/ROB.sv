@@ -27,13 +27,7 @@ module ROB # (
     input   CDB     [C_CDB_NUM-1:0]         cdb_i               ,   // From Complete stage - CDB
     output  ROB_AMT [C_RT_NUM-1:0]          rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
     output  ROB_FL  [C_RT_NUM-1:0]          rob_fl_o            ,   // To Free List - ROB_FL
-    input   logic                           exception_i         ,   // From Exception Controller
-    // Test
-    output  logic   [`ROB_IDX_WIDTH:0]      head_o              ,
-    output  logic   [`ROB_IDX_WIDTH:0]      tail_o              ,
-    output  logic   [`ROB_ENTRY_NUM-1:0]    entry_valid_o       ,
-    output  logic   [`ROB_ENTRY_NUM-1:0]    entry_complete_o    ,
-    output  logic   [`ROB_IDX_WIDTH:0]      next_tail_o         
+    input   logic                           exception_i             // From Exception Controller
 );
 
 // ====================================================================
@@ -54,19 +48,20 @@ module ROB # (
 // Signal Declarations Start
 // ====================================================================
     // Pointers
-    logic       [C_ROB_IDX_WIDTH:0]     head                                ;
-    logic       [C_ROB_IDX_WIDTH:0]     tail                                ;
-    logic       [C_ROB_IDX_WIDTH:0]     next_head                           ;   
-    logic       [C_ROB_IDX_WIDTH:0]     next_tail                           ;   
+    logic       [C_ROB_IDX_WIDTH-1:0]   head                                ;
+    logic       [C_ROB_IDX_WIDTH-1:0]   tail                                ;
+    logic       [C_ROB_IDX_WIDTH-1:0]   next_head                           ;   
+    logic       [C_ROB_IDX_WIDTH-1:0]   next_tail                           ;   
     logic       [C_ROB_ENTRY_NUM-1:0]   head_sel                            ;
 
     // ROB array
     ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_arr                             ;
 
     // Dispatch
-    logic       [C_DP_NUM-1:0]          rob_ready                           ;
     logic       [C_DP_NUM-1:0]          dp_en_concat                        ;
     logic       [C_ROB_ENTRY_NUM-1:0]   dp_sel                              ;
+    logic       [C_ROB_ENTRY_NUM-1:0]   dp_window                           ;
+    logic       [C_ROB_ENTRY_NUM-1:0]   dp_ready                            ;
 
     // Complete
     logic       [C_ROB_ENTRY_NUM-1:0]   cp_sel                              ;
@@ -94,13 +89,11 @@ module ROB # (
 // --------------------------------------------------------------------
 // Head entry selector
 // --------------------------------------------------------------------
-    assign  head_sel    =   1'b1 << head[C_ROB_IDX_WIDTH-1:0];
+    assign  head_sel    =   1'b1 << head;
 
 // --------------------------------------------------------------------
 // Dispatch entry selector
 // --------------------------------------------------------------------
-
-
     always_comb begin
         // Concatenate dp_en from the dispatch channels
         for (integer idx = 0; idx < C_DP_NUM; idx++) begin
@@ -109,12 +102,12 @@ module ROB # (
 
         // Circular left shift to assert the selected entries
         // e.g. 8'b00001111 << 5 => 8'b11100001
-        dp_sel  =   (dp_en_concat << tail[C_ROB_IDX_WIDTH-1:0]) |
-                    (dp_en_concat >> (C_ROB_ENTRY_NUM - tail[C_ROB_IDX_WIDTH-1:0]));
+        dp_sel  =   (dp_en_concat << tail) |
+                    (dp_en_concat >> (C_ROB_ENTRY_NUM - tail));
 
         // Output dispatched entries index to Reservation Station
         for (integer idx = 0; idx < C_DP_NUM; idx++) begin
-            rob_rs_o[idx].rob_idx   =   tail[C_ROB_IDX_WIDTH-1:0] + idx;
+            rob_rs_o[idx].rob_idx   =   tail + idx;
         end
     end
 
@@ -146,14 +139,14 @@ module ROB # (
         // 2. Its own complete bit.
 
         // Select the entries in the retire window.
-        rt_window   =   ({C_RT_NUM{1'b1}} << head[C_ROB_IDX_WIDTH-1:0]) |
-                        ({C_RT_NUM{1'b1}} >> (C_ROB_ENTRY_NUM - tail[C_ROB_IDX_WIDTH-1:0]));
+        rt_window   =   ({C_RT_NUM{1'b1}} << head) |
+                        ({C_RT_NUM{1'b1}} >> (C_ROB_ENTRY_NUM - tail));
 
         // Select the entries that are ready to retire
         rt_sel  =   {C_ROB_ENTRY_NUM{1'b0}};
         for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             // If the entry is in the retire window -> go on to check if it is ready to retire
-            if (rt_window[idx]) begin
+            if (rt_window[idx] && rob_arr[0].valid) begin
                 // idx == 0
                 if (idx == 0) begin
                     rt_sel[0]   =   head_sel[0] ?
@@ -173,7 +166,7 @@ module ROB # (
         // Output retire valid signal to Architectural Map Table 
         // & Free List
         for (integer idx = 0; idx < C_RT_NUM; idx++) begin
-            rt_valid[idx]   =   rt_sel[head[C_ROB_IDX_WIDTH-1:0]+idx];
+            rt_valid[idx]   =   rt_sel[head+idx];
         end
     end
 
@@ -213,11 +206,11 @@ module ROB # (
             end else if (dp_sel[idx]) begin
                 rob_arr[idx].valid      <=  `SD 1'b1;
                 rob_arr[idx].complete   <=  `SD 1'b0;
-                rob_arr[idx].pc         <=  `SD dp_rob_i[idx-tail[C_ROB_IDX_WIDTH-1:0]].pc;
-                rob_arr[idx].arch_reg   <=  `SD dp_rob_i[idx-tail[C_ROB_IDX_WIDTH-1:0]].arch_reg;
-                rob_arr[idx].tag        <=  `SD dp_rob_i[idx-tail[C_ROB_IDX_WIDTH-1:0]].tag;
-                rob_arr[idx].tag_old    <=  `SD dp_rob_i[idx-tail[C_ROB_IDX_WIDTH-1:0]].tag_old;
-                rob_arr[idx].br_predict <=  `SD dp_rob_i[idx-tail[C_ROB_IDX_WIDTH-1:0]].br_predict;
+                rob_arr[idx].pc         <=  `SD dp_rob_i[idx-tail].pc;
+                rob_arr[idx].arch_reg   <=  `SD dp_rob_i[idx-tail].arch_reg;
+                rob_arr[idx].tag        <=  `SD dp_rob_i[idx-tail].tag;
+                rob_arr[idx].tag_old    <=  `SD dp_rob_i[idx-tail].tag_old;
+                rob_arr[idx].br_predict <=  `SD dp_rob_i[idx-tail].br_predict;
             // Retire
             end else if (rt_sel[idx]) begin
                 rob_arr[idx].complete   <=  `SD 1'b0; 
@@ -233,53 +226,26 @@ module ROB # (
     end
 
 // --------------------------------------------------------------------
-// Calculate the number of available entries
+// Configure rob_ready
 // --------------------------------------------------------------------
     always_comb begin
-        // Head and tail on the same page -> Substract directly
-        if (tail[C_ROB_IDX_WIDTH-1:0] > next_head[C_ROB_IDX_WIDTH-1:0]) begin
-            avail_num   =   C_ROB_ENTRY_NUM - (tail[C_ROB_IDX_WIDTH-1:0] - next_head[C_ROB_IDX_WIDTH-1:0]);
-        // Head and tail not on the same page -> Add C_ROB_ENTRY_NUM before substraction
-        end else if (tail[C_ROB_IDX_WIDTH-1:0] < next_head[C_ROB_IDX_WIDTH-1:0]) begin
-            avail_num   =   next_head[C_ROB_IDX_WIDTH-1:0] - tail[C_ROB_IDX_WIDTH-1:0];
-        // Head and tail meet -> Full or Empty
-        end else begin
-            // Head and tail on the same page -> ROB is empty
-            if (tail[C_ROB_IDX_WIDTH] == next_head[C_ROB_IDX_WIDTH]) begin
-                avail_num   =   C_ROB_ENTRY_NUM;
-            // Head and tail not on the same page -> ROB is full
+        dp_window   =   ({C_DP_NUM{1'b1}} << tail) |
+                        ({C_DP_NUM{1'b1}} >> (C_ROB_ENTRY_NUM - tail));
+        
+        for (int idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+            if (rob_arr[idx].valid) begin
+                dp_ready[idx]   =   rt_sel[idx];
             end else begin
-                avail_num   =   0;
-            end
-        end
-    end
-
-// --------------------------------------------------------------------
-// Configure the rob ready signal.
-// --------------------------------------------------------------------
-    always_comb begin
-        // All signals are high as long as there are more than enough entries.
-        if (avail_num >= C_DP_NUM) begin
-            rob_ready   =   {C_DP_NUM{1'b1}};
-        // If there's no available entires, everything is low.
-        //! The reason why this is extra is that the {{avail_num{1'b0}}{1'b0}} syntax cannot work when avail_num == 0.
-        end else if (avail_num == 0) begin
-            rob_ready   =   {C_DP_NUM{1'b0}};
-        // LSB refers to the lowest idx available.
-        // Make a 0*1* signal (where the lowest bits indicates possible signals to dispatch).
-        end else begin
-            for (int idx = 0; idx < C_DP_NUM; idx++) begin
-                if (idx < avail_num) begin
-                    rob_ready[idx]  =   1'b1;
-                end else begin
-                    rob_ready[idx]  =   1'b0;
-                end
+                dp_ready[idx]   =   dp_window[idx];
             end
         end
 
-        // Output to dispatcher
-        for (integer idx = 0; idx < C_DP_NUM; idx++) begin
-            rob_dp_o[idx].rob_ready =   rob_ready[idx];
+        for (int idx = 0; idx < C_DP_NUM; idx++) begin
+            if (idx + tail < C_ROB_ENTRY_NUM) begin
+                rob_dp_o[idx].rob_ready =   dp_ready[idx+tail];
+            end else begin
+                rob_dp_o[idx].rob_ready =   dp_ready[idx+tail-C_ROB_ENTRY_NUM];
+            end
         end
     end
 
@@ -331,23 +297,14 @@ module ROB # (
 // --------------------------------------------------------------------
     always_comb begin
         for (integer idx = 0; idx < C_RT_NUM; idx++) begin
-            rob_fl_o[idx].valid    =    rt_valid[idx];
-            rob_amt_o[idx].valid   =    rt_valid[idx];
-            rob_fl_o[idx].phy_reg  =    rob_arr[head+idx].tag_old;
-            rob_amt_o[idx].phy_reg =    rob_arr[head+idx].tag;
+            rob_fl_o[idx].valid     =   rt_valid[idx];
+            rob_amt_o[idx].valid    =   rt_valid[idx];
+            rob_fl_o[idx].phy_reg   =   rob_arr[head+idx].tag_old;
+            rob_amt_o[idx].phy_reg  =   rob_arr[head+idx].tag;
+            rob_amt_o[idx].arch_reg =   rob_arr[head+idx].arch_reg;
         end
     end
 
-
-    assign  head_o  =   head;
-    assign  tail_o  =   tail;
-    assign  next_tail_o =   next_tail;
-    always_comb begin
-        for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
-            entry_valid_o[idx]      =   rob_arr[idx].valid;
-            entry_complete_o[idx]   =   rob_arr[idx].complete;
-        end
-    end
 // ====================================================================
 // RTL Logic End
 // ====================================================================
