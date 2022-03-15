@@ -27,7 +27,8 @@ module ROB # (
     input   CDB     [C_CDB_NUM-1:0]         cdb_i               ,   // From Complete stage - CDB
     output  ROB_AMT [C_RT_NUM-1:0]          rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
     output  ROB_FL  [C_RT_NUM-1:0]          rob_fl_o            ,   // To Free List - ROB_FL
-    input   logic                           exception_i             // From Exception Controller
+    input   logic                           exception_i         ,   // From Exception Controller
+    output  logic                           br_flush_o          
 );
 
 // ====================================================================
@@ -69,7 +70,6 @@ module ROB # (
 
     // Branch mispredict
     logic       [C_ROB_ENTRY_NUM-1:0]   br_mispredict                       ;
-    logic                               br_flush                            ;
 
     // Retire
     logic       [C_ROB_ENTRY_NUM-1:0]   rt_window                           ;
@@ -174,13 +174,13 @@ module ROB # (
 // Branch miprediction detection & flush
 // --------------------------------------------------------------------
     always_comb begin
-        br_flush    =   0;
-        for (integer idx = 0; idx < C_ROB_IDX_WIDTH; idx++) begin
+        br_flush_o  =   1'b0;
+        for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             br_mispredict[idx]  =   (rob_arr[idx].br_predict 
                                     != rob_arr[idx].br_result);
             // Once the mispredicted branch retires, flush the ROB entries
             if (rt_sel[idx] && br_mispredict[idx]) begin
-                br_flush    =   1;
+                br_flush_o  =   1'b1;
             end
         end
     end
@@ -199,7 +199,7 @@ module ROB # (
                 rob_arr[idx].valid      <=  `SD 1'b0;
                 rob_arr[idx].complete   <=  `SD 1'b0;
             // Flush by branch misprediction
-            end else if (br_flush) begin
+            end else if (br_flush_o) begin
                 rob_arr[idx].valid      <=  `SD 1'b0;
                 rob_arr[idx].complete   <=  `SD 1'b0;
             // Dispatch
@@ -259,7 +259,7 @@ module ROB # (
         end else if (exception_i) begin
             head    <=  `SD 0;
             tail    <=  `SD 0;
-        end else if (br_flush) begin
+        end else if (br_flush_o) begin
             head    <=  `SD 0;
             tail    <=  `SD 0;
         end else begin
@@ -297,8 +297,8 @@ module ROB # (
 // --------------------------------------------------------------------
     always_comb begin
         for (integer idx = 0; idx < C_RT_NUM; idx++) begin
-            rob_fl_o[idx].valid     =   rt_valid[idx];
-            rob_amt_o[idx].valid    =   rt_valid[idx];
+            rob_fl_o[idx].valid     =   rt_valid[idx] && (!br_flush_o);
+            rob_amt_o[idx].valid    =   rt_valid[idx] && (!br_flush_o);
             rob_fl_o[idx].phy_reg   =   rob_arr[head+idx].tag_old;
             rob_amt_o[idx].phy_reg  =   rob_arr[head+idx].tag;
             rob_amt_o[idx].arch_reg =   rob_arr[head+idx].arch_reg;

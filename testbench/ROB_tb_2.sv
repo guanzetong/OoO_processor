@@ -39,12 +39,16 @@ endfunction
 class gen_item; // GEN -> DRV
     rand int    dp_num;
     rand int    cp_num;
+    rand int    br_channel;
+    rand bit    br_result;
 
     constraint dispatch_num_range {dp_num >= 0; dp_num <= `DP_NUM;}
     constraint complete_num_range {cp_num >= 0; cp_num <= `CDB_NUM;}
+    constraint br_channel_range {br_channel >= 0; br_channel < `CDB_NUM;};
+    constraint br_result_rate {br_result dist{0:=50, 1:=50};}
     function void print (string msg_tag="");
-        $display("T=%0t %s #Dispatch=%0d #Complete=%0d",
-                $time, msg_tag, dp_num, cp_num);
+        $display("T=%0t %s Generator requests #Dispatch=%0d, #Complete=%0d, Branch Misprediction=%0b",
+                $time, msg_tag, dp_num, cp_num, br_result);
     endfunction // print
 endclass // gen_item
 
@@ -57,11 +61,16 @@ class mon_item; // MON -> SCB
     logic                               br_result       ;
     logic   [`ROB_IDX_WIDTH-1:0]        expected_head   ;
     logic   [`ROB_IDX_WIDTH-1:0]        expected_tail   ;
+    logic                               br_flush        ;
 
     function void print (string msg_tag="");
-        $display("T=%0t %s %s arch_reg=%0d tag=%0d tag_old=%0d rob_idx=%0d br_result=%0b expected_head=%0d expected_tail=%0d",
-                $time, msg_tag, feature, arch_reg, tag, tag_old, rob_idx, br_result, expected_head, expected_tail);
+        $display("T=%0t %s %s arch_reg=%0d tag=%0d tag_old=%0d rob_idx=%0d br_result=%0b expected_head=%0d expected_tail=%0d br_flush=%0d",
+                $time, msg_tag, feature, arch_reg, tag, tag_old, rob_idx, br_result, expected_head, expected_tail, br_flush);
     endfunction
+endclass
+
+class squash_item;
+    bit     squash;
 endclass
 // ====================================================================
 // Transaction Object End
@@ -88,10 +97,14 @@ class driver;
             drv_mbx.get(item);
 
             item.print("[Driver]");
-            
-            complete(item.cp_num);  // Firstly, complete ROB entries
-            dispatch(item.dp_num);  // Secondly, dispatch new instructions
 
+            if (vif.br_flush_o) begin
+                squash_in_flight();
+            end else begin
+                complete(item.cp_num, item.br_result, item.br_channel);  // Firstly, complete ROB entries
+                dispatch(item.dp_num);  // Secondly, dispatch new instructions
+            end
+            
             vif.exception_i =   0;  // Disable external exceptions
 
             // Branch misprediction is also disabled for now
@@ -114,7 +127,7 @@ class driver;
         end
     endtask // run()
 
-    task complete(int cp_num);
+    task complete(int cp_num, bit br_result, int br_channel);
         logic   [`ROB_IDX_WIDTH-1:0]    cp_rob_idx  [`CDB_NUM-1:0]  ;
         int                             queue_size                  ;
         int                             queue_idx                   ;
@@ -123,6 +136,8 @@ class driver;
             // Choose arbitary entries in the in_flight_queue to complete
             queue_size      =   in_flight_queue.size();
             cdb_valid_num   =   min_int(queue_size, cp_num);
+            $display("T=%0t [Driver] #in-flight=%0d, #requested complete=%0d, #actual complete=%0d",
+                    $time, queue_size, cp_num, cdb_valid_num);
             for (int n = 0; n < cdb_valid_num; n++) begin
                 queue_size      =   in_flight_queue.size();
                 queue_idx       =   $urandom % queue_size;
@@ -135,7 +150,11 @@ class driver;
                     vif.cdb_i[n].valid      =   1'b1;
                     vif.cdb_i[n].rob_idx    =   cp_rob_idx[n];
                     vif.cdb_i[n].tag        =   'd0;
-                    vif.cdb_i[n].br_result  =   1'b0;
+                    if (n == br_channel) begin
+                        vif.cdb_i[n].br_result  =   br_result;
+                    end else begin
+                        vif.cdb_i[n].br_result  =   1'b0;
+                    end
                     $display("T=%0t [Driver] Complete in channel%0d, rob_idx=%0d",
                     $time, n, vif.cdb_i[n].rob_idx);
                 end else begin
@@ -155,18 +174,22 @@ class driver;
         logic   [32-1:0]            dp_en_concat        ;
         int                         rob_ready_num       ;
         int                         dp_en_num           ;
+        int                         squash_msg_num      ;
 
         begin
             // Read rob_ready in each dispatch channel
             rob_ready_concat    =   32'b0;
             for (int n = 0 ; n < `DP_NUM; n++) begin
                 rob_ready_concat[n] = vif.rob_dp_o[n].rob_ready;
+                $display("rob_ready=%0b", vif.rob_dp_o[n].rob_ready);
             end
+            $display("rob_ready_concat=%0b", rob_ready_concat);
             // Generate the dp_en in each dispatch channel
             rob_ready_num   =   thermometer_to_binary(rob_ready_concat);
             dp_en_num       =   min_int(dp_num, rob_ready_num);
             dp_en_concat    =   binary_to_thermometer(dp_en_num);
-
+            $display("T=%0t [Driver] #available ROB=%0d, #requested dispatch=%0d, #actual dispatch=%0d",
+                    $time, rob_ready_num, dp_num, dp_en_num);
             for (int n = 0; n < `DP_NUM; n++) begin
                 vif.dp_rob_i[n].dp_en       =   dp_en_concat[n];
                 if (dp_en_concat[n]) begin
@@ -189,6 +212,13 @@ class driver;
             end
         end
     endtask // dispatch()
+
+    task squash_in_flight();
+        begin
+            $display("T=%0t [Driver] Branch misprediction. Squash in-flight queue.", $time);
+            in_flight_queue.delete();
+        end
+    endtask // squash_in_flight()
 endclass // driver
 // ====================================================================
 // Driver End
@@ -198,11 +228,13 @@ endclass // driver
 // Scoreboard Start
 // ====================================================================
 class scoreboard;
-    mailbox     scb_mbx             ;
-    mon_item    dispatch_queue  [$] ;
-    mon_item    complete_queue  [$] ;
-    mon_item    retire_queue    [$] ;
-    int         check_idx           ;
+    mailbox     scb_mbx                     ;
+    mon_item    dispatch_queue  [$]         ;
+    mon_item    complete_queue  [$]         ;
+    mon_item    retire_queue    [$]         ;
+    int         check_idx                   ;
+    int         squash_start_idx            ;
+    int         last_squash_time    =   0   ;
 
     task run();
         forever begin
@@ -220,11 +252,18 @@ class scoreboard;
                 "retire"    :   retire_queue.push_back(item);
             endcase
 
-            // Check dispatched rob index
             if (item.feature == "dispatch") begin
+                // Should not dispatch any instruction at branch misprediction
+                if (item.br_flush) begin
+                    $display("T=%0t [Scoreboard] Dispatch & branch misprediction at the same time", $time);
+                    $display("T=%0t [Scoreboard] Error: dispatch & br_flush=%0b", 
+                            $time, item.br_flush);
+                    exit_on_error();
+                end
+                // Check dispatched rob index
                 if (item.expected_tail != item.rob_idx) begin
                     $display("T=%0t [Scoreboard] Mismatched dispatched entry index", $time);
-                    $display("T=%0t [Scoreboard] Exit: check_idx=%0d rob_idx=%0d expected_tail=%0d", 
+                    $display("T=%0t [Scoreboard] Error: check_idx=%0d rob_idx=%0d expected_tail=%0d", 
                             $time, dispatch_queue.size()-1, item.rob_idx, item.expected_tail);
                     exit_on_error();
                 end
@@ -233,25 +272,53 @@ class scoreboard;
             // Check in-order retirement by comparing 
             // dispatch_queue and retire_queue
             if (item.feature == "retire") begin
+                // Should not retire any instruction at branch misprediction
+                if (item.br_flush) begin
+                    $display("T=%0t [Scoreboard] Retire & branch misprediction at the same time", $time);
+                    $display("T=%0t [Scoreboard] Error: retire & br_flush=%0b", 
+                            $time, item.br_flush);
+                    exit_on_error();
+                end
+
+                // Check the length of retire queue. Should not exceeds the length
+                // of dispatch queue.
+                if (retire_queue.size() > dispatch_queue.size()) begin
+                    $display("T=%0t [Scoreboard] #Retired > #Dispatched", $time);
+                    $display("T=%0t [Scoreboard] Error: #Dispatched=%0d #Retired=%0d", 
+                            $time, dispatch_queue.size(), retire_queue.size());
+                    exit_on_error();
+                end
+
                 check_idx   =   retire_queue.size() - 1;
+                // Check the arch_reg of retired and dispatched instruction
                 if (retire_queue[check_idx].arch_reg != dispatch_queue[check_idx].arch_reg) begin
                     $display("T=%0t [Scoreboard] Mismatched architectural register", $time);
-                    $display("T=%0t [Scoreboard] Exit: check_idx=%0d dp_arch_reg=%0d rt_arch_reg=%0d", 
+                    $display("T=%0t [Scoreboard] Error: check_idx=%0d dp_arch_reg=%0d rt_arch_reg=%0d", 
                             $time, check_idx, dispatch_queue[check_idx].arch_reg, retire_queue[check_idx].arch_reg);
                     exit_on_error();
                 end
+                // Check the tag of retired and dispatched instruction
                 if (retire_queue[check_idx].tag != dispatch_queue[check_idx].tag) begin
                     $display("T=%0t [Scoreboard] Mismatched tag", $time);
-                    $display("T=%0t [Scoreboard] Exit: check_idx=%0d dp_tag=%0d rt_tag=%0d", 
+                    $display("T=%0t [Scoreboard] Error: check_idx=%0d dp_tag=%0d rt_tag=%0d", 
                             $time, check_idx, dispatch_queue[check_idx].tag, retire_queue[check_idx].tag);
                     exit_on_error();
                 end
+                // Check the tag_old of retired and dispatched instruction
                 if (retire_queue[check_idx].tag_old != dispatch_queue[check_idx].tag_old) begin
                     $display("T=%0t [Scoreboard] Mismatched tag_old", $time);
-                    $display("T=%0t [Scoreboard] Exit: check_idx=%0d dp_tag_old=%0d rt_tag_old=%0d", 
+                    $display("T=%0t [Scoreboard] Error: check_idx=%0d dp_tag_old=%0d rt_tag_old=%0d", 
                             $time, check_idx, dispatch_queue[check_idx].tag_old, retire_queue[check_idx].tag_old);
                     exit_on_error();
                 end
+            end
+
+            // Squash the younger entries in dispatch queue if a branch misprediction occurs
+            if (item.feature == "branch") begin
+                squash_start_idx    =   retire_queue.size() - 1;
+                dispatch_queue      =   dispatch_queue[0:squash_start_idx];
+                $display("T=%0t [Scoreboard] Branch misprediction. Squash any instruction in dispatched queue that is younger than the tail of retired queue.", 
+                        $time);
             end
         end
     endtask // run()
@@ -269,10 +336,10 @@ endclass // scoreboard
 // Monitor Start
 // ====================================================================
 class monitor;
-    virtual ROB_if                  vif                     ;
-    mailbox                         scb_mbx                 ;
-    logic   [`ROB_IDX_WIDTH-1:0]    expected_head   =   0   ;
-    logic   [`ROB_IDX_WIDTH-1:0]    expected_tail   =   0   ;
+    virtual ROB_if                  vif                         ;
+    mailbox                         scb_mbx                     ;
+    logic   [`ROB_IDX_WIDTH-1:0]    expected_head       =   0   ;
+    logic   [`ROB_IDX_WIDTH-1:0]    expected_tail       =   0   ;
 
     task run();
         $display("T=%0t [Monitor] starting ...", $time);
@@ -290,7 +357,8 @@ class monitor;
                     item.br_result      =   0;
                     item.expected_head  =   expected_head;
                     item.expected_tail  =   expected_tail;
-                    expected_tail       =   expected_tail + 1;
+                    item.br_flush       =   vif.br_flush_o;
+                    expected_tail       =   expected_tail + 1;  // Move tail pointer
                     scb_mbx.put(item);
                     $display("T=%0t [Monitor] Dispatch detected in channel %0d",
                             $time, n);
@@ -299,15 +367,16 @@ class monitor;
             // Check complete channels
             for (int n = 0; n < `CDB_NUM; n++) begin
                 if (vif.cdb_i[n].valid) begin
-                    mon_item item   =   new;
-                    item.feature    =   "complete";
-                    item.arch_reg   =   0;
-                    item.tag        =   vif.cdb_i[n].tag;
-                    item.tag_old    =   0;
-                    item.rob_idx    =   vif.cdb_i[n].rob_idx;
-                    item.br_result  =   vif.cdb_i[n].br_result;
+                    mon_item item       =   new;
+                    item.feature        =   "complete";
+                    item.arch_reg       =   0;
+                    item.tag            =   vif.cdb_i[n].tag;
+                    item.tag_old        =   0;
+                    item.rob_idx        =   vif.cdb_i[n].rob_idx;
+                    item.br_result      =   vif.cdb_i[n].br_result;
                     item.expected_head  =   expected_head;
                     item.expected_tail  =   expected_tail;
+                    item.br_flush       =   vif.br_flush_o;
                     scb_mbx.put(item);
                     $display("T=%0t [Monitor] Complete detected in channel %0d",
                             $time, n);
@@ -316,20 +385,39 @@ class monitor;
             // Check retire channels
             for (int n = 0; n < `RT_NUM; n++) begin
                 if (vif.rob_amt_o[n].valid && vif.rob_fl_o[n].valid) begin
-                    mon_item item   =   new;
-                    item.feature    =   "retire";
-                    item.arch_reg   =   vif.rob_amt_o[n].arch_reg;
-                    item.tag        =   vif.rob_amt_o[n].phy_reg;
-                    item.tag_old    =   vif.rob_fl_o[n].phy_reg;
-                    item.rob_idx    =   0;
-                    item.br_result  =   0;
+                    mon_item item       =   new;
+                    item.feature        =   "retire";
+                    item.arch_reg       =   vif.rob_amt_o[n].arch_reg;
+                    item.tag            =   vif.rob_amt_o[n].phy_reg;
+                    item.tag_old        =   vif.rob_fl_o[n].phy_reg;
+                    item.rob_idx        =   0;
+                    item.br_result      =   0;
                     item.expected_head  =   expected_head;
                     item.expected_tail  =   expected_tail;
-                    expected_head   =   expected_head + 1;
+                    expected_head       =   expected_head + 1;
+                    item.br_flush       =   vif.br_flush_o; // Move head pointer
                     scb_mbx.put(item);
                     $display("T=%0t [Monitor] Retire detected in channel %0d",
                             $time, n);
                 end
+            end
+
+            // Check branch misprediction
+            if (vif.br_flush_o) begin
+                mon_item item = new;
+                item.feature        =   "branch";
+                item.arch_reg       =   0;
+                item.tag            =   0;
+                item.tag_old        =   0;
+                item.rob_idx        =   0;
+                item.expected_head  =   expected_head;
+                item.expected_tail  =   expected_tail;
+                item.br_flush       =   vif.br_flush_o;
+                scb_mbx.put(item);
+                $display("T=%0t [Monitor] Branch misprediction detected",
+                        $time);
+                expected_head       =   0;
+                expected_tail       =   0;
             end
         end
     endtask // run()
@@ -344,7 +432,7 @@ endclass // monitor
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   1000;
+    int     num     =   100;
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -372,8 +460,8 @@ class env;
     generator       g0          ;   // generator  handle
     scoreboard      s0          ;   // scoreboard handle
 
-    mailbox         drv_mbx     ;   // Connect generator <-> driver
-    mailbox         scb_mbx     ;   // Connect monitor   <-> scoreboard
+    mailbox         drv_mbx     ;   // Connect generator  <-> driver
+    mailbox         scb_mbx     ;   // Connect monitor    <-> scoreboard
     event           drv_done    ;   // Indicates when driver is done
 
     virtual ROB_if  vif         ;   // Virtual interface handle
@@ -441,6 +529,7 @@ interface ROB_if (input bit clk_i);
     ROB_AMT [`RT_NUM-1:0]           rob_amt_o   ;
     ROB_FL  [`RT_NUM-1:0]           rob_fl_o    ;
     logic                           exception_i ;
+    logic                           br_flush_o  ;
 endinterface // ROB_if
 // ====================================================================
 // Interface End
@@ -488,7 +577,8 @@ module ROB_tb;
         .cdb_i          (_if.cdb_i          ),
         .rob_amt_o      (_if.rob_amt_o      ),
         .rob_fl_o       (_if.rob_fl_o       ),
-        .exception_i    (_if.exception_i    )
+        .exception_i    (_if.exception_i    ),
+        .br_flush_o     (_if.br_flush_o     )
     );
 // --------------------------------------------------------------------
 
