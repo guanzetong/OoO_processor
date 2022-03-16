@@ -18,7 +18,7 @@ module ROB_svsim # (
     input   logic                           clk_i               ,       input   logic                           rst_i               ,       output  ROB_DP  [C_DP_NUM-1:0]          rob_dp_o            ,       input   DP_ROB  [C_DP_NUM-1:0]          dp_rob_i            ,       output  ROB_RS  [C_DP_NUM-1:0]          rob_rs_o            ,       input   CDB     [C_CDB_NUM-1:0]         cdb_i               ,       output  ROB_AMT [C_RT_NUM-1:0]          rob_amt_o           ,       output  ROB_FL  [C_RT_NUM-1:0]          rob_fl_o            ,       input   logic                           exception_i         ,       output  logic                           br_flush_o          
 );
 
-    
+
 
   ROB ROB( {>>{ clk_i }}, {>>{ rst_i }}, {>>{ rob_dp_o }}, {>>{ dp_rob_i }}, 
         {>>{ rob_rs_o }}, {>>{ cdb_i }}, {>>{ rob_amt_o }}, {>>{ rob_fl_o }}, 

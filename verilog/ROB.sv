@@ -10,6 +10,28 @@
 /////////////////////////////////////////////////////////////////////////
 
 `timescale 1ns/100ps
+module pe(gnt,enc);
+        //synopsys template
+        parameter OUT_WIDTH=4;
+        parameter IN_WIDTH=1<<OUT_WIDTH;
+
+	input   [IN_WIDTH-1:0] gnt;
+
+	output [OUT_WIDTH-1:0] enc;
+        wor    [OUT_WIDTH-1:0] enc;
+        
+        genvar i,j;
+        generate
+          for(i=0;i<OUT_WIDTH;i=i+1)
+          begin : foo
+            for(j=1;j<IN_WIDTH;j=j+1)
+            begin : bar
+              if (j[i])
+                assign enc[i] = gnt[j];
+            end
+          end
+        endgenerate
+endmodule
 
 module ROB # ( 
     parameter   C_DP_NUM            =   `DP_NUM         ,
@@ -30,6 +52,8 @@ module ROB # (
     input   logic                           exception_i         ,   // From Exception Controller
     output  logic                           br_flush_o          
 );
+
+//synopsys sync_set_reset ‘‘rst_i’’
 
 // ====================================================================
 // Local Parameters Declarations Start
@@ -96,7 +120,7 @@ module ROB # (
 // --------------------------------------------------------------------
     always_comb begin
         // Concatenate dp_en from the dispatch channels
-        for (integer idx = 0; idx < C_DP_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_DP_NUM; idx++) begin
             dp_en_concat[idx] =   dp_rob_i[idx].dp_en;
         end
 
@@ -106,7 +130,7 @@ module ROB # (
                     (dp_en_concat >> (C_ROB_ENTRY_NUM - tail));
 
         // Output dispatched entries index to Reservation Station
-        for (integer idx = 0; idx < C_DP_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_DP_NUM; idx++) begin
             rob_rs_o[idx].rob_idx   =   tail + idx;
         end
     end
@@ -115,12 +139,12 @@ module ROB # (
 // Complete entry selector
 // --------------------------------------------------------------------
     always_comb begin 
-        for (integer entry_idx = 0; entry_idx < C_ROB_ENTRY_NUM; entry_idx++) begin
+        for (int unsigned entry_idx = 0; entry_idx < C_ROB_ENTRY_NUM; entry_idx++) begin
             cp_sel[entry_idx]   =   0;
             cp_idx[entry_idx]   =   0;
             // Check if any rob_idx from valid CDB channels
             // matches the current entry idx
-            for (integer cdb_idx = 0; cdb_idx < C_CDB_NUM; cdb_idx++) begin 
+            for (int unsigned cdb_idx = 0; cdb_idx < C_CDB_NUM; cdb_idx++) begin 
                 if ((entry_idx == cdb_i[cdb_idx].rob_idx) && cdb_i[cdb_idx].valid)begin
                     cp_sel[entry_idx]   =   1'b1;
                     cp_idx[entry_idx]   =   cdb_idx;
@@ -144,7 +168,7 @@ module ROB # (
 
         // Select the entries that are ready to retire
         rt_sel  =   {C_ROB_ENTRY_NUM{1'b0}};
-        for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             // If the entry is in the retire window -> go on to check if it is ready to retire
             if (rt_window[idx] && rob_arr[0].valid) begin
                 // idx == 0
@@ -165,7 +189,7 @@ module ROB # (
 
         // Output retire valid signal to Architectural Map Table 
         // & Free List
-        for (integer idx = 0; idx < C_RT_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             rt_valid[idx]   =   rt_sel[head+idx];
         end
     end
@@ -175,7 +199,7 @@ module ROB # (
 // --------------------------------------------------------------------
     always_comb begin
         br_flush_o  =   1'b0;
-        for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             br_mispredict[idx]  =   (rob_arr[idx].br_predict 
                                     != rob_arr[idx].br_result);
             // Once the mispredicted branch retires, flush the ROB entries
@@ -189,7 +213,7 @@ module ROB # (
 // Entry content manipulation
 // --------------------------------------------------------------------
     always_ff @(posedge clk_i) begin
-        for (integer idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             // System synchronous reset
             if (rst_i) begin
                 rob_arr[idx].valid      <=  `SD 1'b0;
@@ -232,7 +256,7 @@ module ROB # (
         dp_window   =   ({C_DP_NUM{1'b1}} << tail) |
                         ({C_DP_NUM{1'b1}} >> (C_ROB_ENTRY_NUM - tail));
         
-        for (int idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             if (rob_arr[idx].valid) begin
                 dp_ready[idx]   =   rt_sel[idx];
             end else begin
@@ -240,7 +264,7 @@ module ROB # (
             end
         end
 
-        for (int idx = 0; idx < C_DP_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_DP_NUM; idx++) begin
             if (idx + tail < C_ROB_ENTRY_NUM) begin
                 rob_dp_o[idx].rob_ready =   dp_ready[idx+tail];
             end else begin
@@ -273,7 +297,7 @@ module ROB # (
         // A thermometer code to binary encoder
         // calculates the number of retire entries.
         next_head   =   head;
-        for (integer idx = 0; idx < C_RT_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             if (rt_valid[idx]) begin
                 next_head   =   head + idx + 'd1;
             end
@@ -285,7 +309,7 @@ module ROB # (
         // A thermometer code to binary encoder
         // calculates the number of dispatched entries.
         next_tail   =   tail;
-        for (integer idx = 0; idx < C_DP_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_DP_NUM; idx++) begin
             if (dp_rob_i[idx].dp_en) begin 
                 next_tail   =   tail + idx + 'd1;
             end
@@ -296,7 +320,7 @@ module ROB # (
 // ROB update to free list and architecture map table
 // --------------------------------------------------------------------
     always_comb begin
-        for (integer idx = 0; idx < C_RT_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             rob_fl_o[idx].valid     =   rt_valid[idx] && (!br_flush_o);
             rob_amt_o[idx].valid    =   rt_valid[idx] && (!br_flush_o);
             rob_fl_o[idx].phy_reg   =   rob_arr[head+idx].tag_old;
@@ -310,6 +334,3 @@ module ROB # (
 // ====================================================================
 
 endmodule
-
-
-

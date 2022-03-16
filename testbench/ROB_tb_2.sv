@@ -181,9 +181,9 @@ class driver;
             rob_ready_concat    =   32'b0;
             for (int n = 0 ; n < `DP_NUM; n++) begin
                 rob_ready_concat[n] = vif.rob_dp_o[n].rob_ready;
-                $display("rob_ready=%0b", vif.rob_dp_o[n].rob_ready);
+                // $display("rob_ready=%0b", vif.rob_dp_o[n].rob_ready);
             end
-            $display("rob_ready_concat=%0b", rob_ready_concat);
+            // $display("rob_ready_concat=%0b", rob_ready_concat);
             // Generate the dp_en in each dispatch channel
             rob_ready_num   =   thermometer_to_binary(rob_ready_concat);
             dp_en_num       =   min_int(dp_num, rob_ready_num);
@@ -432,7 +432,7 @@ endclass // monitor
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   100;
+    int     num     =   1000;
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -591,10 +591,14 @@ module ROB_tb;
 // Call test
 // --------------------------------------------------------------------
     initial begin
-        _if.rst_i   =   1;
-
+        _if.rst_i       =   1;
+        _if.dp_rob_i    =   0;
+        _if.cdb_i       =   0;
+        _if.exception_i =   0;
+        // $display("tail_o=%0b", _if.tail_o);
         // Apply reset and start stimulus
         #50 _if.rst_i   =   0;
+        // $display("tail_o=%0b", _if.tail_o);
 
         t0  =   new;
         t0.e0.vif   =   _if;
