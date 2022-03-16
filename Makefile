@@ -89,12 +89,15 @@ all:    simv
 # Simulation:
 
 sim:	simv
-	./simv | tee sim_program.out
+	./simv -cm line+tgl | tee sim_program.out
 
 simv:	$(HEADERS) $(SIMFILES) $(TESTBENCH)
-	$(VCS) $^ -o simv
+	$(VCS) $^ -o simv -cm line+tgl
 
 .PHONY: sim
+
+urg: 	sim
+	urg -dir simv.vdb -format text
 
 # Programs
 
@@ -155,6 +158,9 @@ clean:
 nuke:	clean
 	rm -rf synth/*.vg synth/*.rep synth/*.ddc synth/*.chk synth/*.log synth/*.syn
 	rm -rf synth/*.out command.log synth/*.db synth/*.svf synth/*.mr synth/*.pvl
+	rm -rf simv.vdb
+	rm -rf cm.log
+	rm -rf urgReport
 
 Robin:
 	git config user.name "xiongrob"

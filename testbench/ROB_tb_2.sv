@@ -181,9 +181,7 @@ class driver;
             rob_ready_concat    =   32'b0;
             for (int n = 0 ; n < `DP_NUM; n++) begin
                 rob_ready_concat[n] = vif.rob_dp_o[n].rob_ready;
-                // $display("rob_ready=%0b", vif.rob_dp_o[n].rob_ready);
             end
-            // $display("rob_ready_concat=%0b", rob_ready_concat);
             // Generate the dp_en in each dispatch channel
             rob_ready_num   =   thermometer_to_binary(rob_ready_concat);
             dp_en_num       =   min_int(dp_num, rob_ready_num);
