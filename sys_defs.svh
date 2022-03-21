@@ -364,7 +364,7 @@ typedef struct packed {
     logic                               ready       ;
     logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
     logic   [`TAG_IDX_WIDTH-1:0]        phy_reg     ;
-} MT_ENTRY                                          ;
+} MT_ENTRY;
 
 typedef struct packed {
     logic                               valid       ;
@@ -430,9 +430,9 @@ typedef struct packed {
 typedef struct packed {
     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs1         ;
     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs2         ;
-    logic                                           valid       ;
     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rd          ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    logic                                           wr_en       ;
 } DP_MT; // Per-Channel
 
 typedef struct packed {
