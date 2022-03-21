@@ -352,7 +352,7 @@ typedef struct packed {
 typedef struct packed {
     logic   [`XLEN-1:0]                 pc          ;
     logic                               valid       ;
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]   rd          ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag_old     ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
     logic                               br_predict  ;
@@ -381,6 +381,7 @@ typedef struct packed {
     logic                               wr_mem      ;
     logic                               cond_br     ;
     logic                               uncond_br   ;
+    logic                               halt        ;
     logic                               illegal     ;
     logic                               csr_op      ;
 } RS_ENTRY;
@@ -397,9 +398,9 @@ typedef struct packed {
 typedef struct packed {
     logic   [`DP_NUM_WIDTH-1:0]                     dp_num      ;
     logic   [`DP_NUM-1:0][`XLEN-1:0]                pc          ;
-    logic   [`DP_NUM-1:0][`ARCH_REG_IDX_WIDTH-1:0]  arch_reg    ;
-    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag_old     ;
+    logic   [`DP_NUM-1:0][`ARCH_REG_IDX_WIDTH-1:0]  rd          ;
     logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag         ;
+    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag_old     ;
     logic   [`DP_NUM-1:0]                           br_predict  ;
 } DP_ROB; // Combined
 
@@ -417,7 +418,7 @@ typedef struct packed{
 } CDB; // Per-Channel
 
 typedef struct packed {
-    logic                                           valid       ;
+    logic                                           wr_en       ;
     logic   [`ARCH_REG_IDX_WIDTH-1:0]               arch_reg    ;   // Key
     logic   [`TAG_IDX_WIDTH-1:0]                    phy_reg     ;   // Value
 } ROB_AMT; // Per-Channel
@@ -457,6 +458,7 @@ typedef struct packed {
     INST    [`DP_NUM-1:0]                           inst        ;
     logic   [`DP_NUM-1:0][`THREAD_IDX_WIDTH-1:0]    thread_idx  ;
     logic   [`DP_NUM-1:0][`XLEN-1:0]                pc          ;
+    logic   [`DP_NUM-1:0]                           br_predict  ;
 } FIQ_DP; // Combined
 
 typedef struct packed {
