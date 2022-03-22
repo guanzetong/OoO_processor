@@ -262,11 +262,12 @@ typedef union packed {
 //////////////////////////////////////////////
 
 typedef struct packed {
-	logic valid; // If low, the data in this struct is garbage
-    INST  inst;  // fetched instruction out
-	logic [`XLEN-1:0] NPC; // PC + 4
-	logic [`XLEN-1:0] PC;  // PC 
-} IF_ID_PACKET;
+	logic 								  valid		; // If low, the data in this struct is garbage
+    INST       							  inst		; // fetched instruction out
+	logic [`XLEN-1:0] 					  NPC		; // PC + 4
+	logic [`XLEN-1:0]   				  PC		; // PC 
+	logic [`THREAD_IDX_WIDTH-1:0]         thread_idx;
+} IF_DP_PACKET;
 
 //////////////////////////////////////////////
 //
@@ -380,6 +381,17 @@ typedef struct packed {
     logic                               illegal     ;
     logic                               csr_op      ;
 } DEC_INST;
+
+// This specifies a queue of instructions that are exposed
+// by the interface as well as the number of the instructions that
+// are available. This will allow for the dispatcher to look at the 
+// inst_queued and realize which instructions are available 
+// (e.g. if inst_avail == 2), inst_queued[0]  and inst_queued[1]
+// are valid instructions (that can be dispatched).
+typedef struct packed {
+	logic   [`DP_NUM-1:0]				inst_queued ;
+	logic 	[`DP_NUM_WIDTH-1:0]			inst_avail  ;
+} FET_DP;
 
 typedef struct packed {
     logic                               valid       ;
