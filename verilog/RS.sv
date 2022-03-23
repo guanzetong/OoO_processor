@@ -19,7 +19,7 @@ module RS #(
     output  RS_DP                       rs_dp_o         ,
     input   DP_RS                       dp_rs_i         ,
     input   CDB     [C_CDB_NUM-1:0]     cdb_i           ,
-    output  RS_IB   [FU_TYPE_NUM-1:0]   rs_ib_o         ,
+    output  RS_IB   [C_IS_NUM-1:0]      rs_ib_o         ,
     input   IB_RS                       ib_rs_i         ,
     output  RS_PRF  [C_IS_NUM-1:0]      rs_prf_o        ,
     input   PRF_RS  [C_IS_NUM-1:0]      prf_rs_i        ,
@@ -94,9 +94,9 @@ module RS #(
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   dp_pe
+// Module name  :   is_pe
 // Description  :   Priority Encoder with multiple outputs
-//                  to select the entries allocated for dispatch.
+//                  to select the entries allocated for issue.
 // --------------------------------------------------------------------
     pe_mult #(
         .C_IN_WIDTH (C_RS_ENTRY_NUM     ),
@@ -109,9 +109,8 @@ module RS #(
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   dp_pe
-// Description  :   Priority Encoder with multiple outputs
-//                  to select the entries allocated for dispatch.
+// Module name  :   COD
+// Description  :   Calculate the Center Of Dispatched RS index.
 // --------------------------------------------------------------------
     COD #(
         .C_DP_NUM       (C_DP_NUM       ),
@@ -347,6 +346,13 @@ module RS #(
                     rs_ib_o[is_idx].opa_select  =   rs_array[entry_idx].dec_inst.opa_select ;
                     rs_ib_o[is_idx].opb_select  =   rs_array[entry_idx].dec_inst.opb_select ;
                     rs_ib_o[is_idx].alu_func    =   rs_array[entry_idx].dec_inst.alu_func   ;
+                    rs_ib_o[is_idx].rd_mem      =   rs_array[entry_idx].dec_inst.rd_mem     ;
+                    rs_ib_o[is_idx].wr_mem      =   rs_array[entry_idx].dec_inst.wr_mem     ;
+                    rs_ib_o[is_idx].cond_br     =   rs_array[entry_idx].dec_inst.cond_br    ;
+                    rs_ib_o[is_idx].uncond_br   =   rs_array[entry_idx].dec_inst.uncond_br  ;
+                    rs_ib_o[is_idx].halt        =   rs_array[entry_idx].dec_inst.halt       ;
+                    rs_ib_o[is_idx].illegal     =   rs_array[entry_idx].dec_inst.illegal    ;
+                    rs_ib_o[is_idx].csr_op      =   rs_array[entry_idx].dec_inst.csr_op     ;
                 end
             end
         end

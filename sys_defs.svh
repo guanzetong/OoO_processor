@@ -328,7 +328,6 @@ typedef struct packed {
 `define BR_NUM          1   // The number of Branch Resolvers.
 `define THREAD_NUM      2
 
-`define FU_TYPE_NUM     5
 `define ALU_NUM         3
 `define MULT_NUM        2
 `define BR_NUM          1
@@ -336,12 +335,11 @@ typedef struct packed {
 `define STORE_NUM       1
 `define FU_NUM          `ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM
 
-`define ALU_BASE        0
-`define MULT_BASE       `ALU_BASE + `ALU_NUM
-`define BR_BASE         `MULT_BASE + `MULT_NUM
-`define LOAD_BASE       `BR_BASE + `BR_NUM
-`define STORE_BASE      `LOAD_BASE + `LOAD_NUM
-
+`define ALU_Q_SIZE      8
+`define MULT_Q_SIZE     8
+`define BR_Q_SIZE       8
+`define LOAD_Q_SIZE     8
+`define STORE_Q_SIZE    8
 //////////////////////////////////////////////
 // 
 // Interfaces between modules
@@ -399,6 +397,13 @@ typedef struct packed {
     ALU_OPA_SELECT                      opa_select  ;
     ALU_OPB_SELECT                      opb_select  ;
     ALU_FUNC                            alu_func    ;
+    logic                               rd_mem      ;
+    logic                               wr_mem      ;
+    logic                               cond_br     ;
+    logic                               uncond_br   ;
+    logic                               halt        ;
+    logic                               illegal     ;
+    logic                               csr_op      ;
 } IS_INST;
 
 typedef struct packed {
