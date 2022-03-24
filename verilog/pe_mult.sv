@@ -35,7 +35,7 @@ module pe_mult #(
             // Generate the input to each Priority Encoder
             // The bits with higher priority should be masked
             if (i == 0) begin
-                assgin  pe_bit_i[i] =   bit_i   ;
+                assign  pe_bit_i[i] =   bit_i   ;
             end else begin
                 assign  pe_bit_i[i] =   pe_bit_i[i-1] & (~mask[i-1]);
             end
@@ -48,8 +48,6 @@ module pe_mult #(
                 .enc_o          (enc_o[i]       ),
                 .valid_o        (valid_o[i]     )
             );
-            // Generate Valid
-            assign  enc_valid_o[i]  =   
 
             // Instantiate binary_decoders for masks generation
             if (i < C_OUT_NUM-1) begin

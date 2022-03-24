@@ -49,11 +49,13 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 # SIMULATION CONFIG
 
 HEADERS     = $(wildcard *.svh)
-# TESTBENCH   = $(wildcard testbench/*.sv)
-# TESTBENCH  += $(wildcard testbench/*.c)
-TESTBENCH	= testbench/ROB_tb.sv
-# PIPEFILES   = $(wildcard verilog/*.sv)
-PIPEFILES	= verilog/ROB.sv
+TESTBENCH   = $(wildcard testbench/*.sv)
+TESTBENCH  += $(wildcard testbench/*.c)
+# TESTBENCH	= testbench/RS_tb.sv
+# TESTBENCH	= testbench/test_tb.sv
+PIPEFILES   = $(wildcard verilog/*.sv)
+# PIPEFILES	= verilog/RS.sv verilog/COD.sv verilog/binary_encoder.sv verilog/pe_mult.sv verilog/pe.sv
+# PIPEFILES	= verilog/binary_encoder.sv
 
 SIMFILES    = $(PIPEFILES)
 
@@ -63,8 +65,9 @@ SYNTH_DIR = ./synth
 export HEADERS
 export PIPEFILES
 
-# export PIPELINE_NAME = pipeline
-export PIPELINE_NAME = ROB
+export PIPELINE_NAME = pipeline
+# export PIPELINE_NAME = RS
+# export PIPELINE_NAME = binary_encoder
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
@@ -94,6 +97,9 @@ simv:	$(HEADERS) $(SIMFILES) $(TESTBENCH)
 	$(VCS) $^ -o simv
 
 .PHONY: sim
+
+urg: 	sim
+	urg -dir simv.vdb -format text
 
 # Programs
 

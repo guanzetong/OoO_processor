@@ -8,7 +8,7 @@
 
 module binary_decoder #(
     parameter   C_OUT_WIDTH =   32                  ,
-    parameter   C_IN_WIDTH  =   $clog2(C_IN_WIDTH)
+    parameter   C_IN_WIDTH  =   $clog2(C_OUT_WIDTH)
 )(
     input   logic   [C_IN_WIDTH-1:0]    enc_i   ,
     input   logic                       valid_i ,

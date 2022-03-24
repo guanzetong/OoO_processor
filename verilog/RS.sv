@@ -8,10 +8,13 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
+`timescale 1ns/100ps
+
 module RS #(
     parameter   C_RS_ENTRY_NUM  =   `RS_ENTRY_NUM   ,
     parameter   C_DP_NUM        =   `DP_NUM         ,
     parameter   C_IS_NUM        =   `IS_NUM         ,
+    parameter   C_CDB_NUM       =   `CDB_NUM        ,
     parameter   C_THREAD_NUM    =   `THREAD_NUM     
 ) (
     input   logic                       clk_i           ,   //  Clock
@@ -118,7 +121,7 @@ module RS #(
     ) COD_inst (
         .rs_idx_i       (dp_entry_idx   ),
         .valid_i        (dp_pe_valid    ),
-        .cod_o          (cod            ),
+        .cod_o          (cod            )
     );
 // --------------------------------------------------------------------
 
@@ -172,7 +175,7 @@ module RS #(
         for (int is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
             // Only count the valid Issue Channels.
             if (rs_ib_o[is_idx].valid) begin
-                is_cnt[rs_ib_o[is_idx].thread_idx]  =   is_cnt[rs_ib_o[is_idx].thread_idx] + 'd1;
+                is_cnt[rs_ib_o[is_idx].is_inst.thread_idx]  =   is_cnt[rs_ib_o[is_idx].is_inst.thread_idx] + 'd1;
             end
         end
     end
@@ -273,27 +276,27 @@ module RS #(
 // Ready-to-Issue Checker
 // --------------------------------------------------------------------
     always_comb begin
+        is_ready    =   'b0;
         for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             // If both source register are ready in PRF
-            if (rs_array[entry_idx].tag1_ready && 
-            rs_array[entry_idx].tag2_ready &&
-            rs_array[entry_idx].valid) begin
+            if (rs_array[entry_idx].dec_inst.tag1_ready && rs_array[entry_idx].dec_inst.tag2_ready &&
+                rs_array[entry_idx].valid) begin
                 // Check FU availibility
                 //  LOAD
-                if (rs_array[entry_idx].rd_mem && ib_rs_i.LOAD_ready) begin
+                if (rs_array[entry_idx].dec_inst.rd_mem && ib_rs_i.LOAD_ready) begin
                     is_ready[entry_idx] =   1'b1;
                 // STORE
-                end else if (rs_array[entry_idx].wr_mem && ib_rs_i.STORE_ready) begin
+                end else if (rs_array[entry_idx].dec_inst.wr_mem && ib_rs_i.STORE_ready) begin
                     is_ready[entry_idx] =   1'b1;
                 // Branch Resolver
-                end else if ((rs_array[entry_idx].cond_br || rs_array[entry_idx].uncond_br) 
+                end else if ((rs_array[entry_idx].dec_inst.cond_br || rs_array[entry_idx].dec_inst.uncond_br) 
                 && ib_rs_i.BR_ready) begin
                     is_ready[entry_idx] =   1'b1;
                 // Multiplier
-                end else if (rs_array[entry_idx].mult && ib_rs_i.MULT_ready) begin
+                end else if (rs_array[entry_idx].dec_inst.mult && ib_rs_i.MULT_ready) begin
                     is_ready[entry_idx] =   1'b1;
                 // ALU
-                end else if (rs_array[entry_idx].alu && ib_rs_i.ALU_ready) begin
+                end else if (rs_array[entry_idx].dec_inst.alu && ib_rs_i.ALU_ready) begin
                     is_ready[entry_idx] =   1'b1;
                 // FU not available
                 end else begin
@@ -332,27 +335,27 @@ module RS #(
             for (int is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
                 if ((is_entry_idx[is_idx] == entry_idx)
                     && (is_pe_valid[is_idx] == 1'b1)) begin
-                    is_sel[entry_idx]           =   1'b1                                    ;
-                    rs_prf_o[is_idx].rd_addr1   =   rs_array[entry_idx].dec_inst.tag1       ;
-                    rs_prf_o[is_idx].rd_addr2   =   rs_array[entry_idx].dec_inst.tag2       ;
-                    rs_ib_o[is_idx].valid       =   1'b1                                    ;
-                    rs_ib_o[is_idx].pc          =   rs_array[entry_idx].dec_inst.pc         ;
-                    rs_ib_o[is_idx].inst        =   rs_array[entry_idx].dec_inst.inst       ;
-                    rs_ib_o[is_idx].rs1_value   =   prf_rs_i[is_idx].data_out1              ;
-                    rs_ib_o[is_idx].rs2_value   =   prf_rs_i[is_idx].data_out2              ;
-                    rs_ib_o[is_idx].tag         =   rs_array[entry_idx].dec_inst.tag        ;
-                    rs_ib_o[is_idx].thread_idx  =   rs_array[entry_idx].dec_inst.thread_idx ;
-                    rs_ib_o[is_idx].rob_idx     =   rs_array[entry_idx].dec_inst.rob_idx    ;
-                    rs_ib_o[is_idx].opa_select  =   rs_array[entry_idx].dec_inst.opa_select ;
-                    rs_ib_o[is_idx].opb_select  =   rs_array[entry_idx].dec_inst.opb_select ;
-                    rs_ib_o[is_idx].alu_func    =   rs_array[entry_idx].dec_inst.alu_func   ;
-                    rs_ib_o[is_idx].rd_mem      =   rs_array[entry_idx].dec_inst.rd_mem     ;
-                    rs_ib_o[is_idx].wr_mem      =   rs_array[entry_idx].dec_inst.wr_mem     ;
-                    rs_ib_o[is_idx].cond_br     =   rs_array[entry_idx].dec_inst.cond_br    ;
-                    rs_ib_o[is_idx].uncond_br   =   rs_array[entry_idx].dec_inst.uncond_br  ;
-                    rs_ib_o[is_idx].halt        =   rs_array[entry_idx].dec_inst.halt       ;
-                    rs_ib_o[is_idx].illegal     =   rs_array[entry_idx].dec_inst.illegal    ;
-                    rs_ib_o[is_idx].csr_op      =   rs_array[entry_idx].dec_inst.csr_op     ;
+                    is_sel[entry_idx]                   =   1'b1                                    ;
+                    rs_prf_o[is_idx].rd_addr1           =   rs_array[entry_idx].dec_inst.tag1       ;
+                    rs_prf_o[is_idx].rd_addr2           =   rs_array[entry_idx].dec_inst.tag2       ;
+                    rs_ib_o[is_idx].valid               =   1'b1                                    ;
+                    rs_ib_o[is_idx].is_inst.pc          =   rs_array[entry_idx].dec_inst.pc         ;
+                    rs_ib_o[is_idx].is_inst.inst        =   rs_array[entry_idx].dec_inst.inst       ;
+                    rs_ib_o[is_idx].is_inst.rs1_value   =   prf_rs_i[is_idx].data_out1              ;
+                    rs_ib_o[is_idx].is_inst.rs2_value   =   prf_rs_i[is_idx].data_out2              ;
+                    rs_ib_o[is_idx].is_inst.tag         =   rs_array[entry_idx].dec_inst.tag        ;
+                    rs_ib_o[is_idx].is_inst.thread_idx  =   rs_array[entry_idx].dec_inst.thread_idx ;
+                    rs_ib_o[is_idx].is_inst.rob_idx     =   rs_array[entry_idx].dec_inst.rob_idx    ;
+                    rs_ib_o[is_idx].is_inst.opa_select  =   rs_array[entry_idx].dec_inst.opa_select ;
+                    rs_ib_o[is_idx].is_inst.opb_select  =   rs_array[entry_idx].dec_inst.opb_select ;
+                    rs_ib_o[is_idx].is_inst.alu_func    =   rs_array[entry_idx].dec_inst.alu_func   ;
+                    rs_ib_o[is_idx].is_inst.rd_mem      =   rs_array[entry_idx].dec_inst.rd_mem     ;
+                    rs_ib_o[is_idx].is_inst.wr_mem      =   rs_array[entry_idx].dec_inst.wr_mem     ;
+                    rs_ib_o[is_idx].is_inst.cond_br     =   rs_array[entry_idx].dec_inst.cond_br    ;
+                    rs_ib_o[is_idx].is_inst.uncond_br   =   rs_array[entry_idx].dec_inst.uncond_br  ;
+                    rs_ib_o[is_idx].is_inst.halt        =   rs_array[entry_idx].dec_inst.halt       ;
+                    rs_ib_o[is_idx].is_inst.illegal     =   rs_array[entry_idx].dec_inst.illegal    ;
+                    rs_ib_o[is_idx].is_inst.csr_op      =   rs_array[entry_idx].dec_inst.csr_op     ;
                 end
             end
         end
@@ -367,7 +370,7 @@ module RS #(
             if (rst_i) begin
                 rs_array[idx]   <=  `SD 'b0;
             // Squash at External Exception
-            else if (exception_i) begin
+            end else if (exception_i) begin
                 rs_array[idx]   <=  `SD 'b0;
             // Squash at Branch Misprediction
             end else if (br_mis_i.valid[rs_array[idx].dec_inst.thread_idx]) begin

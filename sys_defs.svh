@@ -325,7 +325,6 @@ typedef struct packed {
 `define RS_ENTRY_NUM    32	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
 `define PHY_REG_NUM     64  // The number of Physical registers.
-`define BR_NUM          1   // The number of Branch Resolvers.
 `define THREAD_NUM      2
 
 `define ALU_NUM         3
@@ -366,7 +365,7 @@ typedef struct packed {
 
 typedef struct packed {
     logic   [`XLEN-1:0]                 pc          ;
-    logic   [`XLEN-1:0]                 inst        ;
+    INST                                inst        ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag1        ;
     logic                               tag1_ready  ;
@@ -384,6 +383,8 @@ typedef struct packed {
     logic                               halt        ;
     logic                               illegal     ;
     logic                               csr_op      ;
+    logic                               alu         ;
+    logic                               mult        ;
 } DEC_INST;
 
 typedef struct packed {
@@ -420,7 +421,7 @@ typedef struct packed {
 
 typedef struct packed {
     logic                               ready       ;
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]           ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
     logic   [`TAG_IDX_WIDTH-1:0]        phy_reg     ;
 } MT_ENTRY;
 
