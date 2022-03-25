@@ -8,9 +8,9 @@ all:    simv
 # Modify starting here
 #####
 
-TESTBENCH = maptable_tb.sv
+TESTBENCH = AMT_tb.sv
 
-SIMFILES  = maptable.sv
+SIMFILES  = AMT.sv
 
 HEADERS   = sys_defs.svh
 

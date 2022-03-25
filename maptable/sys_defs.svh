@@ -4,6 +4,7 @@
 `define ROB_IDX_WIDTH 5
 `define DP_NUM 2
 `define CDB_NUM 2
+`define RT_NUM          2
 `define PHY_REG_IDX     $clog2(`PHY_REG_NUM)
 `define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
 `define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
@@ -51,3 +52,18 @@ typedef struct packed{
 typedef struct packed {
     logic [`PHY_REG_IDX-1:0] amt_tag;
 } AMT_ENTRY;
+
+
+typedef struct packed {
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rd          ;   // used to index mt entry for destination register
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;   // tag for destination register 
+    logic                                           wr_en       ;
+} DP_AMT;
+
+
+typedef struct packed {
+    logic [`PHY_REG_IDX-1:0] amt_tag;
+} AMT_OUTPUT;
+
+
+
