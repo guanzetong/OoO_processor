@@ -11,6 +11,7 @@ module COD #(
     parameter   C_RS_ENTRY_NUM  =   `RS_ENTRY_NUM           ,
     parameter   C_RS_IDX_WIDTH  =   $clog2(C_RS_ENTRY_NUM)
 ) (
+    input   logic                                       clk_i       ,   // Clock
     input   logic   [C_DP_NUM-1:0][C_RS_IDX_WIDTH-1:0]  rs_idx_i    ,
     input   logic   [C_DP_NUM-1:0]                      valid_i     ,
     output  logic   [C_RS_IDX_WIDTH-1:0]                cod_o       
@@ -50,16 +51,18 @@ module COD #(
                 // biased to the lower half, so the LSB of i is
                 // added to balance.
                 end else begin
-                    sum =   sum + (C_RS_ENTRY_NUM >> 1) + i[0];
+                    sum =   sum + (C_RS_ENTRY_NUM >> 1);
                 end
             // Add the center index of RS
             end else begin
-                sum =   sum + (C_RS_ENTRY_NUM >> 1) + i[0];
+                sum =   sum + (C_RS_ENTRY_NUM >> 1);
             end
         end
+    end
 
+    always_ff @(posedge clk_i) begin
         // Calculate the COD with right shift.
-        cod_o   =   sum >> C_DP_NUM_WDITH;
+        cod_o   <=  `SD sum >> C_DP_NUM_WDITH;
     end
 // ====================================================================
 // RTL Logic End

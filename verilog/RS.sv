@@ -119,9 +119,11 @@ module RS #(
         .C_DP_NUM       (C_DP_NUM       ),
         .C_RS_ENTRY_NUM (C_RS_ENTRY_NUM )
     ) COD_inst (
+        .clk_i          (clk_i          ),
         .rs_idx_i       (dp_entry_idx   ),
         .valid_i        (dp_valid       ),
         .cod_o          (cod            )
+        // .cod_o          (             )
     );
 // --------------------------------------------------------------------
 
@@ -138,7 +140,7 @@ module RS #(
 // --------------------------------------------------------------------
     // The number of valid instructions of a thread in RS
     always_ff @(posedge clk_i) begin
-        for (int th_idx = 0; th_idx < C_THREAD_NUM; th_idx++) begin
+        for (int unsigned th_idx = 0; th_idx < C_THREAD_NUM; th_idx++) begin
             // Reset
             if (rst_i) begin
                 valid_cnt[th_idx]   <=  `SD 'd0;
@@ -159,7 +161,7 @@ module RS #(
     // The number of dispatched instruction of a thread in the current cycle
     always_comb begin
         dp_cnt  =   0;
-        for (int dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
+        for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
             // Only count the valid Dispatch Channels.
             // dp_rs_i.dp_num indicates the number of actually dispatched 
             // instructions in the current cycle.
@@ -172,7 +174,7 @@ module RS #(
     // The number of issued instruction of a thread in the current cycle
     always_comb begin
         is_cnt  =   0;
-        for (int is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
+        for (int unsigned is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
             // Only count the valid Issue Channels.
             if (rs_ib_o[is_idx].valid) begin
                 is_cnt[rs_ib_o[is_idx].is_inst.thread_idx]  =   is_cnt[rs_ib_o[is_idx].is_inst.thread_idx] + 'd1;
@@ -187,7 +189,7 @@ module RS #(
         // Substract the number of entries occupied or is about to be freed 
         // thread by thread, to derive the number of available entries for 
         // Dispatch in the next cycle.
-        for (int th_idx = 0; th_idx < C_THREAD_NUM; th_idx++) begin
+        for (int unsigned th_idx = 0; th_idx < C_THREAD_NUM; th_idx++) begin
             avail_cnt =   avail_cnt - valid_cnt[th_idx] + is_cnt[th_idx];
         end
 
@@ -208,9 +210,8 @@ module RS #(
     // it can be immediately allocated to a newly dispatched instruction
     // in the next cycle.
     always_comb begin
-        for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
-            entry_empty_concat[entry_idx]   =   ~rs_array[entry_idx].valid 
-                                                || is_sel[entry_idx];
+        for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
+            entry_empty_concat[entry_idx]   =   (~rs_array[entry_idx].valid) || is_sel[entry_idx];
         end
     end
 
@@ -226,17 +227,15 @@ module RS #(
         dp_sel      =   'b0;
         dp_switch   =   'b0;
         dp_valid    =   'b0;
-
-        for (int dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
+        for (int unsigned dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
             if ((dp_pe_valid[dp_idx] == 1'b1) && (dp_idx < dp_rs_i.dp_num)) begin
                 dp_valid[dp_idx]    =   1'b1;
             end
         end
 
-        for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
-            for (int dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
-                if ((dp_entry_idx[dp_idx] == entry_idx) 
-                    && dp_valid[dp_idx]) begin
+        for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
+            for (int unsigned dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
+                if ((dp_entry_idx[dp_idx] == entry_idx) && dp_valid[dp_idx]) begin
                     dp_sel   [entry_idx]    =   1'b1                    ;
                     dp_switch[entry_idx]    =   dp_rs_i.dec_inst[dp_idx];
                 end
@@ -252,8 +251,8 @@ module RS #(
         // cp_sel_tag1 is a per-entry signal to indicate whether tag1 is matched
         // Also, the thread index must be considered.
         cp_sel_tag1 =   'b0;
-        for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
-            for (int cp_idx = 0; cp_idx < C_IS_NUM; cp_idx++) begin
+        for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
+            for (int unsigned cp_idx = 0; cp_idx < C_IS_NUM; cp_idx++) begin
                 // Compare tag1 and thread_idx
                 if ((cdb_i[cp_idx].valid == 1'b1) && 
                     (cdb_i[cp_idx].tag == rs_array[entry_idx].dec_inst.tag1) && 
@@ -269,8 +268,8 @@ module RS #(
         // cp_sel_tag2 is a per-entry signal to indicate whether tag2 is matched
         // Also, the thread index must be considered.
         cp_sel_tag2 =   'b0;
-        for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
-            for (int cp_idx = 0; cp_idx < C_IS_NUM; cp_idx++) begin
+        for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
+            for (int unsigned cp_idx = 0; cp_idx < C_IS_NUM; cp_idx++) begin
                 // Compare tag2 and thread_idx
                 if ((cdb_i[cp_idx].valid == 1'b1) && 
                     (cdb_i[cp_idx].tag == rs_array[entry_idx].dec_inst.tag2) && 
@@ -286,7 +285,7 @@ module RS #(
 // --------------------------------------------------------------------
     always_comb begin
         is_ready    =   'b0;
-        for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
+        for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             // If both source register are ready in PRF
             if (rs_array[entry_idx].dec_inst.tag1_ready && rs_array[entry_idx].dec_inst.tag2_ready &&
                 rs_array[entry_idx].valid) begin
@@ -322,9 +321,9 @@ module RS #(
 // Center-Of-Dispatch and set priority mode
 // --------------------------------------------------------------------
     always_comb begin
-        for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
+        for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             // If the COD is at the higher half, lowest index is of highest priority
-            if (cod[C_RS_IDX_WIDTH-1]) begin
+            if (cod >= (C_RS_ENTRY_NUM >> 1)) begin
                 is_ready_cod[entry_idx] =   is_ready[entry_idx];
             // If the COD is at the lower half, highest index is of highest priority
             end else begin
@@ -332,7 +331,7 @@ module RS #(
             end
         end
 
-        for (int is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
+        for (int unsigned is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
             if (cod[C_RS_IDX_WIDTH-1]) begin
                 is_entry_idx[is_idx]    =   is_entry_idx_cod[is_idx];
             end else begin
@@ -348,10 +347,10 @@ module RS #(
     always_comb begin
         is_sel      =   'b0;
         rs_ib_o     =   'b0;
-        for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
-            for (int is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
-                if ((is_entry_idx[is_idx] == entry_idx)
-                    && (is_pe_valid[is_idx] == 1'b1)) begin
+        rs_prf_o    =   'b0;
+        for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
+            for (int unsigned is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
+                if ((is_entry_idx[is_idx] == entry_idx) && (is_pe_valid[is_idx] == 1'b1)) begin
                     is_sel[entry_idx]                   =   1'b1                                    ;
                     rs_prf_o[is_idx].rd_addr1           =   rs_array[entry_idx].dec_inst.tag1       ;
                     rs_prf_o[is_idx].rd_addr2           =   rs_array[entry_idx].dec_inst.tag2       ;
@@ -382,7 +381,7 @@ module RS #(
 // RS entry
 // --------------------------------------------------------------------
     always_ff @(posedge clk_i) begin
-        for (int idx = 0; idx < C_RS_ENTRY_NUM; idx++) begin
+        for (int unsigned idx = 0; idx < C_RS_ENTRY_NUM; idx++) begin
             // Reset
             if (rst_i) begin
                 rs_array[idx].valid     <=  `SD 1'b0;
@@ -400,8 +399,7 @@ module RS #(
                 rs_array[idx].valid     <=  `SD 1'b1;
                 rs_array[idx].dec_inst  <=  `SD dp_switch[idx];
             // Complete
-            end else if (rs_array[idx].valid && 
-                (cp_sel_tag1[idx] || cp_sel_tag2[idx])) begin
+            end else if (rs_array[idx].valid && (cp_sel_tag1[idx] || cp_sel_tag2[idx])) begin
                 // tag1_ready & tag2_ready should be independently set
                 if (cp_sel_tag1[idx]) begin
                     rs_array[idx].dec_inst.tag1_ready   <=  `SD 1'b1;

@@ -1,5 +1,3 @@
-`timescale 1ns/100ps
-
 function automatic int min_int (
     input int inta, intb
 );
@@ -146,6 +144,7 @@ class driver;
         int         min_rob_fl      ;
         int         min_dp_rs       ;
         begin
+            $display("T=%0t [Driver] Checking Dispatch", $time);
             // Derive the number of valid dispatch
             rob_avail_num   =   `ROB_ENTRY_NUM - rob.size();
             fl_avail_num    =   free_list.size();
@@ -208,6 +207,7 @@ class driver;
         int                     cdb_valid_num   ;   // number of asserted CDB.valid
         IS_INST [`CDB_NUM-1:0]  cp_inst         ;   // selected instruction to complete
         begin
+            $display("T=%0t [Driver] Driving Complete", $time);
             queue_size      =   issue_queue.size();
             cdb_valid_num   =   min_int(queue_size, cp_num);
             $display("T=%0t [Driver] #issued=%0d, #requested complete=%0d, #actual complete=%0d",
@@ -249,34 +249,40 @@ class driver;
     endtask // complete()
 
     task issue();
-        for (int is_idx = 0; is_idx < `IS_NUM; is_idx++) begin
-            vif.prf_rs_i[is_idx].data_out1  =   prf[vif.rs_prf_o[is_idx].rd_addr1];
-            vif.prf_rs_i[is_idx].data_out2  =   prf[vif.rs_prf_o[is_idx].rd_addr2];
-            if (vif.rs_ib_o[is_idx].valid) begin
-                $display("T=%0t [Driver] Issue in channel%0d, PC=%0d, tag=%0d, thread=%0d",
-                    $time, is_idx, vif.rs_ib_o[is_idx].is_inst.pc, 
-                    vif.rs_ib_o[is_idx].is_inst.tag, vif.rs_ib_o[is_idx].is_inst.thread_idx);
-                issue_queue.push_back(vif.rs_ib_o[is_idx].is_inst);
+        begin
+            $display("T=%0t [Driver] Checking Issue", $time);
+            for (int is_idx = 0; is_idx < `IS_NUM; is_idx++) begin
+                vif.prf_rs_i[is_idx].data_out1  =   prf[vif.rs_prf_o[is_idx].rd_addr1];
+                vif.prf_rs_i[is_idx].data_out2  =   prf[vif.rs_prf_o[is_idx].rd_addr2];
+                if (vif.rs_ib_o[is_idx].valid) begin
+                    $display("T=%0t [Driver] Issue in channel%0d, PC=%0d, tag=%0d, thread=%0d",
+                        $time, is_idx, vif.rs_ib_o[is_idx].is_inst.pc, 
+                        vif.rs_ib_o[is_idx].is_inst.tag, vif.rs_ib_o[is_idx].is_inst.thread_idx);
+                    issue_queue.push_back(vif.rs_ib_o[is_idx].is_inst);
+                end
             end
         end
     endtask // issue()
 
     task retire();
         int     rt_num  ;
-        if (rob.size() > 0) begin
-            while(1) begin
-                if (rob[0].complete == 1'b0) begin
-                    $display("T=%0t [Driver] No Retire, ROB[0].PC=%0d, ROB[0].tag=%0d, ROB[0].tag_old=%0d, ROB[0].complete=%0b",
-                    $time, rob[0].pc, rob[0].tag, rob[0].tag_old, rob[0].complete);
-                    break;
-                end else begin
-                    $display("T=%0t [Driver] Retire ROB[0].PC=%0d, ROB[0].tag=%0d, ROB[0].tag_old=%0d, ROB[0].complete=%0b",
-                    $time, rob[0].pc, rob[0].tag, rob[0].tag_old, rob[0].complete);
-                    free_list.push_back(rob[0].tag_old);
-                    rob.pop_front();
-                    rt_num++;
-                    if (rt_num == `RT_NUM) begin
+        begin
+            $display("T=%0t [Driver] Checking Retire", $time);
+            if (rob.size() > 0) begin
+                while(1) begin
+                    if (rob[0].complete == 1'b0) begin
+                        $display("T=%0t [Driver] No Retire, ROB[0].PC=%0d, ROB[0].tag=%0d, ROB[0].tag_old=%0d, ROB[0].complete=%0b",
+                        $time, rob[0].pc, rob[0].tag, rob[0].tag_old, rob[0].complete);
                         break;
+                    end else begin
+                        $display("T=%0t [Driver] Retire ROB[0].PC=%0d, ROB[0].tag=%0d, ROB[0].tag_old=%0d, ROB[0].complete=%0b",
+                        $time, rob[0].pc, rob[0].tag, rob[0].tag_old, rob[0].complete);
+                        free_list.push_back(rob[0].tag_old);
+                        rob.pop_front();
+                        rt_num++;
+                        if (rt_num == `RT_NUM) begin
+                            break;
+                        end
                     end
                 end
             end
@@ -387,6 +393,16 @@ class monitor;
             dispatch();
             complete();
             issue();
+            // $display("T=%0t, cod=%0d, dp_0=%0d|%0b, dp_1=%0d|%0b",
+            //     $time, vif.cod, vif.dp_entry_idx[0], vif.dp_valid[0],
+            //     vif.dp_entry_idx[1], vif.dp_valid[1]);
+            // @(negedge vif.clk_i);
+            // for (int i = 0; i < `RS_ENTRY_NUM; i++) begin
+            //     $display("idx=%0d, valid=%0b, PC=%0d, tag=%0d, tag1=%0d|%0b, tag2=%0d|%0b",
+            //         i, vif.rs_array[i].valid, vif.rs_array[i].dec_inst.pc, vif.rs_array[i].dec_inst.tag, 
+            //         vif.rs_array[i].dec_inst.tag1, vif.rs_array[i].dec_inst.tag1_ready,
+            //         vif.rs_array[i].dec_inst.tag2, vif.rs_array[i].dec_inst.tag2_ready,);
+            // end
         end
     endtask
 
@@ -441,7 +457,7 @@ endclass // monitor
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   100;
+    int     num     =   1000;
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -530,16 +546,21 @@ endclass // test
 // Interface Start
 // ====================================================================
 interface RS_if (input bit clk_i);
-    logic                       rst_i       ;
-    RS_DP                       rs_dp_o     ;
-    DP_RS                       dp_rs_i     ;
-    CDB     [`CDB_NUM-1:0]      cdb_i       ;
-    RS_IB   [`IS_NUM-1:0]       rs_ib_o     ;
-    IB_RS                       ib_rs_i     ;
-    RS_PRF  [`IS_NUM-1:0]       rs_prf_o    ;
-    PRF_RS  [`IS_NUM-1:0]       prf_rs_i    ;
-    BR_MIS                      br_mis_i    ;
-    logic                       exception_i ;
+    logic                                           rst_i           ;
+    RS_DP                                           rs_dp_o         ;
+    DP_RS                                           dp_rs_i         ;
+    CDB         [`CDB_NUM-1:0]                      cdb_i           ;
+    RS_IB       [`IS_NUM-1:0]                       rs_ib_o         ;
+    IB_RS                                           ib_rs_i         ;
+    RS_PRF      [`IS_NUM-1:0]                       rs_prf_o        ;
+    PRF_RS      [`IS_NUM-1:0]                       prf_rs_i        ;
+    BR_MIS                                          br_mis_i        ;
+    logic                                           exception_i     ;
+    // RS_ENTRY    [`RS_ENTRY_NUM-1:0]                 rs_array        ;
+    // logic       [`RS_IDX_WIDTH-1:0]                 cod             ;
+    // logic       [`DP_NUM-1:0][`RS_IDX_WIDTH-1:0]    dp_entry_idx    ;
+    // logic       [`DP_NUM-1:0]                       dp_valid        ;
+
 endinterface // ROB_if
 // ====================================================================
 // Interface End
@@ -590,6 +611,10 @@ module RS_tb;
         .prf_rs_i       (_if.prf_rs_i       ),
         .br_mis_i       (_if.br_mis_i       ),
         .exception_i    (_if.exception_i    )
+        // .rs_array       (_if.rs_array       ),
+        // .cod            (_if.cod            ),
+        // .dp_entry_idx   (_if.dp_entry_idx   ),
+        // .dp_valid       (_if.dp_valid       )
     );
 // --------------------------------------------------------------------
 
