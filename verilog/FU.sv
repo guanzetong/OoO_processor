@@ -15,35 +15,6 @@
 
 `timescale 1ns/100ps
 //
-// The FU control
-//
-// given the command code CMD and proper operands A and B, compute the
-// result of the instruction
-//
-// This module is purely combinational
-//
-
-module FU # ( 
-    parameter   C_ALU_NUM            =   `ALU_NUM         ,
-    parameter   C_MULT_NUM           =   `MULT_NUM        ,
-    parameter   C_BRANCH_NUM            =   `BRANCH_NUM         ,
-    parameter   C_LOAD_NUM     =   `LOAD_NUM  ,
-    parameter   C_STORE_NUM      =   `STORE_NUM   ,
-    parameter   C_ALU_CYCLE       =   `ALU_CYCLE    ,
-    parameter   C_MULT_CYCLE       =   `MULT_CYCLE    ,
-    parameter   C_BRANCH_CYCLE       =   `BRANCH_CYCLE    ,
-    parameter   C_COUNTER_LEN       =   `COUNTER_LEN    
-
-) (
-    input   logic                           clk_i               ,   // Clock
-    input   logic                           rst_i               ,   // Reset
-    input   logic [C_ALU_NUM-1:0]           alu_start_i,
-    input   logic [C_ALU_NUM-1:0]           alu_reset_i,
-    input   ALU_FUNC [C_ALU_NUM-1:0]        alu_func_i,
-    input   logic [C_ALU_NUM-1:0][`XLEN-1:0]     alu_opa_i,
-    input   logic [C_ALU_NUM-1:0][`XLEN-1:0]     alu_opb_i
-);
-//
 // The ALU
 //
 // given the command code CMD and proper operands A and B, compute the
@@ -194,7 +165,7 @@ module mult_comb(
             default:      result = `XLEN'hfacebeec;  // here to prevent latches
         endcase
     end
-endmodule // mult
+endmodule // mult_comb
 
 
 module mult(
@@ -534,6 +505,136 @@ module store(
         end
     end
 endmodule // module store
+
+
+module FU ( 
+    parameter   C_ALU_NUM            =   `ALU_NUM         ,
+    parameter   C_MULT_NUM           =   `MULT_NUM        ,
+    parameter   C_BRANCH_NUM            =   `BRANCH_NUM         ,
+    parameter   C_LOAD_NUM     =   `LOAD_NUM  ,
+    parameter   C_STORE_NUM      =   `STORE_NUM   ,
+    parameter   C_ALU_CYCLE       =   `ALU_CYCLE    ,
+    parameter   C_MULT_CYCLE       =   `MULT_CYCLE    ,
+    parameter   C_BRANCH_CYCLE       =   `BRANCH_CYCLE    ,
+    parameter   C_COUNTER_LEN       =   `COUNTER_LEN    
+)(
+    input   logic                            clk_i               ,   // Clock
+    input   logic                            rst_i               ,   // Reset
+    input   logic [C_ALU_NUM-1:0]            alu_start_i,
+    input   logic [C_ALU_NUM-1:0]            alu_reset_i,
+    input   FU_PACKET [C_ALU_NUM-1:0]        alu_fu_packet_i,
+    output  logic [C_ALU_NUM-1:0]            alu_ready_o,
+    output  logic [C_ALU_NUM-1:0]            alu_valid_o,
+    output  logic [C_ALU_NUM-1:0][`XLEN-1:0] alu_result_o,
+
+    input   logic [C_MULT_NUM-1:0]            mult_start_i,
+    input   logic [C_MULT_NUM-1:0]            mult_reset_i,
+    input   FU_PACKET [C_MULT_NUM-1:0]        mult_fu_packet_i,
+    output  logic [C_MULT_NUM-1:0]            mult_ready_o,
+    output  logic [C_MULT_NUM-1:0]            mult_valid_o,
+    output  logic [C_MULT_NUM-1:0][`XLEN-1:0] mult_result_o,
+
+    input   logic [C_BRANCH_NUM-1:0]            branch_start_i,
+    input   logic [C_BRANCH_NUM-1:0]            branch_reset_i,
+    input   FU_PACKET [C_BRANCH_NUM-1:0]        branch_fu_packet_i,
+    output  logic [C_BRANCH_NUM-1:0]            branch_ready_o,
+    output  logic [C_BRANCH_NUM-1:0]            branch_valid_o,
+    output  logic [C_BRANCH_NUM-1:0][`XLEN-1:0] branch_result_o,
+    output  logic [C_BRANCH_NUM-1:0]            take_branch_o,
+
+    input   logic [C_LOAD_NUM-1:0]             load_start_i,
+    input   logic [C_LOAD_NUM-1:0]             load_reset_i,
+    input   FU_PACKET [C_LOAD_NUM-1:0]         load_fu_packet_i,
+    input   logic [C_LOAD_NUM-1:0][`XLEN-1:0]  Dmem2proc_data_i,
+    input   logic [C_LOAD_NUM-1:0]             Dmem2proc_request_i,
+    output  logic [C_LOAD_NUM-1:0]             load_ready_o,
+    output  logic [C_LOAD_NUM-1:0]             load_valid_o,
+    output  logic [C_LOAD_NUM-1:0][`XLEN-1:0]  load_result_o,
+    output  logic [C_LOAD_NUM-1:0][1:0]        proc2Dmem_command_o,
+    output  MEM_SIZE [C_LOAD_NUM-1:0]          proc2Dmem_size_o,
+    output  logic [C_LOAD_NUM-1:0][`XLEN-1:0]  proc2Dmem_addr_o,      // Address sent to data-memory
+    output  logic [C_LOAD_NUM-1:0]             proc2Dmem_request_o,
+
+    input   logic [C_STORE_NUM-1:0]             store_start_i,
+    input   logic [C_STORE_NUM-1:0]             store_reset_i,
+    input   FU_PACKET [C_STORE_NUM-1:0]         store_fu_packet_i,
+    input   logic [C_STORE_NUM-1:0][`XLEN-1:0]  Dmem2proc_data_i,
+    input   logic [C_STORE_NUM-1:0]             Dmem2proc_request_i,
+    output  logic [C_STORE_NUM-1:0]             store_ready_o,
+    output  logic [C_STORE_NUM-1:0]             store_valid_o,
+    output  logic [C_STORE_NUM-1:0][`XLEN-1:0]  store_result_o,
+    output  logic [C_STORE_NUM-1:0][1:0]        proc2Dmem_command_o,
+    output  MEM_SIZE [C_STORE_NUM-1:0]          proc2Dmem_size_o,
+    output  logic [C_STORE_NUM-1:0][`XLEN-1:0]  proc2Dmem_addr_o,      // Address sent to data-memory
+    output  logic [C_STORE_NUM-1:0]             proc2Dmem_request_o
+);
+
+    alu alu_unit [C_ALU_NUM-1:0] (
+        .clk_i(clk_i),
+        .alu_start_i(alu_start_i),
+        .alu_reset_i(alu_reset_i),
+        .alu_fu_packet_i(alu_fu_packet_i),
+
+        .alu_ready_o(alu_ready_o),
+        .alu_valid_o(alu_valid_o),
+        .alu_result_o(alu_result_o)
+    );
+
+    mult mult_unit [C_MULT_NUM-1:0](
+        .clk_i(clk_i),
+        .mult_start_i(mult_start_i),
+        .mult_reset_i(mult_reset_i),
+        .mult_fu_packet_i(mult_fu_packet_i),
+
+        .mult_ready_o(mult_ready_o),
+        .mult_valid_o(mult_valid_o),
+        .mult_result_o(mult_result_o)
+    );
+
+    branch branch_unit [C_BRANCH_NUM-1:0](
+        .clk_i(clk_i),
+        .branch_start_i(branch_start_i),
+        .branch_reset_i(branch_reset_i),
+        .branch_fu_packet_i(branch_fu_packet_i),
+
+        .branch_ready_o(branch_ready_o),
+        .branch_valid_o(branch_valid_o),
+        .branch_result_o(branch_result_o),
+        .take_branch_o(take_branch_o)
+    );
+
+    load load_unit [C_LOAD_NUM-1:0](
+        .clk_i(clk_i),
+        .load_start_i(load_start_i),
+        .load_reset_i(load_reset_i),
+        .load_fu_packet_i(load_fu_packet_i),
+        .Dmem2proc_data_i(Dmem2proc_data_i),
+        .Dmem2proc_request_i(Dmem2proc_request_i),
+
+        .load_ready_o(load_ready_o),
+        .load_valid_o(load_valid_o),
+        .load_result_o(load_result_o),
+        .proc2Dmem_command_o(proc2Dmem_command_o),
+        .proc2Dmem_size_o(proc2Dmem_size_o),
+        .proc2Dmem_addr_o(proc2Dmem_addr_o),
+        .proc2Dmem_request_o(proc2Dmem_request_o)
+    );
+
+    store store_unit [C_STORE_NUM-1:0](
+        .clk_i(clk_i),
+        .store_start_i(store_start_i),
+        .store_reset_i(store_reset_i),
+        .store_fu_packet_i(store_fu_packet_i),
+
+        .store_ready_o(store_ready_o),
+        .store_valid_o(store_valid_o),
+        .store_result_o(store_result_o),
+        .proc2Dmem_command_o(proc2Dmem_command_o),
+        .proc2Dmem_data_o(proc2Dmem_data_o),
+        .proc2Dmem_size_o(proc2Dmem_size_o),
+        .proc2Dmem_addr_o(proc2Dmem_addr_o),
+        .proc2Dmem_request_o(proc2Dmem_request_o)
+    );
 
 
 endmodule // module fu_module
