@@ -297,7 +297,7 @@ typedef struct packed {
 	logic       illegal;       // is this instruction illegal?
 	logic       csr_op;        // is this a CSR operation? (we only used this as a cheap way to get return code)
 	logic       valid;         // is inst a valid instruction to be counted for CPI calculations?
-} ID_EX_PACKET;
+} FU_PACKET;
 
 typedef struct packed {
 	logic [`XLEN-1:0] alu_result; // alu_result
