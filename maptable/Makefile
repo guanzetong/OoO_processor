@@ -16,11 +16,11 @@ HEADERS   = sys_defs.svh
 
 # SYNTHESIS CONFIG
 SYNTH_DIR = ./syn
-SYNFILES  = $(SYNTH_DIR)/RAT.vg
+SYNFILES  = $(SYNTH_DIR)/maptable.vg
 
-$(SYNFILES):	RAT.sv syn/RAT.syn.tcl
+$(SYNFILES):	maptable.sv syn/maptable.tcl
 	mkdir -p syn
-	cd $(SYNTH_DIR) && dc_shell-t -f RAT.syn.tcl | tee RAT_synth.out
+	cd $(SYNTH_DIR) && dc_shell-t -f maptable.tcl | tee maptable_synth.out
 
 
 #####

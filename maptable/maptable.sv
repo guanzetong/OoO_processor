@@ -9,13 +9,14 @@ module maptable #(
     input logic rollback_i,    
 
     input CDB [C_CDB_NUM-1:0] cdb_i,
-    input DP_MT [C_DP_NUM-1:0] dp_mp_i,
+    input DP_MT_READ [C_DP_NUM-1:0] dp_mp_read_i,
+    input DP_MT_WRITE [C_DP_NUM-1:0] dp_mp_write_i,
     input  AMT_ENTRY [C_MT_ENTRY-1:0] amt_i,
     output MT_DP [C_DP_NUM-1:0] mp_dp_o
 );
     MP_ENTRY [C_MT_ENTRY-1:0] mt_entry;
-    logic [`TAG_IDX_WIDTH-1:0] rd_tag_buffer;
-    logic rd_ready_bit_buffer;
+    // logic [`TAG_IDX_WIDTH-1:0] rd_tag_buffer;
+    // logic rd_ready_bit_buffer;
     // read == mp_dp.rs1 and rs2
     // write == rd;
     // genvar i,j;
@@ -56,7 +57,7 @@ module maptable #(
     // end
 
     // endgenerate
-
+    
     always_comb begin
         // if (i == 1 && dp_mp_i[0].wr_en && dp_mp_i[i].rs1 == dp_mp_i[0].rd) begin
         //     mp_dp_o[i].tag1 = dp_mp_i[i-1].tag;
@@ -66,28 +67,28 @@ module maptable #(
         //     mp_dp_o[i].tag1_ready = mt_entry[dp_mp_i[i].rs1].phy_reg_ready;
         // end
         for (integer i = 0; i<C_DP_NUM; i++) begin
-            if (i == 1 && dp_mp_i[0].wr_en && dp_mp_i[i].rs1 == dp_mp_i[0].rd) begin
-                mp_dp_o[i].tag1 = dp_mp_i[i-1].tag;
+            if (i == 1 && dp_mp_write_i[0].wr_en && dp_mp_read_i[i].rs1 == dp_mp_write_i[0].rd) begin
+                mp_dp_o[i].tag1 = dp_mp_write_i[i-1].tag;
                 mp_dp_o[i].tag1_ready = 0;
             end 
             // else if (dp_mp_i[i].rs1 == dp_mp_i[i].rd && dp_mp_i[i].read_en)begin 
-            //     mp_dp_o[i].tag1 = rd_tag_buffer[i];
-            //     mp_dp_o[i].tag1_ready = rd_ready_bit_buffer[i];
+            //     mp_dp_o[i].tag1 = rd_tag_buffer;
+            //     mp_dp_o[i].tag1_ready = rd_ready_bit_buffer;
             // end 
-            else if (dp_mp_i[i].read_en) begin 
-                mp_dp_o[i].tag1 = mt_entry[dp_mp_i[i].rs1].tag;
-                mp_dp_o[i].tag1_ready = mt_entry[dp_mp_i[i].rs1].phy_reg_ready;
+            else if (dp_mp_read_i[i].read_en) begin 
+                mp_dp_o[i].tag1 = mt_entry[dp_mp_read_i[i].rs1].tag;
+                mp_dp_o[i].tag1_ready = mt_entry[dp_mp_read_i[i].rs1].phy_reg_ready;
             end else begin 
                 mp_dp_o[i].tag1 = 0;
                 mp_dp_o[i].tag1_ready = 0;
             end
 
-            if (i == 1 && dp_mp_i[0].wr_en && dp_mp_i[i].rs2 == dp_mp_i[0].rd) begin 
-                mp_dp_o[i].tag2 = dp_mp_i[i-1].tag;
+            if (i == 1 && dp_mp_write_i[0].wr_en && dp_mp_read_i[i].rs2 == dp_mp_write_i[0].rd) begin 
+                mp_dp_o[i].tag2 = dp_mp_write_i[i-1].tag;
                 mp_dp_o[i].tag2_ready = 0;
-            end else if (dp_mp_i[i].read_en) begin 
-                mp_dp_o[i].tag2 = mt_entry[dp_mp_i[i].rs2].tag;
-                mp_dp_o[i].tag2_ready = mt_entry[dp_mp_i[i].rs2].phy_reg_ready;
+            end else if (dp_mp_read_i[i].read_en) begin 
+                mp_dp_o[i].tag2 = mt_entry[dp_mp_read_i[i].rs2].tag;
+                mp_dp_o[i].tag2_ready = mt_entry[dp_mp_read_i[i].rs2].phy_reg_ready;
             end else begin 
                 mp_dp_o[i].tag2 = 0;
                 mp_dp_o[i].tag2_ready = 0;
@@ -103,7 +104,14 @@ module maptable #(
         end
     end
 
-
+    always_comb begin 
+        integer i;
+        for (i = 0; i< C_DP_NUM; i++) begin
+            if (dp_mp_write_i[i].wr_en) begin 
+                mp_dp_o[i].tag_old <= mt_entry[dp_mp_write_i[i].rd].tag;
+            end
+        end
+    end
 
     // always_comb begin
     //     for (integer cdb_idx = 0; idx < CDB_NUM; idx++) begin
@@ -130,15 +138,14 @@ module maptable #(
         end else begin
             for (integer r=0; r<C_DP_NUM; r++) begin
                 // if (dp_mp_i[r].rs1 == dp_mp_i[r].rd && dp_mp_i[r].read_en) begin 
-                //         rd_tag_buffer[r] <= mt_entry[dp_mp_i[r].rd].tag;
-                //         rd_ready_bit_buffer [r] <= mt_entry[dp_mp_i[r].rd].phy_reg_ready;
+                //     rd_tag_buffer <= mt_entry[dp_mp_i[r].rd].tag;
+                //     rd_ready_bit_buffer <= mt_entry[dp_mp_i[r].rd].phy_reg_ready;
                 // end
-                if (dp_mp_i[r].wr_en) begin
-                    mp_dp_o[r].tag_old <= mt_entry[dp_mp_i[r].rd].tag;
-
-                    mt_entry[dp_mp_i[r].rd].tag <= dp_mp_i[r].tag;
-                    mt_entry[dp_mp_i[r].rd].phy_reg_ready <= 0; 
-                end 
+                if (dp_mp_write_i[r].wr_en) begin
+                    // mp_dp_o[r].tag_old <= mt_entry[dp_mp_write_i[r].rd].tag;
+                    mt_entry[dp_mp_write_i[r].rd].tag <= dp_mp_write_i[r].tag;
+                    mt_entry[dp_mp_write_i[r].rd].phy_reg_ready <= 0; 
+                end
             end
                
             for (integer entry_idx = 0; entry_idx < C_MT_ENTRY; entry_idx++) begin

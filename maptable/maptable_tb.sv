@@ -8,7 +8,8 @@ module maptable_tb();
     logic reset;
     logic rollback;
 
-    DP_MT  [dp_num - 1 : 0]   dp_input;
+    DP_MT_READ  [dp_num - 1 : 0]   dp_read_input;
+    DP_MT_WRITE  [dp_num - 1 : 0]  dp_write_input;
     MT_DP [dp_num - 1 : 0]   mt_output;
     MT_DP [dp_num - 1 : 0]   correct;
 
@@ -20,7 +21,8 @@ module maptable_tb();
         .rst_i(reset),
         .rollback_i(rollback),
         .cdb_i(cdb_input),
-        .dp_mp_i(dp_input),
+        .dp_mp_read_i(dp_read_input),
+        .dp_mp_write_i(dp_write_input),
         .amt_i(amt_input),
         .mp_dp_o(mt_output)
     );
@@ -63,7 +65,7 @@ module maptable_tb();
       end else begin
         $display("@@@ Incorrect result at TIME: %.4f", $time);
         $display("tag_old for destination reg, tag: %d", mt_packet[i].tag_old);
-        $display("correct value, tag: %d", correct[i].tag_old);
+        $display("correct value,               tag: %d", correct[i].tag_old);
         $display("@@@ Failed");
       end
     end
@@ -77,7 +79,8 @@ module maptable_tb();
         clock = 0;
         reset = 1;
 
-        dp_input = 'b0;
+        dp_read_input = 'b0;
+        dp_write_input = 'b0;
         cdb_input = 'b0;
         amt_input = 'b0;
 
@@ -88,134 +91,239 @@ module maptable_tb();
         $display("@@@ check initial values in maptable");
         reset = 0;
         rollback = 0;
-        dp_input[0].read_en = 1;
-        dp_input[1].read_en = 1;
-        dp_input[0].rs1 = 'd0;
-        dp_input[0].rs2 = 'd5;
-        dp_input[1].rs1 = 'd7;
-        dp_input[1].rs2 = 'd8;
+        dp_read_input[0] = '{
+          'd0, // rs1
+          'd5, // rs2
+            1, // read_en
+            0  // thread idx
+        };
+        dp_read_input[1] = '{
+          'd7, // rs1
+          'd8, // rs2
+            1, // read_en
+            0  // thread idx
+        };
 
-        correct[0].tag1 = 'd0;
-        correct[0].tag2 = 'd5;
-        correct[1].tag1 = 'd7;
-        correct[1].tag2 = 'd8;
-
-        correct[0].tag1_ready = 1;
-        correct[0].tag2_ready = 1;
-        correct[1].tag1_ready = 1;
-        correct[1].tag2_ready = 1;
+        correct[0] = '{
+          'd0, // tag1
+            1, // tag1_ready
+          'd5, // tag2
+            1, // tag2_ready
+            0 // tag_old
+        };
+        correct[1] = '{
+          'd7, // tag1
+            1, // tag1_ready
+          'd8, // tag2
+            1, // tag2_ready
+            0 // tag_old
+        };
         #5
         check_rs_read(mt_output, correct);
-        // ###########################
-
 
 
 
         // testcase for write enable triggered,
         // check whether tag_old is updated as the value before write.
         // ###########################
+        reset = 1;
+        @(negedge clock);
         @(negedge clock);
         $display("@@@ check write enable triggered");
-        dp_input[0].wr_en = 1;
-        dp_input[0].rd = 'd5;
-        dp_input[0].tag = 'd32;
+        reset = 0;
+        rollback = 0;
+        dp_read_input[0] = '{
+          'd0, // rs1
+          'd5, // rs2
+            1, // read_en
+            0  // thread idx
+        };
+        dp_write_input[0] = '{
+          'd0, // rd
+          'd32, // tag
+            1, // write_en
+            0  // thread idx
+        };
         
-        dp_input[1].wr_en = 1;
-        dp_input[1].rd =  'd7;
-        dp_input[1].tag = 'd10;
+        dp_read_input[1] = '{
+          'd7, // rs1
+          'd8, // rs2
+            1, // read_en
+            0  // thread idx
+        };
 
+        dp_write_input[1] = '{
+          'd7, // rd
+          'd37, // tag
+            1, // write_en
+            0  // thread idx
+        };
 
-        correct[0].tag2 = 'd32;
-        correct[1].tag1 = 'd10;
-        correct[0].tag_old = 'd5;
-        correct[1].tag_old = 'd7;
-
-        correct[0].tag1_ready = 1;
-        correct[0].tag2_ready = 0;
-        correct[1].tag1_ready = 0;
-        correct[1].tag2_ready = 1;
-
-        #10
-        check_rd_write(mt_output, correct);
-        #10
+        correct[0] = '{
+          'd0, // tag1
+            1, // tag1_ready
+          'd5, // tag2
+            1, // tag2_ready
+            0 // tag_old
+        };
+        correct[1] = '{
+          'd7, // tag1
+            1, // tag1_ready
+          'd8, // tag2
+            1, // tag2_ready
+            7 // tag_old
+        };
+        #5
         check_rs_read(mt_output, correct);
-        // ###########################
+        check_rd_write(mt_output, correct);
 
 
-        // testcase for superscalar: first-round destination reg is second-round source reg
         // ###########################
-        
-        
-        $display("@@@ check superscalar");
+        // testcase for same rd and rs of one instruction,
+        // check the tag and ready bit for rs1/rs2 should be value before write.
+        // ###########################
         reset = 1;
         @(negedge clock);
         @(negedge clock);
+        $display("@@@ check same source and destination register");
         reset = 0;
 
-        dp_input[0].rs1 = 'd0;
-        dp_input[0].rs2 = 'd5;
-        dp_input[0].wr_en = 1;
-        dp_input[0].rd = 'd9;
-        dp_input[0].tag = 'd32;
-
-
-        dp_input[1].rs1 = 'd9;
-        dp_input[1].rs2 = 'd8;
-
-        correct[0].tag1 = 'd0;
-        correct[0].tag2 = 'd5;
-        correct[1].tag1 = 'd32;
-        correct[1].tag2 = 'd8;
-
-        correct[0].tag1_ready = 1;
-        correct[0].tag2_ready = 1;
-        correct[1].tag1_ready = 0;
-        correct[1].tag2_ready = 1;
-
-
-        #10
-        check_rs_read(mt_output, correct);
-        // ###########################
-
-
-        // testcase for destination reg and source reg is the same.
-        // ###########################
+        dp_read_input[0] = '{
+          'd7, // rs1
+          'd7, // rs2
+            1, // read_en
+            0  // thread idx
+        };
+        dp_write_input[0] = '{
+          'd7, // rd
+          'd32, // tag
+            1, // write_en
+            0  // thread idx
+        };
         
-        reset = 1;
-        $display("@@@ check same source reg and destination reg");
-        @(negedge clock)
-        @(negedge clock)
-        reset = 0;
-        
+        dp_read_input[1] = '{
+          'd8, // rs1
+          'd8, // rs2
+            1, // read_en
+            0  // thread idx
+        };
 
-        dp_input[0].read_en = 1;
-        dp_input[0].wr_en = 1;
-        dp_input[0].rs1 = 'd5;
-        dp_input[0].rs2 = 'd0;
-        dp_input[1].rs1 = 'd7;
-        dp_input[1].rs2 = 'd8;
+        dp_write_input[1] = '{
+          'd8, // rd
+          'd37, // tag
+            1, // write_en
+            0  // thread idx
+        };
 
-        dp_input[0].rd = 'd5;
-        dp_input[0].tag = 'd32;
-
-
-
-        correct[0].tag1 = 'd0;
-        correct[0].tag2 = 'd5;
-        correct[1].tag1 = 'd7;
-        correct[1].tag2 = 'd8;
-
-        correct[0].tag1_ready = 1;
-        correct[0].tag2_ready = 1;
-        correct[1].tag1_ready = 1;
-        correct[1].tag2_ready = 1;
-
-        correct[0].tag_old = 5;
-
-        #10
+        correct[0] = '{
+          'd7, // tag1
+            1, // tag1_ready
+          'd7, // tag2
+            1, // tag2_ready
+            7 // tag_old
+        };
+        correct[1] = '{
+          'd8, // tag1
+            1, // tag1_ready
+          'd8, // tag2
+            1, // tag2_ready
+            8 // tag_old
+        };
+        #5
         check_rs_read(mt_output, correct);
         check_rd_write(mt_output, correct);
+
         // ###########################
+        // testcase for same rd and rs of one instruction,
+        // check the tag and ready bit in the entry has changed
+        // ###########################
+        $display("@@@ check entry changed");
+        dp_read_input[0] = '{
+          'd7, // rs1
+          'd8, // rs2
+            1, // read_en
+            0  // thread idx
+        };
+
+        dp_read_input[1] = '{
+          'd5, // rs1
+          'd6, // rs2
+            1, // read_en
+            0  // thread idx
+        };
+
+        correct[0] = '{
+          'd32, // tag1
+            0, // tag1_ready
+          'd37, // tag2
+            0, // tag2_ready
+            7 // tag_old
+        };
+
+        correct[1] = '{
+          'd5, // tag1
+            1, // tag1_ready
+          'd6, // tag2
+            1, // tag2_ready
+            8 // tag_old
+        };
+
+        #5
+        check_rs_read(mt_output, correct);
+
+        // ###########################
+        // testcase for CDB value,
+        // check the tag and ready bit in the entry has changed
+        // ###########################
+        @(negedge clock);
+        @(negedge clock);
+        $display("@@@ check CDB update");
+
+        cdb_input[0] = '{
+          1,  // valid    
+          'd32,  // tag      
+          0 , // rob_idx  
+          0 , // thread_id
+          0  // br_result
+        };
+
+        cdb_input[1] = '{
+          1 , // valid    
+          'd37 , // tag      
+          0  ,// rob_idx  
+          0 , // thread_id
+          0  // br_result
+        };
+
+        dp_read_input[0] = '{
+          'd7, // rs1
+          'd8, // rs2
+            1, // read_en
+            0  // thread idx
+        };
+
+        dp_read_input[1] = '{
+          'd5, // rs1
+          'd6, // rs2
+            1, // read_en
+            0  // thread idx
+        };
+
+        correct[0] = '{
+          'd32, // tag1
+            1, // tag1_ready
+          'd37, // tag2
+            1, // tag2_ready
+            7 // tag_old
+        };
+
+        correct[1] = '{
+          'd5, // tag1
+            1, // tag1_ready
+          'd6, // tag2
+            1, // tag2_ready
+            8 // tag_old
+        };
 
         #200
         $display("@@@ Correct");
