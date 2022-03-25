@@ -24,7 +24,7 @@ module pe #(
 // --------------------------------------------------------------------
     always_comb begin
         enc_o   =   0;
-        for (int unsigned i = C_IN_WIDTH-1; i >=0 ; i++) begin
+        for (int i = C_IN_WIDTH-1; i >=0 ; i--) begin
             if (bit_i[i]) begin
                 enc_o   =   i;
             end

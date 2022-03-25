@@ -59,8 +59,6 @@ class mon_item; // MON -> SCB
                 $time, msg_tag, feature);
             end
         endcase
-        $display("T=%0t %s %s ",
-                $time, msg_tag, feature);
     endfunction
 endclass
 
@@ -79,9 +77,8 @@ class driver;
     logic   [`ARCH_REG_NUM-1:0][`TAG_IDX_WIDTH:0]   map_table       ;
     logic   [`TAG_IDX_WIDTH:0]                      free_list   [$] ;
     ROB_ENTRY                                       rob         [$] ;
-    logic   [`XLEN-1:0]                             prf             ;
-    int                                             rob_avail_num   ;
-    int                                             fl_avail_num    ;
+    logic   [`PHY_REG_NUM-1:0][`XLEN-1:0]           prf             ;
+
     int                                             pc              ;
 
     task run();
@@ -105,8 +102,9 @@ class driver;
             // Set DP, CDB, PRF interface
             retire();
             complete(item.cp_num);
-            issue();
             dispatch(item.dp_num);
+            @(posedge vif.clk_i);
+            issue();
 
             // When transfer is over, raise the done event and reset the inputs
             @(negedge vif.clk_i);
@@ -143,15 +141,19 @@ class driver;
         int         dp_valid_num    ;
         ROB_ENTRY   rob_entry       ;
         int         inst_type       ;
+        int         rob_avail_num   ;
+        int         fl_avail_num    ;
         int         min_rob_fl      ;
-        int         min_cp_rs       ;
+        int         min_dp_rs       ;
         begin
             // Derive the number of valid dispatch
             rob_avail_num   =   `ROB_ENTRY_NUM - rob.size();
             fl_avail_num    =   free_list.size();
             min_rob_fl      =   min_int(rob_avail_num, fl_avail_num);
-            min_cp_rs       =   min_int(dp_num, vif.rs_dp_o.avail_num);
-            dp_valid_num    =   min_int(min_rob_fl, min_cp_rs);
+            min_dp_rs       =   min_int(dp_num, vif.rs_dp_o.avail_num);
+            dp_valid_num    =   min_int(min_rob_fl, min_dp_rs);
+            $display("T=%0t [Driver] #RS=%0d, #FL=%0d, #DP=%0d, #ROB=%0d",
+            $time, vif.rs_dp_o.avail_num, fl_avail_num, dp_num, rob_avail_num);
             // Assign value to interface
             vif.dp_rs_i.dp_num  =   dp_valid_num;
             for (int n = 0; n < `DP_NUM; n++) begin
@@ -175,7 +177,7 @@ class driver;
                     vif.dp_rs_i.dec_inst[n].tag1_ready  =   map_table[vif.dp_rs_i.dec_inst[n].inst.r.rs1][`TAG_IDX_WIDTH];
                     vif.dp_rs_i.dec_inst[n].tag2        =   map_table[vif.dp_rs_i.dec_inst[n].inst.r.rs2][`TAG_IDX_WIDTH-1:0];
                     vif.dp_rs_i.dec_inst[n].tag2_ready  =   map_table[vif.dp_rs_i.dec_inst[n].inst.r.rs2][`TAG_IDX_WIDTH];
-                    $display("T=%0t [Driver] Dispatch in channel%0d, PC=%0h, rd= %0d, rs1=%0d, rs2=%0d, tag=%0b, tag1=%0d|%0d, tag2=%0d|%0d",
+                    $display("T=%0t [Driver] Dispatch in channel%0d, PC=%0d, rd= %0d, rs1=%0d, rs2=%0d, tag=%0d, tag1=%0d|%0b, tag2=%0d|%0b",
                     $time, n, pc, vif.dp_rs_i.dec_inst[n].inst.r.rd, vif.dp_rs_i.dec_inst[n].inst.r.rs1, vif.dp_rs_i.dec_inst[n].inst.r.rs2,
                     vif.dp_rs_i.dec_inst[n].tag, vif.dp_rs_i.dec_inst[n].tag1, vif.dp_rs_i.dec_inst[n].tag1_ready,
                     vif.dp_rs_i.dec_inst[n].tag2, vif.dp_rs_i.dec_inst[n].tag2_ready);
@@ -233,6 +235,12 @@ class driver;
                             rob[m].complete =   1'b1;
                         end
                     end
+                    // Update Map Table
+                    for (int m = 0; m < `ARCH_REG_NUM; m++) begin
+                        if (map_table[m][`TAG_IDX_WIDTH-1:0] == vif.cdb_i[n].tag) begin
+                            map_table[m][`TAG_IDX_WIDTH]    =   1'b1;
+                        end
+                    end
                 end else begin
                     vif.cdb_i[n]    =   'b0;
                 end
@@ -245,6 +253,9 @@ class driver;
             vif.prf_rs_i[is_idx].data_out1  =   prf[vif.rs_prf_o[is_idx].rd_addr1];
             vif.prf_rs_i[is_idx].data_out2  =   prf[vif.rs_prf_o[is_idx].rd_addr2];
             if (vif.rs_ib_o[is_idx].valid) begin
+                $display("T=%0t [Driver] Issue in channel%0d, PC=%0d, tag=%0d, thread=%0d",
+                    $time, is_idx, vif.rs_ib_o[is_idx].is_inst.pc, 
+                    vif.rs_ib_o[is_idx].is_inst.tag, vif.rs_ib_o[is_idx].is_inst.thread_idx);
                 issue_queue.push_back(vif.rs_ib_o[is_idx].is_inst);
             end
         end
@@ -255,8 +266,12 @@ class driver;
         if (rob.size() > 0) begin
             while(1) begin
                 if (rob[0].complete == 1'b0) begin
+                    $display("T=%0t [Driver] No Retire, ROB[0].PC=%0d, ROB[0].tag=%0d, ROB[0].tag_old=%0d, ROB[0].complete=%0b",
+                    $time, rob[0].pc, rob[0].tag, rob[0].tag_old, rob[0].complete);
                     break;
                 end else begin
+                    $display("T=%0t [Driver] Retire ROB[0].PC=%0d, ROB[0].tag=%0d, ROB[0].tag_old=%0d, ROB[0].complete=%0b",
+                    $time, rob[0].pc, rob[0].tag, rob[0].tag_old, rob[0].complete);
                     free_list.push_back(rob[0].tag_old);
                     rob.pop_front();
                     rt_num++;
@@ -286,10 +301,13 @@ class scoreboard;
         forever begin
             mon_item    item    ;
             // Get item from mailbox
-            $display("T=%0t [Scoreboard] waiting for item from Monitor ...", $time);
+            $display("T=%0t [Scoreboard] Waiting for item from Monitor ...", $time);
             scb_mbx.get(item);
 
             item.print("[Scoreboard]");
+
+            $display("T=%0t [Scoreboard] dp_queue.size=%0d, cp_queue.size=%0d, is_queue.size=%0d",
+            $time, dp_queue.size(), cp_queue.size(), is_queue.size());
 
             // Push into a queue according to the "feature"
             case (item.feature)
@@ -298,13 +316,20 @@ class scoreboard;
                 "issue"     :   is_queue.push_back(item); 
             endcase
 
+            $display("T=%0t [Scoreboard] dp_queue.size=%0d, cp_queue.size=%0d, is_queue.size=%0d",
+            $time, dp_queue.size(), cp_queue.size(), is_queue.size());
+
             if (item.feature == "complete") begin
                 for (int i = 0; i < dp_queue.size(); i++) begin
                     if (item.cdb.tag == dp_queue[i].dp_inst.tag1) begin
                         dp_queue[i].dp_inst.tag1_ready  =   1'b1;
+                        $display("T=%0t [Scoreboard] tag1 is ready at PC=%0d",
+                        $time, dp_queue[i].dp_inst.pc);
                     end
                     if (item.cdb.tag == dp_queue[i].dp_inst.tag2) begin
                         dp_queue[i].dp_inst.tag2_ready  =   1'b1;
+                        $display("T=%0t [Scoreboard] tag2 is ready at PC=%0d",
+                        $time, dp_queue[i].dp_inst.pc);
                     end
                 end
             end
@@ -368,26 +393,26 @@ class monitor;
     task dispatch();
         // Check dispatch
         for (int i = 0; i < vif.dp_rs_i.dp_num; i++) begin
-            mon_item    item    ;
+            mon_item item   =   new ;
             item.feature    =   "dispatch";
             item.dp_inst    =   vif.dp_rs_i.dec_inst[i];
             item.dp_channel =   i;
             scb_mbx.put(item);
-            $display("T=%0t [Monitor] Dispatch detected in channel %0d",
-                    $time, i);
+            $display("T=%0t [Monitor] Dispatch detected in channel %0d, PC=%0d",
+                    $time, i, item.dp_inst.pc);
         end
     endtask
 
     task complete();
         for (int i = 0; i < `CDB_NUM; i++) begin
             if (vif.cdb_i[i].valid) begin
-                mon_item    item    ;
+                mon_item item       =   new ;
                 item.feature        =   "complete";
                 item.cdb            =   vif.cdb_i[i];
                 item.cdb_channel    =   i;
                 scb_mbx.put(item);
-                $display("T=%0t [Monitor] Complete detected in channel %0d",
-                        $time, i);
+                $display("T=%0t [Monitor] Complete detected in channel %0d, tag=%0d",
+                        $time, i, item.cdb.tag);
             end
         end
     endtask
@@ -395,13 +420,13 @@ class monitor;
     task issue();
         for (int i = 0; i < `IS_NUM; i++) begin
             if (vif.rs_ib_o[i].valid) begin
-                mon_item    item    ;
+                mon_item item   =   new ;
                 item.feature    =   "issue";
                 item.is_inst    =   vif.rs_ib_o[i].is_inst;
                 item.is_channel =   i;
                 scb_mbx.put(item);
-                $display("T=%0t [Monitor] Issue detected in channel %0d",
-                        $time, i);
+                $display("T=%0t [Monitor] Issue detected in channel %0d, PC=%0d, tag=%0d",
+                        $time, i, item.is_inst.pc, item.is_inst.tag);
             end
         end
     endtask
@@ -416,7 +441,7 @@ endclass // monitor
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   1000;
+    int     num     =   100;
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -571,7 +596,7 @@ module RS_tb;
 // --------------------------------------------------------------------
 // Test Instantiation
 // --------------------------------------------------------------------
-    // test    t0;
+    test    t0;
 
 // --------------------------------------------------------------------
 // Call test
@@ -605,7 +630,7 @@ module RS_tb;
     //     $dumpfile("dump.vcd");
     // end
 
-endmodule // ROB_tb
+endmodule // RS_tb
 
 // ====================================================================
 // Testbench End

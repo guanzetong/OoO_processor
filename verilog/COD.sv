@@ -38,6 +38,7 @@ module COD #(
 // RTL Logic Start
 // ====================================================================
     always_comb begin
+        sum =   0;
         for (int i = 0; i < C_ADDER_IN_NUM; i++) begin
             // Add the actual dispatched RS entry indexes
             if (i < C_DP_NUM) begin

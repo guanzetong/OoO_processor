@@ -8,7 +8,7 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`timescale 1ns/100ps
+// `timescale 1ns/100ps
 
 module RS #(
     parameter   C_RS_ENTRY_NUM  =   `RS_ENTRY_NUM   ,
@@ -57,6 +57,7 @@ module RS #(
     logic       [C_RS_ENTRY_NUM-1:0]                    entry_empty_concat      ;
     logic       [C_DP_NUM-1:0][C_RS_IDX_WIDTH-1:0]      dp_entry_idx            ;
     logic       [C_DP_NUM-1:0]                          dp_pe_valid             ;
+    logic       [C_DP_NUM-1:0]                          dp_valid                ;
     DEC_INST    [C_RS_ENTRY_NUM-1:0]                    dp_switch               ;
     logic       [C_RS_ENTRY_NUM-1:0]                    dp_sel                  ;
 
@@ -67,12 +68,11 @@ module RS #(
     // Issue
     logic       [C_RS_IDX_WIDTH-1:0]                    cod                     ;
     logic       [C_RS_ENTRY_NUM-1:0]                    is_ready                ;
-    logic       [C_RS_ENTRY_NUM-1:0]                    is_ready_priority       ;
+    logic       [C_RS_ENTRY_NUM-1:0]                    is_ready_cod            ;
     logic       [C_IS_NUM-1:0][C_RS_IDX_WIDTH-1:0]      is_entry_idx            ;
+    logic       [C_IS_NUM-1:0][C_RS_IDX_WIDTH-1:0]      is_entry_idx_cod        ;
     logic       [C_IS_NUM-1:0]                          is_pe_valid             ;
     logic       [C_RS_ENTRY_NUM-1:0]                    is_sel                  ;
-    DEC_INST    [C_IS_NUM-1:0]                          is_switch               ;
-    logic       [C_IS_NUM_WIDTH-1:0]                    is_num                  ;
 
 // ====================================================================
 // Signal Declarations End
@@ -105,8 +105,8 @@ module RS #(
         .C_IN_WIDTH (C_RS_ENTRY_NUM     ),
         .C_OUT_NUM  (C_IS_NUM           )
     ) is_pe (
-        .bit_i      (is_ready_priority  ),
-        .enc_o      (is_entry_idx       ),
+        .bit_i      (is_ready_cod       ),
+        .enc_o      (is_entry_idx_cod   ),
         .valid_o    (is_pe_valid        )
     );
 // --------------------------------------------------------------------
@@ -120,7 +120,7 @@ module RS #(
         .C_RS_ENTRY_NUM (C_RS_ENTRY_NUM )
     ) COD_inst (
         .rs_idx_i       (dp_entry_idx   ),
-        .valid_i        (dp_pe_valid    ),
+        .valid_i        (dp_valid       ),
         .cod_o          (cod            )
     );
 // --------------------------------------------------------------------
@@ -221,13 +221,22 @@ module RS #(
     // dispatched instruction.
     // dp_switch is the output of a router logic, to route the newly
     // dispatched instruction to the selected entry.
+    // dp_valid is the indicator of 
     always_comb begin
         dp_sel      =   'b0;
         dp_switch   =   'b0;
+        dp_valid    =   'b0;
+
+        for (int dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
+            if ((dp_pe_valid[dp_idx] == 1'b1) && (dp_idx < dp_rs_i.dp_num)) begin
+                dp_valid[dp_idx]    =   1'b1;
+            end
+        end
+
         for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             for (int dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
                 if ((dp_entry_idx[dp_idx] == entry_idx) 
-                    && (dp_pe_valid[dp_idx] == 1'b1)) begin
+                    && dp_valid[dp_idx]) begin
                     dp_sel   [entry_idx]    =   1'b1                    ;
                     dp_switch[entry_idx]    =   dp_rs_i.dec_inst[dp_idx];
                 end
@@ -262,7 +271,7 @@ module RS #(
         cp_sel_tag2 =   'b0;
         for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             for (int cp_idx = 0; cp_idx < C_IS_NUM; cp_idx++) begin
-                // Compare tag1 and thread_idx
+                // Compare tag2 and thread_idx
                 if ((cdb_i[cp_idx].valid == 1'b1) && 
                     (cdb_i[cp_idx].tag == rs_array[entry_idx].dec_inst.tag2) && 
                     (cdb_i[cp_idx].thread_idx == rs_array[entry_idx].dec_inst.thread_idx)) begin
@@ -316,10 +325,18 @@ module RS #(
         for (int entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             // If the COD is at the higher half, lowest index is of highest priority
             if (cod[C_RS_IDX_WIDTH-1]) begin
-                is_ready_priority[entry_idx]    =   is_ready[entry_idx];
+                is_ready_cod[entry_idx] =   is_ready[entry_idx];
             // If the COD is at the lower half, highest index is of highest priority
             end else begin
-                is_ready_priority[entry_idx]    =   is_ready[C_RS_ENTRY_NUM-1-entry_idx];
+                is_ready_cod[entry_idx] =   is_ready[C_RS_ENTRY_NUM-1-entry_idx];
+            end
+        end
+
+        for (int is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
+            if (cod[C_RS_IDX_WIDTH-1]) begin
+                is_entry_idx[is_idx]    =   is_entry_idx_cod[is_idx];
+            end else begin
+                is_entry_idx[is_idx]    =   C_RS_ENTRY_NUM - 1 - is_entry_idx_cod[is_idx];
             end
         end
     end
@@ -368,13 +385,16 @@ module RS #(
         for (int idx = 0; idx < C_RS_ENTRY_NUM; idx++) begin
             // Reset
             if (rst_i) begin
-                rs_array[idx]   <=  `SD 'b0;
+                rs_array[idx].valid     <=  `SD 1'b0;
+                rs_array[idx].dec_inst  <=  `SD 'b0;
             // Squash at External Exception
             end else if (exception_i) begin
-                rs_array[idx]   <=  `SD 'b0;
+                rs_array[idx].valid     <=  `SD 1'b0;
+                rs_array[idx].dec_inst  <=  `SD 'b0;
             // Squash at Branch Misprediction
             end else if (br_mis_i.valid[rs_array[idx].dec_inst.thread_idx]) begin
-                rs_array[idx]   <=  `SD 'b0;
+                rs_array[idx].valid     <=  `SD 1'b0;
+                rs_array[idx].dec_inst  <=  `SD 'b0;
             // Dispatch
             end else if (dp_sel[idx]) begin
                 rs_array[idx].valid     <=  `SD 1'b1;
@@ -391,7 +411,8 @@ module RS #(
                 end
             // Issue
             end else if (is_sel[idx]) begin
-                rs_array[idx]   <=  `SD 'b0;
+                rs_array[idx].valid     <=  `SD 'b0;
+                rs_array[idx].dec_inst  <=  `SD 'b0;
             end
         end
     end

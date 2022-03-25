@@ -49,13 +49,18 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 # SIMULATION CONFIG
 
 HEADERS     = $(wildcard *.svh)
-TESTBENCH   = $(wildcard testbench/*.sv)
-TESTBENCH  += $(wildcard testbench/*.c)
-# TESTBENCH	= testbench/RS_tb.sv
+# TESTBENCH   = $(wildcard testbench/*.sv)
+# TESTBENCH  += $(wildcard testbench/*.c)
+TESTBENCH	= testbench/RS_tb.sv
 # TESTBENCH	= testbench/test_tb.sv
-PIPEFILES   = $(wildcard verilog/*.sv)
-# PIPEFILES	= verilog/RS.sv verilog/COD.sv verilog/binary_encoder.sv verilog/pe_mult.sv verilog/pe.sv
+# TESTBENCH	= testbench/adder_tb.sv
+# TESTBENCH	= testbench/pe_mult_tb.sv
+# PIPEFILES   = $(wildcard verilog/*.sv)
+PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
+# PIPEFILES	= verilog/RS.sv verilog/COD.sv
+# PIPEFILES	= verilog/binary_encoder.sv verilog/pe_mult.sv verilog/pe.sv
 # PIPEFILES	= verilog/binary_encoder.sv
+# PIPEFILES	= verilog/adder.sv
 
 SIMFILES    = $(PIPEFILES)
 
@@ -65,17 +70,20 @@ SYNTH_DIR = ./synth
 export HEADERS
 export PIPEFILES
 
-export PIPELINE_NAME = pipeline
-# export PIPELINE_NAME = RS
+# export PIPELINE_NAME = pipeline
+export PIPELINE_NAME = RS
 # export PIPELINE_NAME = binary_encoder
+# export PIPELINE_NAME = adder
+# export PIPELINE_NAME = pe_mult
+
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
 # Passed through to .tcl scripts:
-export CLOCK_NET_NAME = clock
-export RESET_NET_NAME = reset
-export CLOCK_PERIOD   = 10	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_NET_NAME = clk_i
+export RESET_NET_NAME = rst_i
+export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################
