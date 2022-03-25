@@ -562,7 +562,6 @@ module FU (
     input   logic [C_STORE_NUM-1:0]             Dmem2proc_request_i,
     output  logic [C_STORE_NUM-1:0]             store_ready_o,
     output  logic [C_STORE_NUM-1:0]             store_valid_o,
-    output  logic [C_STORE_NUM-1:0][`XLEN-1:0]  store_result_o,
     output  logic [C_STORE_NUM-1:0][1:0]        proc2Dmem_command_o,
     output  MEM_SIZE [C_STORE_NUM-1:0]          proc2Dmem_size_o,
     output  logic [C_STORE_NUM-1:0][`XLEN-1:0]  proc2Dmem_addr_o,      // Address sent to data-memory
@@ -628,7 +627,6 @@ module FU (
 
         .store_ready_o(store_ready_o),
         .store_valid_o(store_valid_o),
-        .store_result_o(store_result_o),
         .proc2Dmem_command_o(proc2Dmem_command_o),
         .proc2Dmem_data_o(proc2Dmem_data_o),
         .proc2Dmem_size_o(proc2Dmem_size_o),
