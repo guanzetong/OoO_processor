@@ -67,7 +67,7 @@ module IB_channel #(
         .C_SIZE         (C_SIZE         ),
         .C_IN_NUM       (C_IN_NUM       ),
         .C_OUT_NUM      (C_OUT_NUM      )
-    ) IB_queue(
+    ) IB_queue_inst (
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
         .s_valid_i      (push_in_valid  ),
@@ -88,10 +88,10 @@ module IB_channel #(
     IB_pop_out_router #(
         .C_IN_NUM       (C_OUT_NUM      ),
         .C_OUT_NUM      (C_OUT_NUM      )
-    )(
-        .s_data_i       (pop_out_valid  ),
-        .s_valid_i      (pop_out_ready  ),
-        .s_ready_o      (pop_out_data   ),
+    ) IB_pop_out_router_inst (
+        .s_data_i       (pop_out_data   ),
+        .s_valid_i      (pop_out_valid  ),
+        .s_ready_o      (pop_out_ready  ),
         .fu_ib_i        (fu_ib_i        ),
         .ib_fu_o        (ib_fu_o        )
     );

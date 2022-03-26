@@ -30,7 +30,7 @@ module IB_push_in_router #(
 // Signal Declarations Start
 // ====================================================================
     logic   [C_IN_NUM-1:0]                          valid           ;
-    logic   [C_OUT_NUM-1:0][C_IN_IDX_WIDTH-1:0]     push_in_route   ;
+    logic   [C_OUT_NUM-1:0][C_IN_IDX_WIDTH:0]       push_in_route   ;
 // ====================================================================
 // Signal Declarations End
 // ====================================================================
@@ -69,12 +69,12 @@ module IB_push_in_router #(
     always_comb begin
         for (int in_idx = 0; in_idx < C_IN_NUM; in_idx++) begin
             case (C_FU_TYPE)
-                "ALU"   : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].alu;
-                "MULT"  : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].mult;
-                "BR"    : valid[in_idx]   =   rs_ib_i[in_idx].valid & (rs_ib_i[in_idx].cond_br | rs_ib_i[in_idx].uncond_br);
-                "LOAD"  : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].rd_mem;
-                "STORE" : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].wr_mem;
-                default : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].alu;
+                "ALU"   : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].is_inst.alu;
+                "MULT"  : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].is_inst.mult;
+                "BR"    : valid[in_idx]   =   rs_ib_i[in_idx].valid & (rs_ib_i[in_idx].is_inst.cond_br | rs_ib_i[in_idx].is_inst.uncond_br);
+                "LOAD"  : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].is_inst.rd_mem;
+                "STORE" : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].is_inst.wr_mem;
+                default : valid[in_idx]   =   rs_ib_i[in_idx].valid & rs_ib_i[in_idx].is_inst.alu;
             endcase
         end
     end

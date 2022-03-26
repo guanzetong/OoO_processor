@@ -12,7 +12,7 @@ module IB_pop_out_router #(
 ) (
     input   IS_INST [C_IN_NUM-1:0]      s_data_i        ,
     input   logic   [C_IN_NUM-1:0]      s_valid_i       ,
-    output  logic                       s_ready_o       ,
+    output  logic   [C_IN_NUM-1:0]      s_ready_o       ,
     input   FU_IB   [C_OUT_NUM-1:0]     fu_ib_i         ,
     output  IB_FU   [C_OUT_NUM-1:0]     ib_fu_o         
 );
@@ -29,7 +29,7 @@ module IB_pop_out_router #(
 // Signal Declarations Start
 // ====================================================================
     logic   [C_OUT_NUM-1:0]                         ready           ;
-    logic   [C_OUT_NUM-1:0][C_IN_IDX_WIDTH-1:0]     pop_out_route   ;
+    logic   [C_OUT_NUM-1:0][C_IN_IDX_WIDTH:0]       pop_out_route   ;
 // ====================================================================
 // Signal Declarations End
 // ====================================================================
@@ -42,13 +42,14 @@ module IB_pop_out_router #(
 // Pop-out Router logic defined in Function
 // --------------------------------------------------------------------
     function automatic logic [C_OUT_NUM-1:0][C_IN_IDX_WIDTH:0] route;
-        input   logic   [8-1:0]  ready_i;
+        input   logic   [C_IN_NUM-1:0]  valid_i ;
+        input   logic   [C_OUT_NUM-1:0] ready_i ;
         int     in_idx  ;
         begin
             in_idx =   0;
             route   =   0;
-            for (int out_idx = 0; out_idx < 8; out_idx++) begin
-                if (ready_i[out_idx]) begin
+            for (int out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
+                if (ready_i[out_idx] && valid_i[in_idx]) begin
                     route[out_idx][C_IN_IDX_WIDTH]      =   1'b1    ;
                     route[out_idx][C_IN_IDX_WIDTH-1:0]  =   in_idx  ;
                     in_idx++;
@@ -71,9 +72,9 @@ module IB_pop_out_router #(
 // --------------------------------------------------------------------
     always_comb begin
         ib_fu_o         =   'b0;
-        pop_out_route   =   route(ready);
+        pop_out_route   =   route(s_valid_i, ready);
         for (int out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
-            ib_fu_o[out_idx].is_inst    =   s_data_i[pop_out_route[out_idx][C_IN_IDX_WIDTH-1:0]].is_inst;
+            ib_fu_o[out_idx].is_inst    =   s_data_i[pop_out_route[out_idx][C_IN_IDX_WIDTH-1:0]];
             ib_fu_o[out_idx].valid      =   pop_out_route[out_idx][C_IN_IDX_WIDTH];
         end
     end

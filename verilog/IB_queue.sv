@@ -14,12 +14,12 @@ module IB_queue #(
 ) (
     input   logic                   clk_i           ,   // Clock
     input   logic                   rst_i           ,   // Reset
-    // Interface RS
+    // Push-In
     input   logic   [C_IN_NUM-1:0]  s_valid_i       ,   // Push-in Valid
     output  logic   [C_IN_NUM-1:0]  s_ready_o       ,   // Push-in Ready
     input   IS_INST [C_IN_NUM-1:0]  s_data_i        ,   // Push-in Data
-    // Interface FU
-    input   logic   [C_OUT_NUM-1:0] m_valid_o       ,   // Pop-out Valid
+    // Pop-Out
+    output  logic   [C_OUT_NUM-1:0] m_valid_o       ,   // Pop-out Valid
     input   logic   [C_OUT_NUM-1:0] m_ready_i       ,   // Pop-out Ready
     output  IS_INST [C_OUT_NUM-1:0] m_data_o        ,   // Pop-out Data
     // Flush
@@ -43,16 +43,16 @@ module IB_queue #(
     logic                                       head_rollover   ;
     logic                                       tail_rollover   ;
 
-    logic   [C_IDX_WIDTH:0]                     next_head       ;
-    logic   [C_IDX_WIDTH:0]                     next_tail       ;
+    logic   [C_IDX_WIDTH-1:0]                   next_head       ;
+    logic   [C_IDX_WIDTH-1:0]                   next_tail       ;
     logic   [C_IDX_WIDTH:0]                     push_in_num     ;
     logic   [C_IDX_WIDTH:0]                     pop_out_num     ;
 
     IS_INST [C_SIZE-1:0]                        queue           ;
     logic   [C_SIZE-1:0]                        valid           ;
 
-    logic   [C_IDX_WIDTH-1:0]                   data_num        ;
-    logic   [C_IDX_WIDTH-1:0]                   empty_num       ;
+    logic   [C_IDX_WIDTH:0]                     data_num        ;
+    logic   [C_IDX_WIDTH:0]                     empty_num       ;
 
     logic   [C_IN_NUM-1:0]                      push_in_en      ;
     logic   [C_SIZE-1:0]                        push_in_sel     ;
@@ -82,7 +82,7 @@ module IB_queue #(
     always_comb begin
         push_in_num =   0;
         for (int in_idx = 0; in_idx < C_IN_NUM; in_idx++) begin
-            if (push_in_en) begin
+            if (push_in_en[in_idx]) begin
                 push_in_num =   push_in_num + 'd1;
             end
         end
@@ -91,7 +91,7 @@ module IB_queue #(
     always_comb begin
         pop_out_num =   0;
         for (int out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
-            if (pop_out_en) begin
+            if (pop_out_en[out_idx]) begin
                 pop_out_num =   pop_out_num + 'd1;
             end
         end
@@ -220,11 +220,11 @@ module IB_queue #(
         for (int entry_idx = 0; entry_idx < C_SIZE; entry_idx++) begin
             // Reset
             if (rst_i) begin
-                valid[entry_idx]   <=  `SD 'b0;
+                valid[entry_idx]   <=  `SD 1'b0;
                 queue[entry_idx]   <=  `SD 'b0;
             // External Exception
             end else if (exception_i) begin
-                valid[entry_idx]   <=  `SD 'b0;
+                valid[entry_idx]   <=  `SD 1'b0;
                 queue[entry_idx]   <=  `SD 'b0;
             // Branch Misprediction of a thread -> Empty the entry
             end else if (br_mis_i.valid[queue[entry_idx].thread_idx]) begin
