@@ -51,14 +51,10 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 HEADERS     = $(wildcard *.svh)
 # TESTBENCH   = $(wildcard testbench/*.sv)
 # TESTBENCH  += $(wildcard testbench/*.c)
-<<<<<<< HEAD
 TESTBENCH	= testbench/RS_tb.sv
 # TESTBENCH	= testbench/test_tb.sv
 # TESTBENCH	= testbench/adder_tb.sv
 # TESTBENCH	= testbench/pe_mult_tb.sv
-=======
-TESTBENCH	= testbench/ROB_tb_2.sv
->>>>>>> ROB
 # PIPEFILES   = $(wildcard verilog/*.sv)
 PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
 # PIPEFILES	= verilog/RS.sv verilog/COD.sv
@@ -85,16 +81,9 @@ PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
 # Passed through to .tcl scripts:
-<<<<<<< HEAD
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
 export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
-=======
-# export CLOCK_NET_NAME = clock
-export CLOCK_NET_NAME = clk_i
-export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 10	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
->>>>>>> ROB
                                 #       and make this more aggressive
 
 ################################################################################
