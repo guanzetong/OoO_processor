@@ -61,11 +61,11 @@ class mon_item; // MON -> SCB
     logic                               br_result       ;
     logic   [`ROB_IDX_WIDTH-1:0]        expected_head   ;
     logic   [`ROB_IDX_WIDTH-1:0]        expected_tail   ;
-    logic                               br_flush        ;
+    logic                               br_mis          ;
 
     function void print (string msg_tag="");
-        $display("T=%0t %s %s arch_reg=%0d tag=%0d tag_old=%0d rob_idx=%0d br_result=%0b expected_head=%0d expected_tail=%0d br_flush=%0d",
-                $time, msg_tag, feature, arch_reg, tag, tag_old, rob_idx, br_result, expected_head, expected_tail, br_flush);
+        $display("T=%0t %s %s arch_reg=%0d tag=%0d tag_old=%0d rob_idx=%0d br_result=%0b expected_head=%0d expected_tail=%0d br_mis=%0d",
+                $time, msg_tag, feature, arch_reg, tag, tag_old, rob_idx, br_result, expected_head, expected_tail, br_mis);
     endfunction
 endclass
 
@@ -98,7 +98,7 @@ class driver;
 
             item.print("[Driver]");
 
-            if (vif.br_flush_o) begin
+            if (vif.br_mis_o) begin
                 squash_in_flight();
             end else begin
                 complete(item.cp_num, item.br_result, item.br_channel);  // Firstly, complete ROB entries
@@ -115,13 +115,14 @@ class driver;
                 vif.cdb_i[n].valid      =   0;
                 vif.cdb_i[n].rob_idx    =   0;
             end
+
+            vif.dp_rob_i.dp_num =   0;
             for (int n = 0; n < `DP_NUM; n++) begin
-                vif.dp_rob_i[n].dp_en       =   0;
-                vif.dp_rob_i[n].pc          =   0;
-                vif.dp_rob_i[n].arch_reg    =   0;
-                vif.dp_rob_i[n].tag         =   0;
-                vif.dp_rob_i[n].tag_old     =   0;
-                vif.dp_rob_i[n].br_predict  =   0;
+                vif.dp_rob_i.pc        [n]  =   0;
+                vif.dp_rob_i.rd        [n]  =   0;
+                vif.dp_rob_i.tag       [n]  =   0;
+                vif.dp_rob_i.tag_old   [n]  =   0;
+                vif.dp_rob_i.br_predict[n]  =   0;
             end
             ->drv_done;
         end
@@ -170,42 +171,34 @@ class driver;
     task dispatch(
         input   int     dp_num
     );
-        logic   [32-1:0]            rob_ready_concat    ;
-        logic   [32-1:0]            dp_en_concat        ;
-        int                         rob_ready_num       ;
+        int                         rob_avail_num       ;
         int                         dp_en_num           ;
-        int                         squash_msg_num      ;
 
         begin
-            // Read rob_ready in each dispatch channel
-            rob_ready_concat    =   32'b0;
-            for (int n = 0 ; n < `DP_NUM; n++) begin
-                rob_ready_concat[n] = vif.rob_dp_o[n].rob_ready;
-            end
-            // Generate the dp_en in each dispatch channel
-            rob_ready_num   =   thermometer_to_binary(rob_ready_concat);
-            dp_en_num       =   min_int(dp_num, rob_ready_num);
-            dp_en_concat    =   binary_to_thermometer(dp_en_num);
+            // Calculate the actural dispatch number
+            rob_avail_num   =   vif.rob_dp_o.avail_num;
+            dp_en_num       =   min_int(dp_num, rob_avail_num);
             $display("T=%0t [Driver] #available ROB=%0d, #requested dispatch=%0d, #actual dispatch=%0d",
-                    $time, rob_ready_num, dp_num, dp_en_num);
+                    $time, rob_avail_num, dp_num, dp_en_num);
+
+            vif.dp_rob_i.dp_num =   dp_en_num;
             for (int n = 0; n < `DP_NUM; n++) begin
-                vif.dp_rob_i[n].dp_en       =   dp_en_concat[n];
-                if (dp_en_concat[n]) begin
-                    vif.dp_rob_i[n].pc          =   $urandom;
-                    vif.dp_rob_i[n].arch_reg    =   $urandom % `ARCH_REG_NUM;
-                    vif.dp_rob_i[n].tag         =   $urandom % `PHY_REG_NUM;
-                    vif.dp_rob_i[n].tag_old     =   $urandom % `PHY_REG_NUM;
-                    vif.dp_rob_i[n].br_predict  =   0;
+                if (n < dp_en_num) begin
+                    vif.dp_rob_i.pc        [n]  =   $urandom;
+                    vif.dp_rob_i.rd        [n]  =   $urandom % `ARCH_REG_NUM;
+                    vif.dp_rob_i.tag       [n]  =   $urandom % `PHY_REG_NUM;
+                    vif.dp_rob_i.tag_old   [n]  =   $urandom % `PHY_REG_NUM;
+                    vif.dp_rob_i.br_predict[n]  =   0;
                     $display("T=%0t [Driver] Dispatch in channel%0d, PC=%0h, arch_reg= %0d, tag=%0d, tag_old=%0d, br_predict=%0b, rob_idx=%0d",
-                    $time, n, vif.dp_rob_i[n].pc, vif.dp_rob_i[n].arch_reg, vif.dp_rob_i[n].tag, 
-                    vif.dp_rob_i[n].tag_old, vif.dp_rob_i[n].br_predict, vif.rob_rs_o[n].rob_idx);
-                    in_flight_queue.push_back(vif.rob_rs_o[n].rob_idx);
+                    $time, n, vif.dp_rob_i.pc[n], vif.dp_rob_i.rd      [n], vif.dp_rob_i.tag[n], 
+                    vif.dp_rob_i.tag_old[n], vif.dp_rob_i.br_predict[n], vif.rob_dp_o.rob_idx[n]);
+                    in_flight_queue.push_back(vif.rob_dp_o.rob_idx[n]);
                 end else begin
-                    vif.dp_rob_i[n].pc          =   0;
-                    vif.dp_rob_i[n].arch_reg    =   0;
-                    vif.dp_rob_i[n].tag         =   0;
-                    vif.dp_rob_i[n].tag_old     =   0;
-                    vif.dp_rob_i[n].br_predict  =   0;
+                    vif.dp_rob_i.pc        [n]  =   0;
+                    vif.dp_rob_i.rd        [n]  =   0;
+                    vif.dp_rob_i.tag       [n]  =   0;
+                    vif.dp_rob_i.tag_old   [n]  =   0;
+                    vif.dp_rob_i.br_predict[n]  =   0;
                 end
             end
         end
@@ -252,10 +245,10 @@ class scoreboard;
 
             if (item.feature == "dispatch") begin
                 // Should not dispatch any instruction at branch misprediction
-                if (item.br_flush) begin
+                if (item.br_mis) begin
                     $display("T=%0t [Scoreboard] Dispatch & branch misprediction at the same time", $time);
-                    $display("T=%0t [Scoreboard] Error: dispatch & br_flush=%0b", 
-                            $time, item.br_flush);
+                    $display("T=%0t [Scoreboard] Error: dispatch & br_mis=%0b", 
+                            $time, item.br_mis);
                     exit_on_error();
                 end
                 // Check dispatched rob index
@@ -271,10 +264,10 @@ class scoreboard;
             // dispatch_queue and retire_queue
             if (item.feature == "retire") begin
                 // Should not retire any instruction at branch misprediction
-                if (item.br_flush) begin
+                if (item.br_mis) begin
                     $display("T=%0t [Scoreboard] Retire & branch misprediction at the same time", $time);
-                    $display("T=%0t [Scoreboard] Error: retire & br_flush=%0b", 
-                            $time, item.br_flush);
+                    $display("T=%0t [Scoreboard] Error: retire & br_mis=%0b", 
+                            $time, item.br_mis);
                     exit_on_error();
                 end
 
@@ -345,18 +338,22 @@ class monitor;
             @(posedge vif.clk_i);
             // Check dispatch channels
             for (int n = 0; n < `DP_NUM; n++) begin
-                if (vif.dp_rob_i[n].dp_en) begin
+                if (n < vif.dp_rob_i.dp_num) begin
                     mon_item item       =   new;
                     item.feature        =   "dispatch";
-                    item.arch_reg       =   vif.dp_rob_i[n].arch_reg;
-                    item.tag            =   vif.dp_rob_i[n].tag;
-                    item.tag_old        =   vif.dp_rob_i[n].tag_old;
-                    item.rob_idx        =   vif.rob_rs_o[n].rob_idx;
+                    item.arch_reg       =   vif.dp_rob_i.rd      [n];
+                    item.tag            =   vif.dp_rob_i.tag     [n];
+                    item.tag_old        =   vif.dp_rob_i.tag_old [n];
+                    item.rob_idx        =   vif.rob_dp_o.rob_idx [n];
                     item.br_result      =   0;
                     item.expected_head  =   expected_head;
                     item.expected_tail  =   expected_tail;
-                    item.br_flush       =   vif.br_flush_o;
-                    expected_tail       =   expected_tail + 1;  // Move tail pointer
+                    item.br_mis         =   vif.br_mis_o;
+                    if (expected_tail + 1 >= `ROB_ENTRY_NUM) begin
+                        expected_tail   =   expected_tail + 1 - `ROB_ENTRY_NUM;
+                    end else begin
+                        expected_tail   =   expected_tail + 1;  // Move tail pointer
+                    end
                     scb_mbx.put(item);
                     $display("T=%0t [Monitor] Dispatch detected in channel %0d",
                             $time, n);
@@ -374,7 +371,7 @@ class monitor;
                     item.br_result      =   vif.cdb_i[n].br_result;
                     item.expected_head  =   expected_head;
                     item.expected_tail  =   expected_tail;
-                    item.br_flush       =   vif.br_flush_o;
+                    item.br_mis       =   vif.br_mis_o;
                     scb_mbx.put(item);
                     $display("T=%0t [Monitor] Complete detected in channel %0d",
                             $time, n);
@@ -382,18 +379,22 @@ class monitor;
             end
             // Check retire channels
             for (int n = 0; n < `RT_NUM; n++) begin
-                if (vif.rob_amt_o[n].valid && vif.rob_fl_o[n].valid) begin
+                if (vif.rob_amt_o[n].wr_en && (n < vif.rob_fl_o.rt_num)) begin
                     mon_item item       =   new;
                     item.feature        =   "retire";
                     item.arch_reg       =   vif.rob_amt_o[n].arch_reg;
                     item.tag            =   vif.rob_amt_o[n].phy_reg;
-                    item.tag_old        =   vif.rob_fl_o[n].phy_reg;
+                    item.tag_old        =   vif.rob_fl_o.phy_reg[n];
                     item.rob_idx        =   0;
                     item.br_result      =   0;
                     item.expected_head  =   expected_head;
                     item.expected_tail  =   expected_tail;
-                    expected_head       =   expected_head + 1;
-                    item.br_flush       =   vif.br_flush_o; // Move head pointer
+                    if (expected_head + 1 >= `ROB_ENTRY_NUM) begin
+                        expected_head   =   expected_head + 1 - `ROB_ENTRY_NUM;
+                    end else begin
+                        expected_head   =   expected_head + 1;
+                    end
+                    item.br_mis       =   vif.br_mis_o; // Move head pointer
                     scb_mbx.put(item);
                     $display("T=%0t [Monitor] Retire detected in channel %0d",
                             $time, n);
@@ -401,7 +402,7 @@ class monitor;
             end
 
             // Check branch misprediction
-            if (vif.br_flush_o) begin
+            if (vif.br_mis_o) begin
                 mon_item item = new;
                 item.feature        =   "branch";
                 item.arch_reg       =   0;
@@ -410,7 +411,7 @@ class monitor;
                 item.rob_idx        =   0;
                 item.expected_head  =   expected_head;
                 item.expected_tail  =   expected_tail;
-                item.br_flush       =   vif.br_flush_o;
+                item.br_mis       =   vif.br_mis_o;
                 scb_mbx.put(item);
                 $display("T=%0t [Monitor] Branch misprediction detected",
                         $time);
@@ -520,14 +521,13 @@ endclass // test
 // ====================================================================
 interface ROB_if (input bit clk_i);
     logic                           rst_i       ;
-    ROB_DP  [`DP_NUM-1:0]           rob_dp_o    ;
-    DP_ROB  [`DP_NUM-1:0]           dp_rob_i    ;
-    ROB_RS  [`DP_NUM-1:0]           rob_rs_o    ;
+    ROB_DP                          rob_dp_o    ;
+    DP_ROB                          dp_rob_i    ;
     CDB     [`CDB_NUM-1:0]          cdb_i       ;
     ROB_AMT [`RT_NUM-1:0]           rob_amt_o   ;
-    ROB_FL  [`RT_NUM-1:0]           rob_fl_o    ;
+    ROB_FL                          rob_fl_o    ;
     logic                           exception_i ;
-    logic                           br_flush_o  ;
+    logic                           br_mis_o  ;
 endinterface // ROB_if
 // ====================================================================
 // Interface End
@@ -571,12 +571,11 @@ module ROB_tb;
         .rst_i          (_if.rst_i          ),
         .rob_dp_o       (_if.rob_dp_o       ),
         .dp_rob_i       (_if.dp_rob_i       ),
-        .rob_rs_o       (_if.rob_rs_o       ),
         .cdb_i          (_if.cdb_i          ),
         .rob_amt_o      (_if.rob_amt_o      ),
         .rob_fl_o       (_if.rob_fl_o       ),
         .exception_i    (_if.exception_i    ),
-        .br_flush_o     (_if.br_flush_o     )
+        .br_mis_o       (_if.br_mis_o       )
     );
 // --------------------------------------------------------------------
 
