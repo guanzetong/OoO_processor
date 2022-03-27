@@ -51,10 +51,14 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 HEADERS     = $(wildcard *.svh)
 # TESTBENCH   = $(wildcard testbench/*.sv)
 # TESTBENCH  += $(wildcard testbench/*.c)
+<<<<<<< HEAD
 TESTBENCH	= testbench/RS_tb.sv
 # TESTBENCH	= testbench/test_tb.sv
 # TESTBENCH	= testbench/adder_tb.sv
 # TESTBENCH	= testbench/pe_mult_tb.sv
+=======
+TESTBENCH	= testbench/ROB_tb_2.sv
+>>>>>>> ROB
 # PIPEFILES   = $(wildcard verilog/*.sv)
 PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
 # PIPEFILES	= verilog/RS.sv verilog/COD.sv
@@ -81,9 +85,16 @@ PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
 # Passed through to .tcl scripts:
+<<<<<<< HEAD
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
 export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+=======
+# export CLOCK_NET_NAME = clock
+export CLOCK_NET_NAME = clk_i
+export RESET_NET_NAME = rst_i
+export CLOCK_PERIOD   = 10	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+>>>>>>> ROB
                                 #       and make this more aggressive
 
 ################################################################################
@@ -99,10 +110,10 @@ all:    simv
 # Simulation:
 
 sim:	simv
-	./simv | tee sim_program.out
+	./simv -cm line+tgl | tee sim_program.out
 
 simv:	$(HEADERS) $(SIMFILES) $(TESTBENCH)
-	$(VCS) $^ -o simv
+	$(VCS) $^ -o simv -cm line+tgl
 
 .PHONY: sim
 
@@ -168,6 +179,9 @@ clean:
 nuke:	clean
 	rm -rf synth/*.vg synth/*.rep synth/*.ddc synth/*.chk synth/*.log synth/*.syn
 	rm -rf synth/*.out command.log synth/*.db synth/*.svf synth/*.mr synth/*.pvl
+	rm -rf simv.vdb
+	rm -rf cm.log
+	rm -rf urgReport
 
 Robin:
 	git config user.name "xiongrob"
