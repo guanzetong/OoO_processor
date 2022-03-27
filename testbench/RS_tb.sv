@@ -97,6 +97,9 @@ class driver;
             $display("T=%0t [Driver] IB status: ALU=%0b, MULT=%0b, BR=%0b, LOAD=%0b, STORE=%0b",
                     $time, vif.ib_rs_i.ALU_ready, vif.ib_rs_i.MULT_ready, vif.ib_rs_i.BR_ready, 
                     vif.ib_rs_i.LOAD_ready, vif.ib_rs_i.STORE_ready);
+            #1; // Let the simulator proceed and calculate the number of issue inside the RS
+                // So that the actual number of dispatch will be correct.
+                // Otherwise, the dispatch() task might dispatch incorrect number of instructions
             // Set DP, CDB, PRF interface
             retire();
             complete(item.cp_num);
@@ -327,12 +330,14 @@ class scoreboard;
 
             if (item.feature == "complete") begin
                 for (int i = 0; i < dp_queue.size(); i++) begin
-                    if (item.cdb.tag == dp_queue[i].dp_inst.tag1) begin
+                    if (item.cdb.tag == dp_queue[i].dp_inst.tag1
+                    && dp_queue[i].is_channel == 0) begin
                         dp_queue[i].dp_inst.tag1_ready  =   1'b1;
                         $display("T=%0t [Scoreboard] tag1 is ready at PC=%0d",
                         $time, dp_queue[i].dp_inst.pc);
                     end
-                    if (item.cdb.tag == dp_queue[i].dp_inst.tag2) begin
+                    if (item.cdb.tag == dp_queue[i].dp_inst.tag2
+                    && dp_queue[i].is_channel == 0) begin
                         dp_queue[i].dp_inst.tag2_ready  =   1'b1;
                         $display("T=%0t [Scoreboard] tag2 is ready at PC=%0d",
                         $time, dp_queue[i].dp_inst.pc);
@@ -366,6 +371,7 @@ class scoreboard;
                             dp_queue[match_idx].dp_inst.tag2, dp_queue[match_idx].dp_inst.tag2_ready);
                     exit_on_error();
                 end
+                dp_queue[match_idx].is_channel  =   1;
             end
         end
     endtask

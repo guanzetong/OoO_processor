@@ -332,7 +332,7 @@ module RS #(
         end
 
         for (int unsigned is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
-            if (cod[C_RS_IDX_WIDTH-1]) begin
+            if (cod >= (C_RS_ENTRY_NUM >> 1)) begin
                 is_entry_idx[is_idx]    =   is_entry_idx_cod[is_idx];
             end else begin
                 is_entry_idx[is_idx]    =   C_RS_ENTRY_NUM - 1 - is_entry_idx_cod[is_idx];
