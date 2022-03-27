@@ -58,6 +58,14 @@ class driver;
 
             item.print("[Driver]");
 
+            // Set FU_IB insterface
+            vif.fu_ib_i =   item.FU_ready   ;
+
+            #1; // Let the Simulator proceed and calculate the number of available entries inside IB
+                // Otherwise the following codes won't generate the correct number of push-in
+                // This is only for the testbench to behave correctly, and does not affect the
+                // correctness of IB.
+
             // Set RS_IB interface
             for (int is_idx = 0; is_idx < `IS_NUM; is_idx++) begin
                 if (is_idx < item.inst_num) begin
@@ -119,8 +127,7 @@ class driver;
                 end
             end
 
-            // Set FU_IB insterface
-            vif.fu_ib_i =   item.FU_ready   ;
+
 
             @(negedge vif.clk_i);
             vif.rs_ib_i     =   0;
