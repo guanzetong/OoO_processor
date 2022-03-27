@@ -317,6 +317,7 @@ typedef struct packed {
 // Architecture Parameters
 // 
 //////////////////////////////////////////////
+`define IF_NUM          2
 `define DP_NUM          2   // The number of Dispatch channels.
 `define IS_NUM          2   // The number of Issue channels.
 `define CDB_NUM         2   // The number of CDB/Complete channels.
@@ -406,6 +407,8 @@ typedef struct packed {
     logic                               halt        ;
     logic                               illegal     ;
     logic                               csr_op      ;
+    logic                               alu         ;
+    logic                               mult        ;
 } IS_INST;
 
 typedef struct packed {

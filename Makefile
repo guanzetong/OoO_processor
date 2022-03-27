@@ -51,16 +51,14 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 HEADERS     = $(wildcard *.svh)
 # TESTBENCH   = $(wildcard testbench/*.sv)
 # TESTBENCH  += $(wildcard testbench/*.c)
-TESTBENCH	= testbench/RS_tb.sv
+# TESTBENCH	= testbench/RS_tb.sv
 # TESTBENCH	= testbench/test_tb.sv
 # TESTBENCH	= testbench/adder_tb.sv
 # TESTBENCH	= testbench/pe_mult_tb.sv
+TESTBENCH	= testbench/IB_tb.sv
 # PIPEFILES   = $(wildcard verilog/*.sv)
-PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
-# PIPEFILES	= verilog/RS.sv verilog/COD.sv
-# PIPEFILES	= verilog/binary_encoder.sv verilog/pe_mult.sv verilog/pe.sv
-# PIPEFILES	= verilog/binary_encoder.sv
-# PIPEFILES	= verilog/adder.sv
+# PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
+PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
 
 SIMFILES    = $(PIPEFILES)
 
@@ -71,10 +69,11 @@ export HEADERS
 export PIPEFILES
 
 # export PIPELINE_NAME = pipeline
-export PIPELINE_NAME = RS
+# export PIPELINE_NAME = RS
 # export PIPELINE_NAME = binary_encoder
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
+export PIPELINE_NAME = IB
 
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 

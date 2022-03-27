@@ -60,7 +60,7 @@ module IB #(
 // Description  :   Queue to store the ALU operations
 // --------------------------------------------------------------------
     IB_channel #(
-        .C_SIZE         (ALU_Q_SIZE     ),
+        .C_SIZE         (C_ALU_Q_SIZE   ),
         .C_IN_NUM       (C_IS_NUM       ),
         .C_OUT_NUM      (C_ALU_NUM      ),
         .C_FU_TYPE      ("ALU"          )
@@ -81,7 +81,7 @@ module IB #(
 // Description  :   Queue to store the MULT operations
 // --------------------------------------------------------------------
     IB_channel #(
-        .C_SIZE         (MULT_Q_SIZE    ),
+        .C_SIZE         (C_MULT_Q_SIZE  ),
         .C_IN_NUM       (C_IS_NUM       ),
         .C_OUT_NUM      (C_MULT_NUM     ),
         .C_FU_TYPE      ("MULT"         )
@@ -102,7 +102,7 @@ module IB #(
 // Description  :   Queue to store the BR operations
 // --------------------------------------------------------------------
     IB_channel #(
-        .C_SIZE         (BR_Q_SIZE      ),
+        .C_SIZE         (C_BR_Q_SIZE    ),
         .C_IN_NUM       (C_IS_NUM       ),
         .C_OUT_NUM      (C_BR_NUM       ),
         .C_FU_TYPE      ("BR"           )
@@ -123,7 +123,7 @@ module IB #(
 // Description  :   Queue to store the LOAD operations
 // --------------------------------------------------------------------
     IB_channel #(
-        .C_SIZE         (LOAD_Q_SIZE    ),
+        .C_SIZE         (C_LOAD_Q_SIZE  ),
         .C_IN_NUM       (C_IS_NUM       ),
         .C_OUT_NUM      (C_LOAD_NUM     ),
         .C_FU_TYPE      ("LOAD"         )
@@ -144,7 +144,7 @@ module IB #(
 // Description  :   Queue to store the STORE operations
 // --------------------------------------------------------------------
     IB_channel #(
-        .C_SIZE         (STORE_Q_SIZE   ),
+        .C_SIZE         (C_STORE_Q_SIZE ),
         .C_IN_NUM       (C_IS_NUM       ),
         .C_OUT_NUM      (C_STORE_NUM    ),
         .C_FU_TYPE      ("STORE"        )
