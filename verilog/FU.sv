@@ -55,7 +55,7 @@ module alu(
     input logic              clk_i,
     input logic              alu_start_i,
     input logic              alu_reset_i,
-    input FU_PACKET          fu_packet_i,
+    input IS_INST          fu_packet_i,
 
     output logic             alu_ready_o,
     output logic             alu_valid_o,
@@ -66,7 +66,7 @@ module alu(
     logic [`C_COUNTER_LEN-1:0] counter;
     logic [`XLEN-1:0]          opa_mux_out, opb_mux_out;
     logic                      brcond_result;
-    FU_PACKET                  fu_packet;
+    IS_INST                  fu_packet;
     //
     // ALU opA mux
     //
@@ -74,8 +74,8 @@ module alu(
         opa_mux_out = `XLEN'hdeadfbac;
         case (fu_packet.opa_select)
             OPA_IS_RS1:  opa_mux_out = fu_packet.rs1_value;
-            OPA_IS_NPC:  opa_mux_out = fu_packet.NPC;
-            OPA_IS_PC:   opa_mux_out = fu_packet.PC;
+            OPA_IS_NPC:  opa_mux_out = fu_packet.npc;
+            OPA_IS_PC:   opa_mux_out = fu_packet.pc;
             OPA_IS_ZERO: opa_mux_out = 0;
         endcase
     end
@@ -172,7 +172,7 @@ module mult(
     input logic              clk_i,
     input logic              mult_start_i,
     input logic              mult_reset_i,
-    input FU_PACKET          fu_packet_i,
+    input IS_INST          fu_packet_i,
 
     output logic             mult_ready_o,
     output logic             mult_valid_o,
@@ -183,7 +183,7 @@ module mult(
     logic [`C_COUNTER_LEN-1:0] counter;
     logic [`XLEN-1:0]          opa_mux_out, opb_mux_out;
     logic                      brcond_result;
-    FU_PACKET                  fu_packet;
+    IS_INST                  fu_packet;
     //
     // MULT opA mux
     //
@@ -191,8 +191,8 @@ module mult(
         opa_mux_out = `XLEN'hdeadfbac;
         case (fu_packet.opa_select)
             OPA_IS_RS1:  opa_mux_out = fu_packet.rs1_value;
-            OPA_IS_NPC:  opa_mux_out = fu_packet.NPC;
-            OPA_IS_PC:   opa_mux_out = fu_packet.PC;
+            OPA_IS_NPC:  opa_mux_out = fu_packet.npc;
+            OPA_IS_PC:   opa_mux_out = fu_packet.pc;
             OPA_IS_ZERO: opa_mux_out = 0;
         endcase
     end
@@ -284,7 +284,7 @@ module branch(
     input logic              clk_i,
     input logic              branch_start_i,
     input logic              branch_reset_i,
-    input FU_PACKET          fu_packet_i,
+    input IS_INST          fu_packet_i,
 
     output logic             branch_ready_o,
     output logic             branch_valid_o,
@@ -298,7 +298,7 @@ module branch(
     logic [`C_COUNTER_LEN-1:0] counter;
     logic [`XLEN-1:0]          opa_mux_out, opb_mux_out;
     logic                      brcond_result;
-    FU_PACKET                  fu_packet;
+    IS_INST                  fu_packet;
     //
     // ALU opA mux
     //
@@ -306,8 +306,8 @@ module branch(
         opa_mux_out = `XLEN'hdeadfbac;
         case (fu_packet.opa_select)
             OPA_IS_RS1:  opa_mux_out = fu_packet.rs1_value;
-            OPA_IS_NPC:  opa_mux_out = fu_packet.NPC;
-            OPA_IS_PC:   opa_mux_out = fu_packet.PC;
+            OPA_IS_NPC:  opa_mux_out = fu_packet.npc;
+            OPA_IS_PC:   opa_mux_out = fu_packet.pc;
             OPA_IS_ZERO: opa_mux_out = 0;
         endcase
     end
@@ -382,7 +382,7 @@ module load(
     input logic              clk_i,
     input logic              load_start_i,
     input logic              load_reset_i,
-    input FU_PACKET          fu_packet_i,
+    input IS_INST          fu_packet_i,
     input  [`XLEN-1:0]       Dmem2proc_data_i,
     input                    Dmem2proc_request_i,
     output logic             load_ready_o,
@@ -395,7 +395,7 @@ module load(
 );
     logic [`XLEN-1:0]        load_result;
     logic                    load_started;
-    FU_PACKET                fu_packet;
+    IS_INST                fu_packet;
     logic                    alu_ready;
 
     // Determine the command that must be sent to mem
@@ -458,7 +458,7 @@ module store(
     input logic              clk_i,
     input logic              store_start_i,
     input logic              store_reset_i,
-    input FU_PACKET          fu_packet_i,
+    input IS_INST          fu_packet_i,
     output logic             store_ready_o,
     output logic             store_valid_o,
     output logic [1:0]       proc2Dmem_command_o,
@@ -468,7 +468,7 @@ module store(
     output logic             proc2Dmem_request_o
 );
     logic                    store_started;
-    FU_PACKET                fu_packet;
+    IS_INST                fu_packet;
     logic                    alu_ready;
     // Determine the command that must be sent to mem
     assign proc2Dmem_command =
@@ -522,21 +522,21 @@ module FU (
     input   logic                            rst_i               ,   // Reset
     input   logic [C_ALU_NUM-1:0]            alu_start_i,
     input   logic [C_ALU_NUM-1:0]            alu_reset_i,
-    input   FU_PACKET [C_ALU_NUM-1:0]        alu_fu_packet_i,
+    input   IS_INST [C_ALU_NUM-1:0]        alu_fu_packet_i,
     output  logic [C_ALU_NUM-1:0]            alu_ready_o,
     output  logic [C_ALU_NUM-1:0]            alu_valid_o,
     output  logic [C_ALU_NUM-1:0][`XLEN-1:0] alu_result_o,
 
     input   logic [C_MULT_NUM-1:0]            mult_start_i,
     input   logic [C_MULT_NUM-1:0]            mult_reset_i,
-    input   FU_PACKET [C_MULT_NUM-1:0]        mult_fu_packet_i,
+    input   IS_INST [C_MULT_NUM-1:0]        mult_fu_packet_i,
     output  logic [C_MULT_NUM-1:0]            mult_ready_o,
     output  logic [C_MULT_NUM-1:0]            mult_valid_o,
     output  logic [C_MULT_NUM-1:0][`XLEN-1:0] mult_result_o,
 
     input   logic [C_BRANCH_NUM-1:0]            branch_start_i,
     input   logic [C_BRANCH_NUM-1:0]            branch_reset_i,
-    input   FU_PACKET [C_BRANCH_NUM-1:0]        branch_fu_packet_i,
+    input   IS_INST [C_BRANCH_NUM-1:0]        branch_fu_packet_i,
     output  logic [C_BRANCH_NUM-1:0]            branch_ready_o,
     output  logic [C_BRANCH_NUM-1:0]            branch_valid_o,
     output  logic [C_BRANCH_NUM-1:0][`XLEN-1:0] branch_result_o,
@@ -544,7 +544,7 @@ module FU (
 
     input   logic [C_LOAD_NUM-1:0]             load_start_i,
     input   logic [C_LOAD_NUM-1:0]             load_reset_i,
-    input   FU_PACKET [C_LOAD_NUM-1:0]         load_fu_packet_i,
+    input   IS_INST [C_LOAD_NUM-1:0]         load_fu_packet_i,
     input   logic [C_LOAD_NUM-1:0][`XLEN-1:0]  Dmem2proc_data_i,
     input   logic [C_LOAD_NUM-1:0]             Dmem2proc_request_i,
     output  logic [C_LOAD_NUM-1:0]             load_ready_o,
@@ -557,7 +557,7 @@ module FU (
 
     input   logic [C_STORE_NUM-1:0]             store_start_i,
     input   logic [C_STORE_NUM-1:0]             store_reset_i,
-    input   FU_PACKET [C_STORE_NUM-1:0]         store_fu_packet_i,
+    input   IS_INST [C_STORE_NUM-1:0]         store_fu_packet_i,
     input   logic [C_STORE_NUM-1:0][`XLEN-1:0]  Dmem2proc_data_i,
     input   logic [C_STORE_NUM-1:0]             Dmem2proc_request_i,
     output  logic [C_STORE_NUM-1:0]             store_ready_o,

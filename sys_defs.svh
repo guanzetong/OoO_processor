@@ -32,7 +32,7 @@
 
 //you can change the clock period to whatever, 10 is just fine
 `define VERILOG_CLOCK_PERIOD   10.0
-`define SYNTH_CLOCK_PERIOD     10.0 // Clock period for synth and memory latency
+`define SYNTH_CLOCK_PERIOD     20.0 // Clock period for synth and memory latency
 
 `define MEM_LATENCY_IN_CYCLES (100.0/`SYNTH_CLOCK_PERIOD+0.49999)
 // the 0.49999 is to force ceiling(100/period).  The default behavior for
@@ -262,12 +262,11 @@ typedef union packed {
 //////////////////////////////////////////////
 
 typedef struct packed {
-	logic 								  valid		; // If low, the data in this struct is garbage
-    INST       							  inst		; // fetched instruction out
-	logic [`XLEN-1:0] 					  NPC		; // PC + 4
-	logic [`XLEN-1:0]   				  PC		; // PC 
-	logic [`THREAD_IDX_WIDTH-1:0]         thread_idx;
-} IF_DP_PACKET;
+	logic valid; // If low, the data in this struct is garbage
+    INST  inst;  // fetched instruction out
+	logic [`XLEN-1:0] NPC; // PC + 4
+	logic [`XLEN-1:0] PC;  // PC 
+} IF_ID_PACKET;
 
 //////////////////////////////////////////////
 //
@@ -297,7 +296,7 @@ typedef struct packed {
 	logic       illegal;       // is this instruction illegal?
 	logic       csr_op;        // is this a CSR operation? (we only used this as a cheap way to get return code)
 	logic       valid;         // is inst a valid instruction to be counted for CPI calculations?
-} FU_PACKET;
+} ID_EX_PACKET;
 
 typedef struct packed {
 	logic [`XLEN-1:0] alu_result; // alu_result
@@ -318,6 +317,7 @@ typedef struct packed {
 // Architecture Parameters
 // 
 //////////////////////////////////////////////
+`define IF_NUM          2
 `define DP_NUM          2   // The number of Dispatch channels.
 `define IS_NUM          2   // The number of Issue channels.
 `define CDB_NUM         2   // The number of CDB/Complete channels.
@@ -326,7 +326,6 @@ typedef struct packed {
 `define RS_ENTRY_NUM    32	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
 `define PHY_REG_NUM     64  // The number of Physical registers.
-`define BR_NUM          1   // The number of Branch Resolvers.
 `define THREAD_NUM      2
 
 `define ALU_NUM         3
@@ -336,6 +335,11 @@ typedef struct packed {
 `define STORE_NUM       1
 `define FU_NUM          `ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM
 
+`define ALU_Q_SIZE      8
+`define MULT_Q_SIZE     8
+`define BR_Q_SIZE       8
+`define LOAD_Q_SIZE     8
+`define STORE_Q_SIZE    8
 //////////////////////////////////////////////
 // 
 // Interfaces between modules
@@ -345,10 +349,11 @@ typedef struct packed {
 `define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
 `define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
 `define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
+`define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
 `define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
 
-`define DP_NUM_WIDTH        $clog2(`DP_NUM)+1
-`define RT_NUM_WIDTH        $clog2(`RT_NUM)+1
+`define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
+`define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
 
 // Array Entry Contents Start
 
@@ -362,7 +367,7 @@ typedef struct packed {
 
 typedef struct packed {
     logic   [`XLEN-1:0]                 pc          ;
-    logic   [`XLEN-1:0]                 inst        ;
+    INST                                inst        ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag1        ;
     logic                               tag1_ready  ;
@@ -380,18 +385,32 @@ typedef struct packed {
     logic                               halt        ;
     logic                               illegal     ;
     logic                               csr_op      ;
+    logic                               alu         ;
+    logic                               mult        ;
 } DEC_INST;
 
-// This specifies a queue of instructions that are exposed
-// by the interface as well as the number of the instructions that
-// are available. This will allow for the dispatcher to look at the 
-// inst_queued and realize which instructions are available 
-// (e.g. if inst_avail == 2), inst_queued[0]  and inst_queued[1]
-// are valid instructions (that can be dispatched).
 typedef struct packed {
-	logic   [`DP_NUM-1:0]				inst_queued ;
-	logic 	[`DP_NUM_WIDTH-1:0]			inst_avail  ;
-} FET_DP;
+    logic   [`XLEN-1:0]                 npc          ;
+    logic   [`XLEN-1:0]                 pc          ;
+    INST                                inst        ;
+    logic   [`XLEN-1:0]                 rs1_value   ;
+    logic   [`XLEN-1:0]                 rs2_value   ;
+    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
+    logic   [`THREAD_IDX_WIDTH-1:0]     thread_idx  ;
+    logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;
+    ALU_OPA_SELECT                      opa_select  ;
+    ALU_OPB_SELECT                      opb_select  ;
+    ALU_FUNC                            alu_func    ;
+    logic                               rd_mem      ;
+    logic                               wr_mem      ;
+    logic                               cond_br     ;
+    logic                               uncond_br   ;
+    logic                               halt        ;
+    logic                               illegal     ;
+    logic                               csr_op      ;
+    logic                               alu         ;
+    logic                               mult        ;
+} IS_INST;
 
 typedef struct packed {
     logic                               valid       ;
@@ -407,7 +426,7 @@ typedef struct packed {
 
 typedef struct packed {
     logic                               ready       ;
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]           ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
     logic   [`TAG_IDX_WIDTH-1:0]        phy_reg     ;
 } MT_ENTRY;
 
@@ -483,6 +502,7 @@ typedef struct packed {
     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rd          ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
     logic                                           wr_en       ;
+    logic                                           thread_idx  ;
 } DP_MT; // Per-Channel
 
 typedef struct packed {
@@ -544,20 +564,26 @@ typedef struct packed {
 
 typedef struct packed {
     logic                                           valid       ;
-    logic   [`XLEN-1:0]                             pc          ;
-    INST                                            inst        ;
-    logic   [`XLEN-1:0]                             rs1_value   ;
-    logic   [`XLEN-1:0]                             rs2_value   ;
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-    logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
-    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
-    ALU_OPA_SELECT                                  opa_select  ;
-    ALU_OPB_SELECT                                  opb_select  ;
-    ALU_FUNC                                        alu_func    ;
+    IS_INST                                         is_inst     ;
+    // logic   [`XLEN-1:0]                             pc          ;
+    // INST                                            inst        ;
+    // logic   [`XLEN-1:0]                             rs1_value   ;
+    // logic   [`XLEN-1:0]                             rs2_value   ;
+    // logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    // logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
+    // logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
+    // ALU_OPA_SELECT                                  opa_select  ;
+    // ALU_OPB_SELECT                                  opb_select  ;
+    // ALU_FUNC                                        alu_func    ;
 } RS_IB; // Per-Channel
 
 typedef struct packed {
-    logic   [`FU_NUM-1:0]                           ready       ;
+    // logic   [`FU_NUM-1:0]                           ready       ;
+    logic                                           ALU_ready   ;
+    logic                                           MULT_ready  ;
+    logic                                           BR_ready    ;
+    logic                                           LOAD_ready  ;
+    logic                                           STORE_ready ;
 } IB_RS; // Combined
 
 typedef struct packed {
@@ -572,16 +598,17 @@ typedef struct packed {
 
 typedef struct packed {
     logic                                           valid       ;
-    logic   [`XLEN-1:0]                             pc          ;
-    INST                                            inst        ;
-    logic   [`XLEN-1:0]                             rs1_value   ;
-    logic   [`XLEN-1:0]                             rs2_value   ;
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-    logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
-    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
-    ALU_OPA_SELECT                                  opa_select  ;
-    ALU_OPB_SELECT                                  opb_select  ;
-    ALU_FUNC                                        alu_func    ;
+    IS_INST                                         is_inst     ;
+    // logic   [`XLEN-1:0]                             pc          ;
+    // INST                                            inst        ;
+    // logic   [`XLEN-1:0]                             rs1_value   ;
+    // logic   [`XLEN-1:0]                             rs2_value   ;
+    // logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    // logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
+    // logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
+    // ALU_OPA_SELECT                                  opa_select  ;
+    // ALU_OPB_SELECT                                  opb_select  ;
+    // ALU_FUNC                                        alu_func    ;
 } IB_FU; // Per-Channel
 
 typedef struct packed {
