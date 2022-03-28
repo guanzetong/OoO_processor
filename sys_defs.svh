@@ -262,11 +262,12 @@ typedef union packed {
 //////////////////////////////////////////////
 
 typedef struct packed {
-	logic valid; // If low, the data in this struct is garbage
-    INST  inst;  // fetched instruction out
-	logic [`XLEN-1:0] NPC; // PC + 4
-	logic [`XLEN-1:0] PC;  // PC 
-} IF_ID_PACKET;
+	logic 								  valid		; // If low, the data in this struct is garbage
+    INST       							  inst		; // fetched instruction out
+	logic [`XLEN-1:0] 					  NPC		; // PC + 4
+	logic [`XLEN-1:0]   				  PC		; // PC 
+	logic [`THREAD_IDX_WIDTH-1:0]         thread_idx;
+} IF_DP_PACKET;
 
 //////////////////////////////////////////////
 //
@@ -296,7 +297,7 @@ typedef struct packed {
 	logic       illegal;       // is this instruction illegal?
 	logic       csr_op;        // is this a CSR operation? (we only used this as a cheap way to get return code)
 	logic       valid;         // is inst a valid instruction to be counted for CPI calculations?
-} ID_EX_PACKET;
+} FU_PACKET;
 
 typedef struct packed {
 	logic [`XLEN-1:0] alu_result; // alu_result
