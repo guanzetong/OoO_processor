@@ -13,7 +13,7 @@
 #
 #
 
-SOURCE = test_progs/sampler.s
+SOURCE = test_progs/mult_no_lsq.s
 
 CRT = crt.s
 LINKERS = linker.lds

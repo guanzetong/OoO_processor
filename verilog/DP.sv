@@ -579,7 +579,7 @@ endmodule // decoder
 // //
 // typedef enum logic [1:0] {
 // 	RS2_USED  = 2'h0,
-// 	RS2_USED  = 2'h1
+// 	RS2_NONE  = 2'h1
 // } RS2_SEL;
 
 

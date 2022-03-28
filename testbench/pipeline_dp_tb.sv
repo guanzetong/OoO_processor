@@ -2,7 +2,13 @@
 // Transaction Object Start
 // ====================================================================
 class gen_item; // GEN -> DRV
-    
+    rand int    dp_num  ;   // # Dispatch
+    rand int    cp_num  ;   // # Complete
+
+    function void print (string msg_tag="");
+        $display("T=%0t %s Generator requests #Dispatch=%0d, #Complete=%0d",
+                $time, msg_tag, dp_num, cp_num);
+    endfunction // print
 endclass // gen_item
 // ====================================================================
 // Transaction Object End
@@ -11,7 +17,54 @@ endclass // gen_item
 // ====================================================================
 // Driver Start
 // ====================================================================
+class driver;
+    virtual pipeline_dp_if      vif         ;
+    mailbox                     drv_mbx     ;
+    event                       drv_done    ;
+    int                         pc          ;
+    logic   [][64-1:0]          program_mem ;
 
+    int                         inst_type   ;   // 0: R, 1: I, 2: S, 
+
+    task run();
+        $display("T=%0t [Driver] starting ...", $time);
+
+        pc  =   0;
+        @(negedge vif.clk_i);
+
+        forever begin
+            gen_item    item    ;
+            
+            $display("T=%0t [Driver] waiting for item from Generator ...", $time);
+            drv_mbx.get(item);
+
+            item.print("[Driver]");
+
+            // Dispatch
+            dispatch(item.dp_num);
+
+        end
+    endtask //
+
+    task init();
+        $display("T=%0t [Driver] Reading program.mem", $time);
+
+    endtask
+
+    task dispatch(int dp_num);
+        begin
+            vif.fiq_dp.avail_num =   dp_num;
+            for (int dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
+                vif.fiq_dp.thread_idx[dp_idx]   =   0;
+                vif.fiq_dp.br_predict[dp_idx]   =   0;
+                vif.fiq_dp.pc[dp_idx]           =   pc + dp_idx * 4;
+
+                inst_type   =   $urandom % 4;
+            end
+
+        end
+    endtask
+endclass //
 // ====================================================================
 // Driver End
 // ====================================================================
@@ -46,6 +99,7 @@ class generator;
             item.randomize();
             $display("T=%0t [Generator] Loop:%0d/%0d create next item",
                     $time, i+1, num);
+            item.print("[Generator]");
             drv_mbx.put(item);
             @(drv_done);
         end
@@ -70,7 +124,7 @@ class env;
     mailbox         scb_mbx     ;   // Connect monitor    <-> scoreboard
     event           drv_done    ;   // Indicates when driver is done
 
-    virtual ROB_if  vif         ;   // Virtual interface handle
+    virtual pipeline_dp_if  vif ;   // Virtual interface handle
 
     function new();
         d0          =   new         ;
@@ -146,7 +200,7 @@ endinterface // pipeline_dp_if
 // ====================================================================
 // Testbench Start
 // ====================================================================
-module ROB_tb;
+module pipeline_dp_tb;
 
 // --------------------------------------------------------------------
 // Local Parameters
@@ -179,16 +233,16 @@ module ROB_tb;
     pipeline_dp dut (
         .clk_i          (    clk_i          ),
         .rst_i          (_if.rst_i          ),
-        .fiq_dp         (_if.fiq_dp         ),
+        .fiq_dp         (_if.fiq_dp         ),  // input
         .dp_fiq         (_if.dp_fiq         ),
-        .cdb            (_if.cdb            ),
+        .cdb            (_if.cdb            ),  // input
         .rob_amt        (_if.rob_amt        ),
         .rob_fl         (_if.rob_fl         ),
-        .fu_ib          (_if.fu_ib          ),
+        .fu_ib          (_if.fu_ib          ),  // input
         .ib_fu          (_if.ib_fu          ),
         .bc_prf         (_if.bc_prf         ),
         .br_mis         (_if.br_mis         ),
-        .exception_i    (_if.exception_i    )
+        .exception_i    (_if.exception_i    )   // input
     );
 // --------------------------------------------------------------------
 
@@ -202,10 +256,10 @@ module ROB_tb;
 // --------------------------------------------------------------------
     initial begin
         _if.rst_i       =   1;
-        _if.dp_rob_i    =   0;
-        _if.cdb_i       =   0;
+        _if.fiq_dp      =   0;
+        _if.cdb         =   0;
+        _if.fu_ib       =   0;
         _if.exception_i =   0;
-        // $display("tail_o=%0b", _if.tail_o);
         // Apply reset and start stimulus
         #50 _if.rst_i   =   0;
         // $display("tail_o=%0b", _if.tail_o);
