@@ -1,15 +1,15 @@
 module AMT_tb();
 
-    parameter rt_num = 2;
-    parameter mt_entry = 32;
-    parameter phy_reg_idx = 2;
+    parameter rt_num      = 2   ;
+    parameter mt_entry    = 32  ;
+    parameter phy_reg_idx = 2   ;
 
     logic clock;
     logic reset;
     logic rollback;
-    DP_AMT       [rt_num-1:0]      amt_input ;
+    DP_AMT       [rt_num-1:0]   amt_input ;
     AMT_OUTPUT   [mt_entry-1:0] amt_output;
-    AMT_OUTPUT   [mt_entry-1:0] correct;
+    AMT_OUTPUT   [mt_entry-1:0] correct   ;
 
     AMT amt (
         .clk_i(clock),
@@ -124,15 +124,9 @@ module AMT_tb();
         // @(negedge clock);
         // rollback = 0;
 
-
-
         #100
         $finish;
 
-
     end
-
-
-
 
 endmodule

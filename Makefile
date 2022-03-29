@@ -13,7 +13,7 @@
 #
 #
 
-SOURCE = test_progs/sampler.s
+SOURCE = test_progs/mult_no_lsq.s
 
 CRT = crt.s
 LINKERS = linker.lds
@@ -51,9 +51,14 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 HEADERS     = $(wildcard *.svh)
 # TESTBENCH   = $(wildcard testbench/*.sv)
 # TESTBENCH  += $(wildcard testbench/*.c)
-TESTBENCH	= testbench/ROB_tb.sv
+# TESTBENCH	= testbench/RS_tb.sv
+# TESTBENCH	= testbench/test_tb.sv
+# TESTBENCH	= testbench/adder_tb.sv
+# TESTBENCH	= testbench/pe_mult_tb.sv
+TESTBENCH	= testbench/IB_tb.sv
 # PIPEFILES   = $(wildcard verilog/*.sv)
-PIPEFILES	= verilog/ROB.sv
+# PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
+PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
 
 SIMFILES    = $(PIPEFILES)
 
@@ -64,15 +69,20 @@ export HEADERS
 export PIPEFILES
 
 # export PIPELINE_NAME = pipeline
-export PIPELINE_NAME = ROB
+# export PIPELINE_NAME = RS
+# export PIPELINE_NAME = binary_encoder
+# export PIPELINE_NAME = adder
+# export PIPELINE_NAME = pe_mult
+export PIPELINE_NAME = IB
+
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
 # Passed through to .tcl scripts:
-export CLOCK_NET_NAME = clock
-export RESET_NET_NAME = reset
-export CLOCK_PERIOD   = 10	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_NET_NAME = clk_i
+export RESET_NET_NAME = rst_i
+export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################
@@ -88,12 +98,15 @@ all:    simv
 # Simulation:
 
 sim:	simv
-	./simv | tee sim_program.out
+	./simv -cm line+tgl | tee sim_program.out
 
 simv:	$(HEADERS) $(SIMFILES) $(TESTBENCH)
-	$(VCS) $^ -o simv
+	$(VCS) $^ -o simv -cm line+tgl
 
 .PHONY: sim
+
+urg: 	sim
+	urg -dir simv.vdb -format text
 
 # Programs
 
@@ -154,6 +167,9 @@ clean:
 nuke:	clean
 	rm -rf synth/*.vg synth/*.rep synth/*.ddc synth/*.chk synth/*.log synth/*.syn
 	rm -rf synth/*.out command.log synth/*.db synth/*.svf synth/*.mr synth/*.pvl
+	rm -rf simv.vdb
+	rm -rf cm.log
+	rm -rf urgReport
 
 Robin:
 	git config user.name "xiongrob"

@@ -32,7 +32,7 @@
 
 //you can change the clock period to whatever, 10 is just fine
 `define VERILOG_CLOCK_PERIOD   10.0
-`define SYNTH_CLOCK_PERIOD     10.0 // Clock period for synth and memory latency
+`define SYNTH_CLOCK_PERIOD     20.0 // Clock period for synth and memory latency
 
 `define MEM_LATENCY_IN_CYCLES (100.0/`SYNTH_CLOCK_PERIOD+0.49999)
 // the 0.49999 is to force ceiling(100/period).  The default behavior for
@@ -317,15 +317,15 @@ typedef struct packed {
 // Architecture Parameters
 // 
 //////////////////////////////////////////////
+`define IF_NUM          2
 `define DP_NUM          2   // The number of Dispatch channels.
 `define IS_NUM          2   // The number of Issue channels.
 `define CDB_NUM         2   // The number of CDB/Complete channels.
 `define RT_NUM          2   // The number of Retire channels.
 `define ROB_ENTRY_NUM   32  // The number of ROB entries.
-`define RS_ENTRY_NUM    32	// The number of RS entries.
+`define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
 `define PHY_REG_NUM     64  // The number of Physical registers.
-`define BR_NUM          1   // The number of Branch Resolvers.
 `define THREAD_NUM      2
 
 `define ALU_NUM         3
@@ -335,6 +335,11 @@ typedef struct packed {
 `define STORE_NUM       1
 `define FU_NUM          `ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM
 
+`define ALU_Q_SIZE      8
+`define MULT_Q_SIZE     8
+`define BR_Q_SIZE       8
+`define LOAD_Q_SIZE     8
+`define STORE_Q_SIZE    8
 //////////////////////////////////////////////
 // 
 // Interfaces between modules
@@ -344,10 +349,11 @@ typedef struct packed {
 `define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
 `define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
 `define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
+`define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
 `define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
 
-`define DP_NUM_WIDTH        $clog2(`DP_NUM)+1
-`define RT_NUM_WIDTH        $clog2(`RT_NUM)+1
+`define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
+`define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
 
 // Array Entry Contents Start
 
@@ -361,7 +367,7 @@ typedef struct packed {
 
 typedef struct packed {
     logic   [`XLEN-1:0]                 pc          ;
-    logic   [`XLEN-1:0]                 inst        ;
+    INST                                inst        ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag1        ;
     logic                               tag1_ready  ;
@@ -379,7 +385,32 @@ typedef struct packed {
     logic                               halt        ;
     logic                               illegal     ;
     logic                               csr_op      ;
+    logic                               alu         ;
+    logic                               mult        ;
 } DEC_INST;
+
+typedef struct packed {
+    logic   [`XLEN-1:0]                 pc          ;
+    logic   [`XLEN-1:0]                 npc         ;
+    INST                                inst        ;
+    logic   [`XLEN-1:0]                 rs1_value   ;
+    logic   [`XLEN-1:0]                 rs2_value   ;
+    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
+    logic   [`THREAD_IDX_WIDTH-1:0]     thread_idx  ;
+    logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;
+    ALU_OPA_SELECT                      opa_select  ;
+    ALU_OPB_SELECT                      opb_select  ;
+    ALU_FUNC                            alu_func    ;
+    logic                               rd_mem      ;
+    logic                               wr_mem      ;
+    logic                               cond_br     ;
+    logic                               uncond_br   ;
+    logic                               halt        ;
+    logic                               illegal     ;
+    logic                               csr_op      ;
+    logic                               alu         ;
+    logic                               mult        ;
+} IS_INST;
 
 typedef struct packed {
     logic                               valid       ;
@@ -393,11 +424,16 @@ typedef struct packed {
     logic                               complete    ;
 } ROB_ENTRY;
 
+// typedef struct packed {
+//     logic                               ready       ;
+//     logic   [`ARCH_REG_IDX_WIDTH-1:0]   arch_reg    ;
+//     logic   [`TAG_IDX_WIDTH-1:0]        phy_reg     ;
+// } MT_ENTRY;
+
 typedef struct packed {
-    logic                               ready       ;
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]           ;
-    logic   [`TAG_IDX_WIDTH-1:0]        phy_reg     ;
-} MT_ENTRY;
+	logic   [`TAG_IDX_WIDTH-1:0]                    tag          ;
+    logic                                           tag_ready    ;
+} MT_ENTRY; // Per-channel
 
 typedef struct packed {
     logic                               valid       ;
@@ -448,10 +484,12 @@ typedef struct packed {
 
 typedef struct packed{
     logic                                           valid       ;   // Is this signal valid?
+    logic   [`XLEN-1:0]                             pc          ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;   // Physical Register (Used for broadcasting to M_T and RS)
     logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;   // Used to locate rob entry
     logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;   // Used to locate rob entry
-    logic                                           br_result   ;   // Branch result
+    logic                                           br_result   ;   // Branch result, Taken or Not-Taken
+    logic   [`XLEN-1:0]                             br_target   ;   // Branch Target
 } CDB; // Per-Channel
 
 typedef struct packed {
@@ -465,13 +503,29 @@ typedef struct packed {
     logic   [`RT_NUM-1:0][`TAG_IDX_WIDTH-1:0]       phy_reg     ;
 } ROB_FL; // Combined
 
+// typedef struct packed {
+//     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs1         ;
+//     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs2         ;
+//     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rd          ;
+//     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+//     logic                                           wr_en       ;
+//     logic                                           thread_idx  ;
+// } DP_MT; // Per-Channel
+
 typedef struct packed {
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs1         ;
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs2         ;
-    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rd          ;
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-    logic                                           wr_en       ;
-} DP_MT; // Per-Channel
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs1          ;   // used to index mt entry for source register 1
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs2          ;   // used to index mt entry for source register 2
+    logic                                           read_en      ;
+    logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx   ;   // used for SMT 
+} DP_MT_READ; // Per-Channel
+
+
+typedef struct packed {
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rd           ;   // used to index mt entry for destination register
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag          ;   // tag for destination register 
+    logic                                           wr_en        ;   // the corresponding mt entry ready for write
+    logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx   ;   // used for SMT 
+} DP_MT_WRITE; // Per-Channel
 
 typedef struct packed {
     logic   [`TAG_IDX_WIDTH-1:0]                    tag1        ;
@@ -532,20 +586,26 @@ typedef struct packed {
 
 typedef struct packed {
     logic                                           valid       ;
-    logic   [`XLEN-1:0]                             pc          ;
-    INST                                            inst        ;
-    logic   [`XLEN-1:0]                             rs1_value   ;
-    logic   [`XLEN-1:0]                             rs2_value   ;
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-    logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
-    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
-    ALU_OPA_SELECT                                  opa_select  ;
-    ALU_OPB_SELECT                                  opb_select  ;
-    ALU_FUNC                                        alu_func    ;
+    IS_INST                                         is_inst     ;
+    // logic   [`XLEN-1:0]                             pc          ;
+    // INST                                            inst        ;
+    // logic   [`XLEN-1:0]                             rs1_value   ;
+    // logic   [`XLEN-1:0]                             rs2_value   ;
+    // logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    // logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
+    // logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
+    // ALU_OPA_SELECT                                  opa_select  ;
+    // ALU_OPB_SELECT                                  opb_select  ;
+    // ALU_FUNC                                        alu_func    ;
 } RS_IB; // Per-Channel
 
 typedef struct packed {
-    logic   [`FU_NUM-1:0]                           ready       ;
+    // logic   [`FU_NUM-1:0]                           ready       ;
+    logic                                           ALU_ready   ;
+    logic                                           MULT_ready  ;
+    logic                                           BR_ready    ;
+    logic                                           LOAD_ready  ;
+    logic                                           STORE_ready ;
 } IB_RS; // Combined
 
 typedef struct packed {
@@ -560,16 +620,17 @@ typedef struct packed {
 
 typedef struct packed {
     logic                                           valid       ;
-    logic   [`XLEN-1:0]                             pc          ;
-    INST                                            inst        ;
-    logic   [`XLEN-1:0]                             rs1_value   ;
-    logic   [`XLEN-1:0]                             rs2_value   ;
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-    logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
-    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
-    ALU_OPA_SELECT                                  opa_select  ;
-    ALU_OPB_SELECT                                  opb_select  ;
-    ALU_FUNC                                        alu_func    ;
+    IS_INST                                         is_inst     ;
+    // logic   [`XLEN-1:0]                             pc          ;
+    // INST                                            inst        ;
+    // logic   [`XLEN-1:0]                             rs1_value   ;
+    // logic   [`XLEN-1:0]                             rs2_value   ;
+    // logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    // logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
+    // logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
+    // ALU_OPA_SELECT                                  opa_select  ;
+    // ALU_OPB_SELECT                                  opb_select  ;
+    // ALU_FUNC                                        alu_func    ;
 } IB_FU; // Per-Channel
 
 typedef struct packed {
@@ -578,9 +639,11 @@ typedef struct packed {
 
 typedef struct packed {
     logic                                           valid       ;
+    logic   [`XLEN-1:0]                             pc          ;
     logic   [`XLEN-1:0]                             rd_value    ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
     logic                                           br_result   ;
+    logic   [`XLEN-1:0]                             br_target   ;
     logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
     logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
 } FU_BC; // Per-Channel
@@ -598,5 +661,28 @@ typedef struct packed {
 typedef struct packed {
     logic   [`THREAD_NUM-1:0]                       valid       ;
 } BR_MIS; // Combined
+
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]                    amt_tag      ;
+} AMT_ENTRY;
+
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]                    amt_tag      ;
+} AMT_OUTPUT;
+
+typedef enum logic [1:0] {
+	RD_USED  = 2'h0,
+	RD_NONE  = 2'h1
+} RD_SEL;
+
+typedef enum logic [1:0] {
+	RS1_USED  = 2'h0,
+	RS1_NONE  = 2'h1
+} RS1_SEL;
+
+typedef enum logic [1:0] {
+	RS2_USED  = 2'h0,
+	RS2_NONE  = 2'h1
+} RS2_SEL;
 
 // Interface End
