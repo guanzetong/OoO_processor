@@ -8,19 +8,19 @@ all:    simv
 # Modify starting here
 #####
 
-TESTBENCH = maptable.sv
+TESTBENCH = maptable_tb.sv
 
-SIMFILES  = AMT.sv
+SIMFILES  = maptable.sv
 
 HEADERS   = sys_defs.svh
 
 # SYNTHESIS CONFIG
 SYNTH_DIR = ./syn
-SYNFILES  = $(SYNTH_DIR)/maptable.vg
+SYNFILES  = $(SYNTH_DIR)/RAT.vg
 
-$(SYNFILES):	maptable.sv syn/maptable.tcl
+$(SYNFILES):	RAT.sv syn/RAT.syn.tcl
 	mkdir -p syn
-	cd $(SYNTH_DIR) && dc_shell-t -f maptable.tcl | tee maptable_synth.out
+	cd $(SYNTH_DIR) && dc_shell-t -f RAT.syn.tcl | tee RAT_synth.out
 
 
 #####

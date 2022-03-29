@@ -56,7 +56,7 @@ module maptable #(
         integer i;
         for (i = 0; i< C_DP_NUM; i++) begin
             if (dp_mp_write_i[i].wr_en) begin 
-                mp_dp_o[i].tag_old <= mt_entry[dp_mp_write_i[i].rd].tag;
+                mp_dp_o[i].tag_old = mt_entry[dp_mp_write_i[i].rd].tag;
             end
         end
     end
