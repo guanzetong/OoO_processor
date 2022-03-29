@@ -14,11 +14,11 @@ module freelist #(
     input [C_DP_NUM-1:0] [4:0] rd_idx
 
     `ifdef DEBUG
-	output logic   [`NUM_FL_ENTRIES-1:0][$clog2(`NUM_PR_ENTRIES)-1:0]   FL_table, next_FL_table,
-	output logic   [$clog2(`NUM_FL_ENTRIES)-1:0]                 		FL_rollback_idx,
-	output logic   [$clog2(`NUM_FL_ENTRIES)-1:0]                 		head, next_head,
-	output logic   [$clog2(`NUM_FL_ENTRIES)-1:0]                 		tail, next_tail,
-	output logic   [`SCALAR_WIDTH-1:0][$clog2(`NUM_FL_ENTRIES)-1:0] 	FL_idx,		 		// the position of tail in freelist
+	output logic   [`C_FL_ENTRY_NUM-1:0][$clog2(`C_PR_ENTRY)-1:0]   FL_table, next_FL_table,
+	output logic   [$clog2(`C_FL_ENTRY_NUM)-1:0]                 		FL_rollback_idx,
+	output logic   [$clog2(`C_FL_ENTRY_NUM)-1:0]                 		head, next_head,
+	output logic   [$clog2(`C_FL_ENTRY_NUM)-1:0]                 		tail, next_tail,
+	output logic   [`C_DP_NUM-1:0][$clog2(`C_FL_ENTRY_NUM)-1:0] 	FL_idx,		 		// the position of tail in freelist
 	`endif
 
     output FL_DP fl_dp_o
