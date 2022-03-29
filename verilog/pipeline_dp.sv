@@ -13,7 +13,7 @@ module pipeline_dp #(
     input   logic                       rst_i       ,   //  Reset
     input   FIQ_DP                      fiq_dp      ,
     output  DP_FIQ                      dp_fiq      ,
-    // input   CDB                         cdb         ,
+    input   CDB     [C_CDB_NUM-1:0]     cdb         ,
     output  ROB_AMT [C_RT_NUM-1:0]      rob_amt     ,
     output  ROB_FL                      rob_fl      ,
     input   FU_IB   [C_FU_NUM-1:0]      fu_ib       ,
@@ -24,7 +24,7 @@ module pipeline_dp #(
 
     // //MT
     // input   logic                          rollback_i   ,    
-    // input   CDB         [C_CDB_NUM-1:0]    cdb          ,
+
     // input   DP_MT_READ  [C_DP_NUM-1:0]     dp_mt_read   ,
     // input   DP_MT_WRITE [C_DP_NUM-1:0]     dp_mt_write  ,
     // input   AMT_ENTRY [C_MT_ENTRY_NUM-1:0] amt          ,
@@ -49,6 +49,9 @@ module pipeline_dp #(
     //RS testing
     output  RS_ENTRY [C_RS_ENTRY_NUM-1:0]    rs_mon_o           ,
 
+    //MT_sim testing
+    output  MT_ENTRY [C_ARCH_REG_NUM-1:0]    mt_mon_o           ,
+
     //IB testing
     output  IS_INST  [C_ALU_Q_SIZE  -1:0]    ALU_queue_mon_o    ,
     output  IS_INST  [C_MULT_Q_SIZE -1:0]    MULT_queue_mon_o   ,
@@ -59,7 +62,7 @@ module pipeline_dp #(
     //monitor
     output  DP_RS                       dp_rs_mon_o             ,
     output  CDB                         cdb_mon_o               ,
-    output  RS_IB                       rs_ib_mon_o
+    output  RS_IB                       rs_ib_mon_o             
     //*output IB_FU                     ib_fu_mon_o
     //*output FU_BC                     fu_bc_mon_o
 );
@@ -203,7 +206,7 @@ module pipeline_dp #(
 // Module name  :   MT
 // Description  :   Map Table
 // --------------------------------------------------------------------
-    MT MT_inst (
+    MT MT_sim (
         .clk_i          (clk_i        ),
         .rst_i          (rst_i        ),
         .rollback_i     (rollback_i   ),    
@@ -211,7 +214,9 @@ module pipeline_dp #(
         .dp_mt_read_i   (dp_mt_read   ),
         .dp_mt_write_i  (dp_mt_write  ),
         .amt_i          (amt          ),
-        .mt_dp_o        (mt_dp        )
+        .mt_dp_o        (mt_dp        ),
+         // For Testing
+        .mt_mon_o       (mt_mon_o)
     );
 // --------------------------------------------------------------------
 

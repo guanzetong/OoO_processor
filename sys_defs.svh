@@ -326,6 +326,7 @@ typedef struct packed {
 `define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
 `define PHY_REG_NUM     64  // The number of Physical registers.
+`define FL_ENTRY_NUM    `PHY_REG_NUM - `ARCH_REG_NUM
 `define THREAD_NUM      2
 
 `define ALU_NUM         3
@@ -684,5 +685,18 @@ typedef enum logic [1:0] {
 	RS2_USED  = 2'h0,
 	RS2_NONE  = 2'h1
 } RS2_SEL;
+
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+} VFL_ENTRY;
+
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+} FL_ENTRY;
+
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;
+} ROB_VFL;
 
 // Interface End
