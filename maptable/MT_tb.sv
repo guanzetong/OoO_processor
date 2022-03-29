@@ -1,35 +1,35 @@
-module maptable_tb();
+module MT_tb();
 
-    parameter dp_num = 2;
+    parameter dp_num   = 2 ;
     parameter mt_entry = 32;
-    parameter cdb_num = 2;
+    parameter cdb_num  = 2 ;
 
-    logic clock;
-    logic reset;
-    logic rollback;
+    logic     clock     ;
+    logic     reset     ;
+    logic     rollback  ;
 
-    DP_MT_READ  [dp_num - 1 : 0]   dp_read_input;
-    DP_MT_WRITE  [dp_num - 1 : 0]  dp_write_input;
-    MT_DP [dp_num - 1 : 0]   mt_output;
-    MT_DP [dp_num - 1 : 0]   correct;
+    DP_MT_READ   [dp_num - 1 : 0]   dp_read_input ;
+    DP_MT_WRITE  [dp_num - 1 : 0]   dp_write_input;
+    MT_DP        [dp_num - 1 : 0]   mt_output     ;
+    MT_DP        [dp_num - 1 : 0]   correct       ;
 
-    CDB [cdb_num-1:0] cdb_input;
-    AMT_ENTRY [mt_entry-1:0] amt_input;
+    CDB          [cdb_num-1:0]      cdb_input     ;
+    AMT_ENTRY    [mt_entry-1:0]     amt_input     ;
 
     maptable dut(
-        .clk_i(clock),
-        .rst_i(reset),
-        .rollback_i(rollback),
-        .cdb_i(cdb_input),
-        .dp_mp_read_i(dp_read_input),
-        .dp_mp_write_i(dp_write_input),
-        .amt_i(amt_input),
-        .mp_dp_o(mt_output)
+        .clk_i            (clock),
+        .rst_i            (reset),
+        .rollback_i       (rollback),
+        .cdb_i            (cdb_input),
+        .dp_mt_read_i     (dp_read_input),
+        .dp_mt_write_i    (dp_write_input),
+        .amt_i            (amt_input),
+        .mt_dp_o          (mt_output)
     );
 
   task check_rs_read;
-    input  MT_DP [dp_num - 1 : 0]   mt_packet;
-    input  MT_DP [dp_num - 1 : 0]   correct;
+    input  MT_DP [dp_num - 1 : 0]   mt_packet ;
+    input  MT_DP [dp_num - 1 : 0]   correct   ;
 
     integer i;
   

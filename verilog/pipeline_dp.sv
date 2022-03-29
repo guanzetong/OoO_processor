@@ -13,14 +13,55 @@ module pipeline_dp #(
     input   logic                       rst_i       ,   //  Reset
     input   FIQ_DP                      fiq_dp      ,
     output  DP_FIQ                      dp_fiq      ,
-    input   CDB                         cdb         ,
+    // input   CDB                         cdb         ,
     output  ROB_AMT [C_RT_NUM-1:0]      rob_amt     ,
     output  ROB_FL                      rob_fl      ,
     input   FU_IB   [C_FU_NUM-1:0]      fu_ib       ,
     output  IB_FU   [C_FU_NUM-1:0]      ib_fu       ,
     input   BC_PRF                      bc_prf      ,
     output  BR_MIS                      br_mis      ,
-    input   logic                       exception_i
+    input   logic                       exception_i ,
+
+    // //MT
+    // input   logic                          rollback_i   ,    
+    // input   CDB         [C_CDB_NUM-1:0]    cdb          ,
+    // input   DP_MT_READ  [C_DP_NUM-1:0]     dp_mt_read   ,
+    // input   DP_MT_WRITE [C_DP_NUM-1:0]     dp_mt_write  ,
+    // input   AMT_ENTRY [C_MT_ENTRY_NUM-1:0] amt          ,
+    // output  MT_DP       [C_DP_NUM-1:0]     mt_dp        ,
+
+    // //AMT
+    // input   ROB_AMT      [C_RT_NUM-1:0]         rob_amt , 
+    // output  AMT_OUTPUT   [C_MT_ENTRY_NUM-1:0]   amt_o   ,
+
+    // //FU
+
+    // //BC
+    // input   FU_BC                          fu_bc  ,
+    // output  BC_FU                          bc_fu  ,
+    // output  BC_PRF                         bc_prf ,
+
+    //ROB testing
+    output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
+    output  logic   [C_RT_NUM-1:0][C_XLEN-1:0]  rt_pc_o         ,
+    output  logic   [C_RT_NUM-1:0]              rt_valid_o      ,
+
+    //RS testing
+    output  RS_ENTRY [C_RS_ENTRY_NUM-1:0]    rs_mon_o           ,
+
+    //IB testing
+    output  IS_INST  [C_ALU_Q_SIZE  -1:0]    ALU_queue_mon_o    ,
+    output  IS_INST  [C_MULT_Q_SIZE -1:0]    MULT_queue_mon_o   ,
+    output  IS_INST  [C_BR_Q_SIZE   -1:0]    BR_queue_mon_o     ,
+    output  IS_INST  [C_LOAD_Q_SIZE -1:0]    LOAD_queue_mon_o   ,
+    output  IS_INST  [C_STORE_Q_SIZE-1:0]    STORE_queue_mon_o  ,
+
+    //monitor
+    output  DP_RS                       dp_rs_mon_o             ,
+    output  CDB                         cdb_mon_o               ,
+    output  RS_IB                       rs_ib_mon_o
+    //*output IB_FU                     ib_fu_mon_o
+    //*output FU_BC                     fu_bc_mon_o
 );
 
 // ====================================================================
@@ -96,7 +137,9 @@ module pipeline_dp #(
         .rs_prf_o       (rs_prf         ),
         .prf_rs_i       (prf_rs         ),
         .br_mis_i       (br_mis         ),
-        .exception_i    (exception_i    )
+        .exception_i    (exception_i    ),
+        //RS testing
+        .rs_mon_o       (rs_mon_o       )
     );
 // --------------------------------------------------------------------
 
@@ -113,7 +156,11 @@ module pipeline_dp #(
         .rob_amt_o      (rob_amt        ),
         .rob_fl_o       (rob_fl         ),
         .exception_i    (exception_i    ),
-        .br_mis_o       (br_mis         )
+        .br_mis_o       (br_mis         ),
+        //ROB testing
+        .rob_mon_o      (rob_mon_o      ),
+        .rt_pc_o        (rt_pc_o        ),
+        .rt_valid_o     (rt_valid_o     )
     );
 // --------------------------------------------------------------------
 
@@ -122,14 +169,20 @@ module pipeline_dp #(
 // Description  :   Issue Buffer
 // --------------------------------------------------------------------
     IB IB_inst (
-        .clk_i          (clk_i          ),
-        .rst_i          (rst_i          ),
-        .ib_rs_o        (ib_rs          ),
-        .rs_ib_i        (rs_ib          ),
-        .fu_ib_i        (fu_ib          ),
-        .ib_fu_o        (ib_fu          ),
-        .br_mis_i       (br_mis         ),
-        .exception_i    (exception_i    )
+        .clk_i           (clk_i         ),
+        .rst_i           (rst_i         ),
+        .ib_rs_o         (ib_rs         ),
+        .rs_ib_i         (rs_ib         ),
+        .fu_ib_i         (fu_ib         ),
+        .ib_fu_o         (ib_fu         ),
+        .br_mis_i        (br_mis        ),
+        .exception_i     (exception_i   ),
+        //IB testing    
+        .ALU_queue_mon_o    (ALU_queue_mon_o  ),
+        .MULT_queue_mon_o   (MULT_queue_mon_o ),
+        .BR_queue_mon_o     (BR_queue_mon_o   ),
+        .LOAD_queue_mon_o   (LOAD_queue_mon_o ),
+        .STORE_queue_mon_o  (STORE_queue_mon_o)
     );
 // --------------------------------------------------------------------
 
@@ -146,6 +199,58 @@ module pipeline_dp #(
     );
 // --------------------------------------------------------------------
 
+// --------------------------------------------------------------------
+// Module name  :   MT
+// Description  :   Map Table
+// --------------------------------------------------------------------
+    MT MT_inst (
+        .clk_i          (clk_i        ),
+        .rst_i          (rst_i        ),
+        .rollback_i     (rollback_i   ),    
+        .cdb_i          (cdb          ),
+        .dp_mt_read_i   (dp_mt_read   ),
+        .dp_mt_write_i  (dp_mt_write  ),
+        .amt_i          (amt          ),
+        .mt_dp_o        (mt_dp        )
+    );
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   AMT
+// Description  :   Arch. Map Table
+// --------------------------------------------------------------------
+    AMT AMT_inst (
+        .clk_i          (clk_i        ),
+        .rst_i          (rst_i        ),
+        .rollback_i     (rollback_i   ),    
+        .rob_amt_i      (rob_amt      ),
+        .amt_o          (amt_o        )
+    );
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   FU
+// Description  :   Arch. Map Table
+// --------------------------------------------------------------------
+    FU FU_inst (
+        .fu_bc          (fu_bc        ),
+        .bc_fu          (bc_fu        ),
+        .fu_ib          (fu_ib        ),
+        .ib_fu          (ib_fu        )
+    );
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   BC
+// Description  :   Broadcaster
+// --------------------------------------------------------------------
+    BC BC_inst (
+        .fu_bc          (fu_bc        ),
+        .bc_fu          (bc_fu        ),
+        .bc_prf         (bc_prf       )
+    );
+// --------------------------------------------------------------------
+
 // ====================================================================
 // Module Instantiations End
 // ====================================================================
@@ -153,7 +258,9 @@ module pipeline_dp #(
 // ====================================================================
 // RTL Logic Start
 // ====================================================================
-
+    assign dp_rs_mon_o = dp_rs  ;
+    assign cdb_mon_o   = cdb    ;
+    assign rs_ib_mon_o = rs_ib  ;
 // --------------------------------------------------------------------
 // Logic Divider
 // --------------------------------------------------------------------

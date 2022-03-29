@@ -17,7 +17,8 @@ module ROB # (
     parameter   C_RT_NUM            =   `RT_NUM         ,
     parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM  ,
     parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM   ,
-    parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    
+    parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    ,
+    parameter   C_XLEN              =   `XLEN           
 ) (
     input   logic                           clk_i               ,   // Clock
     input   logic                           rst_i               ,   // Reset
@@ -27,7 +28,12 @@ module ROB # (
     output  ROB_AMT [C_RT_NUM-1:0]          rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
     output  ROB_FL                          rob_fl_o            ,   // To Free List - ROB_FL
     input   logic                           exception_i         ,   // From Exception Controller
-    output  logic                           br_mis_o            
+    output  logic                           br_mis_o            ,
+
+    // For testing
+    output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
+    output  logic   [C_RT_NUM-1:0][C_XLEN-1:0]  rt_pc_o         ,
+    output  logic   [C_RT_NUM-1:0]              rt_valid_o      
 );
 
 //synopsys sync_set_reset ‘‘rst_i’’
@@ -344,6 +350,26 @@ module ROB # (
         end
     end
 
+// --------------------------------------------------------------------
+// For Pipeline Testing
+// --------------------------------------------------------------------
+    assign  rob_mon_o   =   rob_array;
+
+    always_comb begin
+        for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
+            if (head + idx >= C_ROB_ENTRY_NUM) begin
+                retire_pc_o[idx]    =   rob_array[head+idx-C_ROB_ENTRY_NUM].pc;
+            end else begin
+                retire_pc_o[idx]    =   rob_array[head+idx].pc;
+            end
+            
+            if (idx < rt_num) begin
+                rt_valid_o[idx] =   1'b1;
+            end else begin
+                rt_valid_o[idx] =   1'b0;
+            end
+        end
+    end
 // ====================================================================
 // RTL Logic End
 // ====================================================================

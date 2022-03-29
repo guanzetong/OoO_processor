@@ -27,7 +27,10 @@ module RS #(
     output  RS_PRF  [C_IS_NUM-1:0]      rs_prf_o        ,
     input   PRF_RS  [C_IS_NUM-1:0]      prf_rs_i        ,
     input   BR_MIS                      br_mis_i        ,
-    input   logic                       exception_i     
+    input   logic                       exception_i     ,
+
+    // For Testing
+    output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o
 );
 
 // ====================================================================
@@ -356,6 +359,7 @@ module RS #(
                     rs_prf_o[is_idx].rd_addr2           =   rs_array[entry_idx].dec_inst.tag2       ;
                     rs_ib_o[is_idx].valid               =   1'b1                                    ;
                     rs_ib_o[is_idx].is_inst.pc          =   rs_array[entry_idx].dec_inst.pc         ;
+                    rs_ib_o[is_idx].is_inst.npc         =   rs_array[entry_idx].dec_inst.pc + 'd4   ;
                     rs_ib_o[is_idx].is_inst.inst        =   rs_array[entry_idx].dec_inst.inst       ;
                     rs_ib_o[is_idx].is_inst.rs1_value   =   prf_rs_i[is_idx].data_out1              ;
                     rs_ib_o[is_idx].is_inst.rs2_value   =   prf_rs_i[is_idx].data_out2              ;
@@ -415,6 +419,10 @@ module RS #(
         end
     end
 
+// --------------------------------------------------------------------
+// For Pipeline Testing
+// --------------------------------------------------------------------
+    assign  rs_mon_o    =   rs_array    ;
 // ====================================================================
 // RTL Logic End
 // ====================================================================

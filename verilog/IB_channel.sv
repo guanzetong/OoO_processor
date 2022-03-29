@@ -23,6 +23,8 @@ module IB_channel #(
     // Flush
     input   BR_MIS                  br_mis_i        ,   // Branch Misprediction
     input   logic                   exception_i         // External Exception
+    // For Testing
+    output  IS_INST [C_SIZE-1:0]    queue_mon_o     
 );
 
 // ====================================================================
@@ -77,7 +79,8 @@ module IB_channel #(
         .m_ready_i      (pop_out_ready  ),
         .m_data_o       (pop_out_data   ),
         .br_mis_i       (br_mis_i       ),
-        .exception_i    (exception_i    )
+        .exception_i    (exception_i    ),
+        .queue_mon_o    (queue_mon_o    )
     );
 // --------------------------------------------------------------------
 

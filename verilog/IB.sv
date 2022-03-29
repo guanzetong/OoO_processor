@@ -29,7 +29,13 @@ module IB #(
     input   FU_IB   [C_FU_NUM-1:0]      fu_ib_i         ,
     output  IB_FU   [C_FU_NUM-1:0]      ib_fu_o         ,
     input   BR_MIS                      br_mis_i        ,
-    input   logic                       exception_i     
+    input   logic                       exception_i     ,
+    // For Testing
+    output  IS_INST [C_ALU_Q_SIZE  -1:0]    ALU_queue_mon_o     ,
+    output  IS_INST [C_MULT_Q_SIZE -1:0]    MULT_queue_mon_o    ,
+    output  IS_INST [C_BR_Q_SIZE   -1:0]    BR_queue_mon_o      ,
+    output  IS_INST [C_LOAD_Q_SIZE -1:0]    LOAD_queue_mon_o    ,
+    output  IS_INST [C_STORE_Q_SIZE-1:0]    STORE_queue_mon_o   
 );
 
 // ====================================================================
@@ -72,7 +78,8 @@ module IB #(
         .fu_ib_i        (fu_ib_i[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE] ),
         .ib_fu_o        (ib_fu_o[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE] ),
         .br_mis_i       (br_mis_i                                   ),
-        .exception_i    (exception_i                                )
+        .exception_i    (exception_i                                ),
+        .queue_mon_o    (ALU_queue_mon_o                            )
     );
 // --------------------------------------------------------------------
 
@@ -93,7 +100,8 @@ module IB #(
         .fu_ib_i        (fu_ib_i[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
         .ib_fu_o        (ib_fu_o[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
         .br_mis_i       (br_mis_i                                       ),
-        .exception_i    (exception_i                                    )
+        .exception_i    (exception_i                                    ),
+        .queue_mon_o    (MULT_queue_mon_o                               )
     );
 // --------------------------------------------------------------------
 
@@ -114,7 +122,8 @@ module IB #(
         .fu_ib_i        (fu_ib_i[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]    ),
         .ib_fu_o        (ib_fu_o[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]    ),
         .br_mis_i       (br_mis_i                                   ),
-        .exception_i    (exception_i                                )
+        .exception_i    (exception_i                                ),
+        .queue_mon_o    (BR_queue_mon_o                             )
     );
 // --------------------------------------------------------------------
 
@@ -135,7 +144,8 @@ module IB #(
         .fu_ib_i        (fu_ib_i[C_LOAD_BASE+C_LOAD_NUM-1:C_LOAD_BASE]  ),
         .ib_fu_o        (ib_fu_o[C_LOAD_BASE+C_LOAD_NUM-1:C_LOAD_BASE]  ),
         .br_mis_i       (br_mis_i                                       ),
-        .exception_i    (exception_i                                    )
+        .exception_i    (exception_i                                    ),
+        .queue_mon_o    (LOAD_queue_mon_o                               )
     );
 // --------------------------------------------------------------------
 
@@ -156,7 +166,8 @@ module IB #(
         .fu_ib_i        (fu_ib_i[C_STORE_BASE+C_STORE_NUM-1:C_STORE_BASE]   ),
         .ib_fu_o        (ib_fu_o[C_STORE_BASE+C_STORE_NUM-1:C_STORE_BASE]   ),
         .br_mis_i       (br_mis_i                                           ),
-        .exception_i    (exception_i                                        )
+        .exception_i    (exception_i                                        ),
+        .queue_mon_o    (STORE_queue_mon_o                                  )
     );
 // --------------------------------------------------------------------
 

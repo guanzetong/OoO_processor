@@ -24,7 +24,9 @@ module IB_queue #(
     output  IS_INST [C_OUT_NUM-1:0] m_data_o        ,   // Pop-out Data
     // Flush
     input   BR_MIS                  br_mis_i        ,   // Branch Misprediction
-    input   logic                   exception_i         // External Exception
+    input   logic                   exception_i     ,   // External Exception
+    // For Testing
+    output  IS_INST [C_SIZE-1:0]    queue_mon_o     
 );
 
 // ====================================================================
@@ -245,6 +247,11 @@ module IB_queue #(
             end
         end
     end
+
+// --------------------------------------------------------------------
+// Queue Entry
+// --------------------------------------------------------------------
+    assign  queue_mon_o =   queue   ;
 
 // ====================================================================
 // RTL Logic End
