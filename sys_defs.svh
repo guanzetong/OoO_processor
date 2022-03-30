@@ -323,7 +323,7 @@ typedef struct packed {
 `define CDB_NUM         2   // The number of CDB/Complete channels.
 `define RT_NUM          2   // The number of Retire channels.
 `define ROB_ENTRY_NUM   32  // The number of ROB entries.
-`define RS_ENTRY_NUM    32	// The number of RS entries.
+`define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
 `define PHY_REG_NUM     64  // The number of Physical registers.
 `define THREAD_NUM      2
@@ -390,8 +390,8 @@ typedef struct packed {
 } DEC_INST;
 
 typedef struct packed {
-    logic   [`XLEN-1:0]                 npc          ;
     logic   [`XLEN-1:0]                 pc          ;
+    logic   [`XLEN-1:0]                 npc         ;
     INST                                inst        ;
     logic   [`XLEN-1:0]                 rs1_value   ;
     logic   [`XLEN-1:0]                 rs2_value   ;
@@ -479,10 +479,12 @@ typedef struct packed {
 
 typedef struct packed{
     logic                                           valid       ;   // Is this signal valid?
+    logic   [`XLEN-1:0]                             pc          ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;   // Physical Register (Used for broadcasting to M_T and RS)
     logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;   // Used to locate rob entry
     logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;   // Used to locate rob entry
-    logic                                           br_result   ;   // Branch result
+    logic                                           br_result   ;   // Branch result, Taken or Not-Taken
+    logic   [`XLEN-1:0]                             br_target   ;   // Branch Target
 } CDB; // Per-Channel
 
 typedef struct packed {
@@ -597,6 +599,7 @@ typedef struct packed {
 } PRF_RS; // Per-Channel
 
 typedef struct packed {
+    logic                                           start       ;
     logic                                           valid       ;
     IS_INST                                         is_inst     ;
     // logic   [`XLEN-1:0]                             pc          ;
@@ -617,15 +620,19 @@ typedef struct packed {
 
 typedef struct packed {
     logic                                           valid       ;
+    logic   [`XLEN-1:0]                             pc          ;
+    logic                                           write_reg   ;
     logic   [`XLEN-1:0]                             rd_value    ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    logic                                           br_inst     ;
     logic                                           br_result   ;
+    logic   [`XLEN-1:0]                             br_target   ;
     logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
     logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
 } FU_BC; // Per-Channel
 
 typedef struct packed {
-    logic                                           ready       ;
+    logic                                           broadcasted       ;
 } BC_FU; // Per-Channel
 
 typedef struct packed {
