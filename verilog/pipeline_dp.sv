@@ -7,37 +7,38 @@
 /////////////////////////////////////////////////////////////////////////
 
 module pipeline_dp (
-    input   logic                               clk_i               ,   // Clock
-    input   logic                               rst_i               ,   // Reset
-    input   FIQ_DP                              fiq_dp              ,   // From FIQ to DP
-    output  DP_FIQ                              dp_fiq              ,   // From DP to FIQ
-    input   logic                               exception_i         ,   // External exception
+    input   logic                                       clk_i               ,   // Clock
+    input   logic                                       rst_i               ,   // Reset
+    input   FIQ_DP                                      fiq_dp              ,   // From FIQ to DP
+    output  DP_FIQ                                      dp_fiq              ,   // From DP to FIQ
+    input   logic                                       exception_i         ,   // External exception
     // Testing
     //      Dispatch
-    output  DP_RS                               dp_rs_mon_o         ,   // From Dispatcher to RS
+    output  DP_RS                                       dp_rs_mon_o         ,   // From Dispatcher to RS
     //      Issue
-    output  RS_IB                               rs_ib_mon_o         ,   // From RS to IB
+    output  RS_IB                                       rs_ib_mon_o         ,   // From RS to IB
     //      Execute
-    output  IB_FU   [C_FU_NUM-1:0]              ib_fu_mon_o         ,   // From IB to FU
+    output  IB_FU       [`FU_NUM-1:0]                   ib_fu_mon_o         ,   // From IB to FU
     //      Complete
-    output  FU_BC                               fu_bc_mon_o         ,   // From FU to BC
-    output  CDB                                 cdb_mon_o           ,   // CDB
+    output  FU_BC                                       fu_bc_mon_o         ,   // From FU to BC
+    output  CDB                                         cdb_mon_o           ,   // CDB
     //      Retire
-    output  logic   [C_RT_NUM-1:0][C_XLEN-1:0]  rt_pc_o             ,   // PC of retired instructions
-    output  logic   [C_RT_NUM-1:0]              rt_valid_o          ,   // Retire valid
-    output  ROB_AMT [C_RT_NUM-1:0]              rob_amt_mon_o       ,   // From ROB to AMT
-    output  ROB_FL                              rob_fl_mon_o        ,   // From ROB to FL
-    output  ROB_VFL                             rob_vfl_mon_o       ,   // From ROB to VFL
-    output  BR_MIS                              br_mis_mon_o        ,   // Branch Misprediction
+    output  logic       [`RT_NUM-1:0][`XLEN-1:0]        rt_pc_o             ,   // PC of retired instructions
+    output  logic       [`RT_NUM-1:0]                   rt_valid_o          ,   // Retire valid
+    output  ROB_AMT     [`RT_NUM-1:0]                   rob_amt_mon_o       ,   // From ROB to AMT
+    output  ROB_FL                                      rob_fl_mon_o        ,   // From ROB to FL
+    output  ROB_VFL                                     rob_vfl_mon_o       ,   // From ROB to VFL
+    output  BR_MIS                                      br_mis_mon_o        ,   // Branch Misprediction
     //      Contents
-    output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o           ,   // ROB contents monitor
-    output  RS_ENTRY [C_RS_ENTRY_NUM-1:0]       rs_mon_o            ,   // RS contents monitor
-    output  MT_ENTRY [C_ARCH_REG_NUM-1:0]       mt_mon_o            ,   // Map Table contents monitor
-    output  IS_INST  [C_ALU_Q_SIZE  -1:0]       ALU_queue_mon_o     ,   // IB queue monitor
-    output  IS_INST  [C_MULT_Q_SIZE -1:0]       MULT_queue_mon_o    ,   // IB queue monitor
-    output  IS_INST  [C_BR_Q_SIZE   -1:0]       BR_queue_mon_o      ,   // IB queue monitor
-    output  IS_INST  [C_LOAD_Q_SIZE -1:0]       LOAD_queue_mon_o    ,   // IB queue monitor
-    output  IS_INST  [C_STORE_Q_SIZE-1:0]       STORE_queue_mon_o       // IB queue monitor
+    output  ROB_ENTRY   [`ROB_ENTRY_NUM-1:0]            rob_mon_o           ,   // ROB contents monitor
+    output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ,   // RS contents monitor
+    output  MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ,   // Map Table contents monitor
+    output  IS_INST     [`ALU_Q_SIZE  -1:0]             ALU_queue_mon_o     ,   // IB queue monitor
+    output  IS_INST     [`MULT_Q_SIZE -1:0]             MULT_queue_mon_o    ,   // IB queue monitor
+    output  IS_INST     [`BR_Q_SIZE   -1:0]             BR_queue_mon_o      ,   // IB queue monitor
+    output  IS_INST     [`LOAD_Q_SIZE -1:0]             LOAD_queue_mon_o    ,   // IB queue monitor
+    output  IS_INST     [`STORE_Q_SIZE-1:0]             STORE_queue_mon_o   ,   // IB queue monitor
+    output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]  prf_mon_o               // Physical Register File monitor
 );
 
 // ====================================================================
@@ -53,8 +54,8 @@ module pipeline_dp (
 // ====================================================================
     ROB_DP                                  rob_dp          ;
     DP_ROB                                  dp_rob          ;
-    DP_MT_READ  [C_DP_NUM-1:0]              dp_mt_read      ;
-    DP_MT_WRITE [C_DP_NUM-1:0]              dp_mt_write     ;
+    DP_MT_READ  [`DP_NUM-1:0]               dp_mt_read      ;
+    DP_MT_WRITE [`DP_NUM-1:0]               dp_mt_write     ;
     FL_DP                                   fl_dp           ;
     DP_FL                                   dp_fl           ;
     // FIQ_DP                               fiq_dp          ;
@@ -128,20 +129,21 @@ module pipeline_dp (
 // Description  :   Reorder Buffer
 // --------------------------------------------------------------------
     ROB ROB_inst (
-        .clk_i          (clk_i          ),
-        .rst_i          (rst_i          ),
-        .rob_dp_o       (rob_dp         ),
-        .dp_rob_i       (dp_rob         ),
-        .cdb_i          (cdb            ),
-        .rob_amt_o      (rob_amt        ),
-        .rob_fl_o       (rob_fl         ),
-        .rob_vfl_o      (rob_vfl        ),
-        .exception_i    (exception_i    ),
-        .br_mis_o       (br_mis         ),
+        .clk_i              (clk_i              ),
+        .rst_i              (rst_i              ),
+        .rob_dp_o           (rob_dp             ),
+        .dp_rob_i           (dp_rob             ),
+        .cdb_i              (cdb                ),
+        .rob_amt_o          (rob_amt            ),
+        .rob_fl_o           (rob_fl             ),
+        .rob_vfl_o          (rob_vfl            ),
+        .exception_i        (exception_i        ),
+        .br_mis_valid_o     (br_mis.valid[0]    ),
+        .br_target_o        (br_mis.br_target[0]),
         //ROB testing
-        .rob_mon_o      (rob_mon_o      ),
-        .rt_pc_o        (rt_pc_o        ),
-        .rt_valid_o     (rt_valid_o     )
+        .rob_mon_o          (rob_mon_o          ),
+        .rt_pc_o            (rt_pc_o            ),
+        .rt_valid_o         (rt_valid_o         )
     );
 // --------------------------------------------------------------------
 
@@ -176,7 +178,9 @@ module pipeline_dp (
         .rst_i          (rst_i          ),
         .rs_prf_i       (rs_prf         ),
         .prf_rs_o       (prf_rs         ),
-        .bc_prf_i       (bc_prf         )
+        .bc_prf_i       (bc_prf         ),
+        // PRF Testing
+        .prf_mon_o      (prf_mon_o      )
     );
 // --------------------------------------------------------------------
 
@@ -193,7 +197,7 @@ module pipeline_dp (
         .dp_mt_write_i  (dp_mt_write    ),
         .amt_i          (amt            ),
         .mt_dp_o        (mt_dp          ),
-         // For Testing
+         // MT Testing
         .mt_mon_o       (mt_mon_o       )
     );
 // --------------------------------------------------------------------
@@ -203,11 +207,11 @@ module pipeline_dp (
 // Description  :   Arch. Map Table
 // --------------------------------------------------------------------
     AMT AMT_inst (
-        .clk_i          (clk_i                  ),
-        .rst_i          (rst_i                  ),
-        .rollback_i     (exception_i || br_mis  ),    
-        .rob_amt_i      (rob_amt                ),
-        .amt_o          (amt                    )
+        .clk_i          (clk_i                          ),
+        .rst_i          (rst_i                          ),
+        .rollback_i     (exception_i || br_mis.valid[0] ),    
+        .rob_amt_i      (rob_amt                        ),
+        .amt_o          (amt                            )
     );
 // --------------------------------------------------------------------
 
@@ -227,10 +231,13 @@ module pipeline_dp (
 // Module name  :   BC
 // Description  :   Broadcaster
 // --------------------------------------------------------------------
-    BC BC_inst (
-        .fu_bc          (fu_bc        ),
-        .bc_fu          (bc_fu        ),
-        .bc_prf         (bc_prf       )
+    BC_sim BC_inst (
+        .clk_i          (clk_i      ),
+        .rst_i          (rst_i      ),
+        .fu_bc          (fu_bc      ),
+        .bc_fu          (bc_fu      ),
+        .bc_prf         (bc_prf     ),
+        .cdb_o          (cdb        )
     );
 // --------------------------------------------------------------------
 
@@ -239,13 +246,13 @@ module pipeline_dp (
 // Description  :   Freelist
 // --------------------------------------------------------------------
     FL_sim FL_inst (
-        .clk_i          (clk_i                  ),
-        .rst_i          (rst_i                  ),
-        .fl_dp_o        (fl_dp                  ),
-        .dp_fl_i        (dp_fl                  ),
-        .rob_fl_i       (rob_fl                 ),
-        .vfl_i          (vfl                    ),
-        .rollback_i     (exception_i || br_mis  )
+        .clk_i          (clk_i                          ),
+        .rst_i          (rst_i                          ),
+        .fl_dp_o        (fl_dp                          ),
+        .dp_fl_i        (dp_fl                          ),
+        .rob_fl_i       (rob_fl                         ),
+        .vfl_i          (vfl                            ),
+        .rollback_i     (exception_i || br_mis.valid[0] )
     );
 // --------------------------------------------------------------------
 
@@ -254,11 +261,11 @@ module pipeline_dp (
 // Description  :   Victim Freelist
 // --------------------------------------------------------------------
     VFL_sim VFL_inst (
-        .clk_i          (clk_i                  ),
-        .rst_i          (rst_i                  ),
-        .rob_vfl_i      (rob_vfl                ),
-        .vlf_o          (vlf                    ),
-        .roll_back_i    (exception_i || br_mis  )
+        .clk_i          (clk_i                          ),
+        .rst_i          (rst_i                          ),
+        .rob_vfl_i      (rob_vfl                        ),
+        .vlf_o          (vlf                            ),
+        .roll_back_i    (exception_i || br_mis.valid[0] )
     );
 // --------------------------------------------------------------------
 

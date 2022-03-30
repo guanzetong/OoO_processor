@@ -422,6 +422,7 @@ typedef struct packed {
     logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
     logic                               br_predict  ;
     logic                               br_result   ;
+    logic   [`XLEN-1:0]                 br_target   ;
     logic                               complete    ;
 } ROB_ENTRY;
 
@@ -661,6 +662,7 @@ typedef struct packed {
 
 typedef struct packed {
     logic   [`THREAD_NUM-1:0]                       valid       ;
+    logic   [`THREAD_NUM-1:0][`XLEN-1:0]            br_target   ;
 } BR_MIS; // Combined
 
 typedef struct packed {
