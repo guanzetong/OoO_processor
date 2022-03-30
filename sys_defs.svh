@@ -328,6 +328,7 @@ typedef struct packed {
 `define PHY_REG_NUM     64  // The number of Physical registers.
 `define FL_ENTRY_NUM    `PHY_REG_NUM - `ARCH_REG_NUM
 `define THREAD_NUM      2
+`define MT_ENTRY_NUM    32
 
 `define ALU_NUM         3
 `define MULT_NUM        2
@@ -624,7 +625,7 @@ typedef struct packed {
     logic                                           start       ;
     logic                                           valid       ;
     IS_INST                                         is_inst     ;
-git     // logic   [`XLEN-1:0]                             pc          ;
+    // logic   [`XLEN-1:0]                             pc          ;
     // INST                                            inst        ;
     // logic   [`XLEN-1:0]                             rs1_value   ;
     // logic   [`XLEN-1:0]                             rs2_value   ;

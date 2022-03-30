@@ -1,0 +1,582 @@
+Information: Updating design information... (UID-85)
+ 
+****************************************
+Report : design
+Design : AMT
+Version: S-2021.06-SP1
+Date   : Wed Mar 30 19:31:18 2022
+****************************************
+
+Design allows ideal nets on clock nets.
+
+Library(s) Used:
+
+    lec25dscc25_TT (File: /afs/umich.edu/class/eecs470/lib/synopsys/lec25dscc25_TT.db)
+
+Local Link Library:
+
+    {lec25dscc25_TT.db}
+
+Flip-Flop Types:
+
+    No flip-flop types specified.
+
+Latch Types:
+
+    No latch types specified.
+
+Operating Conditions:
+
+
+    Operating Condition Name : nom_pvt
+    Library : lec25dscc25_TT
+    Process :   1.00
+    Temperature :  25.00
+    Voltage :   2.50
+    Interconnect Model : balanced_tree
+
+Wire Loading Model:
+
+    Selected manually by the user.
+
+Name           :   tsmcwire
+Location       :   lec25dscc25_TT
+Resistance     :   0.2642
+Capacitance    :   0.000132782
+Area           :   0.27
+Slope          :   0.74
+Fanout   Length   Points Average Cap Std Deviation
+--------------------------------------------------------------
+     1     0.89
+     2     1.48
+     3     2.44
+     4     3.18
+     5     3.92
+
+
+
+Wire Loading Model Mode: top.
+
+Timing Ranges:
+
+    No timing ranges specified.
+
+Pin Input Delays:
+
+    None specified.
+
+Pin Output Delays:
+
+    None specified.
+
+Disabled Timing Arcs:
+
+    No arcs disabled.
+
+Required Licenses:
+
+    None Required
+
+Design Parameters:
+
+    None specified.
+1
+ 
+****************************************
+Report : area
+Design : AMT
+Version: S-2021.06-SP1
+Date   : Wed Mar 30 19:31:18 2022
+****************************************
+
+Library(s) Used:
+
+    lec25dscc25_TT (File: /afs/umich.edu/class/eecs470/lib/synopsys/lec25dscc25_TT.db)
+
+Number of ports:                          219
+Number of nets:                          1616
+Number of cells:                         1509
+Number of combinational cells:           1317
+Number of sequential cells:               192
+Number of macros/black boxes:               0
+Number of buf/inv:                        267
+Number of references:                      20
+
+Combinational area:              74079.407501
+Buf/Inv area:                     8899.891426
+Noncombinational area:           30258.046875
+Macro/Black Box area:                0.000000
+Net Interconnect area:             989.275629
+
+Total cell area:                104337.454376
+Total area:                     105326.730006
+1
+ 
+****************************************
+Report : timing
+        -path full
+        -delay max
+        -input_pins
+        -nets
+        -max_paths 2
+        -transition_time
+Design : AMT
+Version: S-2021.06-SP1
+Date   : Wed Mar 30 19:31:18 2022
+****************************************
+
+ * Some/all delay information is back-annotated.
+
+Operating Conditions: nom_pvt   Library: lec25dscc25_TT
+Wire Load Model Mode: top
+
+  Startpoint: amt_entry_reg[31][amt_tag][1]
+              (rising edge-triggered flip-flop clocked by clk_i)
+  Endpoint: amt_entry_reg[31][amt_tag][1]
+            (rising edge-triggered flip-flop clocked by clk_i)
+  Path Group: clk_i
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                       Fanout     Trans      Incr       Path
+  ------------------------------------------------------------------------------------
+  clock clk_i (rise edge)                                           0.00       0.00
+  clock network delay (ideal)                                       0.00       0.00
+  amt_entry_reg[31][amt_tag][1]/CLK (dffs1)               0.00      0.00       0.00 r
+  amt_entry_reg[31][amt_tag][1]/Q (dffs1)                 0.20      0.18       0.18 r
+  amt_entry[31][amt_tag][1] (net)               1                   0.00       0.18 r
+  U2000/DIN3 (aoi22s2)                                    0.20      0.00       0.18 r
+  U2000/Q (aoi22s2)                                       0.40      0.14       0.32 f
+  n910 (net)                                    1                   0.00       0.32 f
+  U409/DIN4 (oai211s2)                                    0.40      0.00       0.32 f
+  U409/Q (oai211s2)                                       0.62      0.24       0.56 r
+  n1254 (net)                                   1                   0.00       0.56 r
+  amt_entry_reg[31][amt_tag][1]/DIN (dffs1)               0.62      0.01       0.57 r
+  data arrival time                                                            0.57
+
+  clock clk_i (rise edge)                                          20.00      20.00
+  clock network delay (ideal)                                       0.00      20.00
+  clock uncertainty                                                -0.10      19.90
+  amt_entry_reg[31][amt_tag][1]/CLK (dffs1)                         0.00      19.90 r
+  library setup time                                               -0.15      19.75
+  data required time                                                          19.75
+  ------------------------------------------------------------------------------------
+  data required time                                                          19.75
+  data arrival time                                                           -0.57
+  ------------------------------------------------------------------------------------
+  slack (MET)                                                                 19.18
+
+
+  Startpoint: amt_entry_reg[31][amt_tag][0]
+              (rising edge-triggered flip-flop clocked by clk_i)
+  Endpoint: amt_entry_reg[31][amt_tag][0]
+            (rising edge-triggered flip-flop clocked by clk_i)
+  Path Group: clk_i
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                       Fanout     Trans      Incr       Path
+  ------------------------------------------------------------------------------------
+  clock clk_i (rise edge)                                           0.00       0.00
+  clock network delay (ideal)                                       0.00       0.00
+  amt_entry_reg[31][amt_tag][0]/CLK (dffs1)               0.00      0.00       0.00 r
+  amt_entry_reg[31][amt_tag][0]/Q (dffs1)                 0.20      0.18       0.18 r
+  amt_entry[31][amt_tag][0] (net)               1                   0.00       0.18 r
+  U1999/DIN3 (aoi22s2)                                    0.20      0.00       0.18 r
+  U1999/Q (aoi22s2)                                       0.40      0.14       0.32 f
+  n908 (net)                                    1                   0.00       0.32 f
+  U407/DIN4 (oai211s2)                                    0.40      0.00       0.32 f
+  U407/Q (oai211s2)                                       0.62      0.24       0.56 r
+  n1253 (net)                                   1                   0.00       0.56 r
+  amt_entry_reg[31][amt_tag][0]/DIN (dffs1)               0.62      0.01       0.57 r
+  data arrival time                                                            0.57
+
+  clock clk_i (rise edge)                                          20.00      20.00
+  clock network delay (ideal)                                       0.00      20.00
+  clock uncertainty                                                -0.10      19.90
+  amt_entry_reg[31][amt_tag][0]/CLK (dffs1)                         0.00      19.90 r
+  library setup time                                               -0.15      19.75
+  data required time                                                          19.75
+  ------------------------------------------------------------------------------------
+  data required time                                                          19.75
+  data arrival time                                                           -0.57
+  ------------------------------------------------------------------------------------
+  slack (MET)                                                                 19.18
+
+
+  Startpoint: rob_amt_i[1][arch_reg][4]
+              (input port clocked by clk_i)
+  Endpoint: amt_entry_reg[0][amt_tag][1]
+            (rising edge-triggered flip-flop clocked by clk_i)
+  Path Group: input_grp
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                       Fanout     Trans      Incr       Path
+  ------------------------------------------------------------------------------------
+  clock clk_i (rise edge)                                           0.00       0.00
+  clock network delay (ideal)                                       0.00       0.00
+  input external delay                                              0.10       0.10 f
+  rob_amt_i[1][arch_reg][4] (in)                          0.24      0.05       0.15 f
+  rob_amt_i[1][arch_reg][4] (net)               3                   0.00       0.15 f
+  U1919/DIN (ib1s1)                                       0.24      0.00       0.15 f
+  U1919/Q (ib1s1)                                         0.18      0.09       0.24 r
+  n259 (net)                                    2                   0.00       0.24 r
+  U1940/DIN1 (nor2s1)                                     0.18      0.00       0.24 r
+  U1940/Q (nor2s1)                                        0.84      0.41       0.65 f
+  n1020 (net)                                   8                   0.00       0.65 f
+  U657/DIN1 (nnd2s2)                                      0.84      0.00       0.65 f
+  U657/Q (nnd2s2)                                         0.31      0.16       0.81 r
+  n776 (net)                                    2                   0.00       0.81 r
+  U1654/DIN1 (nor2s1)                                     0.31      0.00       0.81 r
+  U1654/Q (nor2s1)                                        0.93      0.47       1.28 f
+  n765 (net)                                   11                   0.00       1.28 f
+  U1551/DIN (ib1s1)                                       0.93      0.00       1.28 f
+  U1551/Q (ib1s1)                                         0.49      0.26       1.54 r
+  n240 (net)                                    5                   0.00       1.54 r
+  U1492/DIN4 (nnd4s1)                                     0.49      0.00       1.54 r
+  U1492/Q (nnd4s1)                                        0.32      0.14       1.68 f
+  n936 (net)                                    1                   0.00       1.68 f
+  U1491/DIN1 (or4s1)                                      0.32      0.00       1.68 f
+  U1491/Q (or4s1)                                         0.20      0.30       1.99 f
+  n935 (net)                                    2                   0.00       1.99 f
+  U1486/DIN5 (nor5s2)                                     0.20      0.00       1.99 f
+  U1486/Q (nor5s2)                                        0.54      0.38       2.37 r
+  n422 (net)                                   16                   0.00       2.37 r
+  U16/DIN1 (oai221s2)                                     0.54      0.00       2.37 r
+  U16/Q (oai221s2)                                        0.91      0.37       2.74 f
+  n413 (net)                                    7                   0.00       2.74 f
+  U14/DIN1 (nnd2s2)                                       0.91      0.00       2.75 f
+  U14/Q (nnd2s2)                                          0.46      0.25       3.00 r
+  n415 (net)                                    6                   0.00       3.00 r
+  U1827/DIN4 (oai22s2)                                    0.46      0.00       3.00 r
+  U1827/Q (oai22s2)                                       0.55      0.21       3.21 f
+  n1068 (net)                                   1                   0.00       3.21 f
+  amt_entry_reg[0][amt_tag][1]/DIN (dffs1)                0.55      0.01       3.21 f
+  data arrival time                                                            3.21
+
+  clock clk_i (rise edge)                                          20.00      20.00
+  clock network delay (ideal)                                       0.00      20.00
+  clock uncertainty                                                -0.10      19.90
+  amt_entry_reg[0][amt_tag][1]/CLK (dffs1)                          0.00      19.90 r
+  library setup time                                               -0.19      19.71
+  data required time                                                          19.71
+  ------------------------------------------------------------------------------------
+  data required time                                                          19.71
+  data arrival time                                                           -3.21
+  ------------------------------------------------------------------------------------
+  slack (MET)                                                                 16.49
+
+
+  Startpoint: rob_amt_i[1][arch_reg][4]
+              (input port clocked by clk_i)
+  Endpoint: amt_entry_reg[0][amt_tag][0]
+            (rising edge-triggered flip-flop clocked by clk_i)
+  Path Group: input_grp
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                       Fanout     Trans      Incr       Path
+  ------------------------------------------------------------------------------------
+  clock clk_i (rise edge)                                           0.00       0.00
+  clock network delay (ideal)                                       0.00       0.00
+  input external delay                                              0.10       0.10 f
+  rob_amt_i[1][arch_reg][4] (in)                          0.24      0.05       0.15 f
+  rob_amt_i[1][arch_reg][4] (net)               3                   0.00       0.15 f
+  U1919/DIN (ib1s1)                                       0.24      0.00       0.15 f
+  U1919/Q (ib1s1)                                         0.18      0.09       0.24 r
+  n259 (net)                                    2                   0.00       0.24 r
+  U1940/DIN1 (nor2s1)                                     0.18      0.00       0.24 r
+  U1940/Q (nor2s1)                                        0.84      0.41       0.65 f
+  n1020 (net)                                   8                   0.00       0.65 f
+  U657/DIN1 (nnd2s2)                                      0.84      0.00       0.65 f
+  U657/Q (nnd2s2)                                         0.31      0.16       0.81 r
+  n776 (net)                                    2                   0.00       0.81 r
+  U1654/DIN1 (nor2s1)                                     0.31      0.00       0.81 r
+  U1654/Q (nor2s1)                                        0.93      0.47       1.28 f
+  n765 (net)                                   11                   0.00       1.28 f
+  U1551/DIN (ib1s1)                                       0.93      0.00       1.28 f
+  U1551/Q (ib1s1)                                         0.49      0.26       1.54 r
+  n240 (net)                                    5                   0.00       1.54 r
+  U1492/DIN4 (nnd4s1)                                     0.49      0.00       1.54 r
+  U1492/Q (nnd4s1)                                        0.32      0.14       1.68 f
+  n936 (net)                                    1                   0.00       1.68 f
+  U1491/DIN1 (or4s1)                                      0.32      0.00       1.68 f
+  U1491/Q (or4s1)                                         0.20      0.30       1.99 f
+  n935 (net)                                    2                   0.00       1.99 f
+  U1486/DIN5 (nor5s2)                                     0.20      0.00       1.99 f
+  U1486/Q (nor5s2)                                        0.54      0.38       2.37 r
+  n422 (net)                                   16                   0.00       2.37 r
+  U16/DIN1 (oai221s2)                                     0.54      0.00       2.37 r
+  U16/Q (oai221s2)                                        0.91      0.37       2.74 f
+  n413 (net)                                    7                   0.00       2.74 f
+  U14/DIN1 (nnd2s2)                                       0.91      0.00       2.75 f
+  U14/Q (nnd2s2)                                          0.46      0.25       3.00 r
+  n415 (net)                                    6                   0.00       3.00 r
+  U1825/DIN4 (oai22s2)                                    0.46      0.00       3.00 r
+  U1825/Q (oai22s2)                                       0.55      0.21       3.21 f
+  n1067 (net)                                   1                   0.00       3.21 f
+  amt_entry_reg[0][amt_tag][0]/DIN (dffs1)                0.55      0.01       3.21 f
+  data arrival time                                                            3.21
+
+  clock clk_i (rise edge)                                          20.00      20.00
+  clock network delay (ideal)                                       0.00      20.00
+  clock uncertainty                                                -0.10      19.90
+  amt_entry_reg[0][amt_tag][0]/CLK (dffs1)                          0.00      19.90 r
+  library setup time                                               -0.19      19.71
+  data required time                                                          19.71
+  ------------------------------------------------------------------------------------
+  data required time                                                          19.71
+  data arrival time                                                           -3.21
+  ------------------------------------------------------------------------------------
+  slack (MET)                                                                 16.49
+
+
+  Startpoint: amt_entry_reg[0][amt_tag][1]
+              (rising edge-triggered flip-flop clocked by clk_i)
+  Endpoint: amt_o[0][amt_tag][1]
+            (output port clocked by clk_i)
+  Path Group: output_grp
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                       Fanout     Trans      Incr       Path
+  ------------------------------------------------------------------------------------
+  amt_entry_reg[0][amt_tag][1]/CLK (dffs1)                0.00      0.00       0.00 r
+  amt_entry_reg[0][amt_tag][1]/Q (dffs1)                  0.00      0.16       0.16 r
+  amt_entry_reg[0][amt_tag][1]/QN (dffs1)                 0.13      0.07       0.23 f
+  n191 (net)                                    2                   0.00       0.23 f
+  U1262/DIN2 (oai222s3)                                   0.13      0.00       0.23 f
+  U1262/Q (oai222s3)                                      0.40      0.50       0.73 r
+  amt_o[0][amt_tag][1] (net)                    1                   0.00       0.73 r
+  amt_o[0][amt_tag][1] (out)                              0.40      0.02       0.75 r
+  data arrival time                                                            0.75
+
+  max_delay                                                        20.00      20.00
+  clock uncertainty                                                -0.10      19.90
+  output external delay                                            -0.10      19.80
+  data required time                                                          19.80
+  ------------------------------------------------------------------------------------
+  data required time                                                          19.80
+  data arrival time                                                           -0.75
+  ------------------------------------------------------------------------------------
+  slack (MET)                                                                 19.05
+
+
+  Startpoint: amt_entry_reg[0][amt_tag][0]
+              (rising edge-triggered flip-flop clocked by clk_i)
+  Endpoint: amt_o[0][amt_tag][0]
+            (output port clocked by clk_i)
+  Path Group: output_grp
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                       Fanout     Trans      Incr       Path
+  ------------------------------------------------------------------------------------
+  amt_entry_reg[0][amt_tag][0]/CLK (dffs1)                0.00      0.00       0.00 r
+  amt_entry_reg[0][amt_tag][0]/Q (dffs1)                  0.00      0.16       0.16 r
+  amt_entry_reg[0][amt_tag][0]/QN (dffs1)                 0.13      0.07       0.23 f
+  n192 (net)                                    2                   0.00       0.23 f
+  U1261/DIN2 (oai222s3)                                   0.13      0.00       0.23 f
+  U1261/Q (oai222s3)                                      0.40      0.50       0.73 r
+  amt_o[0][amt_tag][0] (net)                    1                   0.00       0.73 r
+  amt_o[0][amt_tag][0] (out)                              0.40      0.02       0.75 r
+  data arrival time                                                            0.75
+
+  max_delay                                                        20.00      20.00
+  clock uncertainty                                                -0.10      19.90
+  output external delay                                            -0.10      19.80
+  data required time                                                          19.80
+  ------------------------------------------------------------------------------------
+  data required time                                                          19.80
+  data arrival time                                                           -0.75
+  ------------------------------------------------------------------------------------
+  slack (MET)                                                                 19.05
+
+
+1
+ 
+****************************************
+Report : constraint
+        -verbose
+        -max_delay
+Design : AMT
+Version: S-2021.06-SP1
+Date   : Wed Mar 30 19:31:18 2022
+****************************************
+
+
+  Startpoint: amt_entry_reg[31][amt_tag][0]
+              (rising edge-triggered flip-flop clocked by clk_i)
+  Endpoint: amt_entry_reg[31][amt_tag][0]
+            (rising edge-triggered flip-flop clocked by clk_i)
+  Path Group: clk_i
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock clk_i (rise edge)                                 0.00       0.00
+  clock network delay (ideal)                             0.00       0.00
+  amt_entry_reg[31][amt_tag][0]/CLK (dffs1)               0.00       0.00 r
+  amt_entry_reg[31][amt_tag][0]/Q (dffs1)                 0.18       0.18 r
+  U1999/Q (aoi22s2)                                       0.14       0.32 f
+  U407/Q (oai211s2)                                       0.24       0.56 r
+  amt_entry_reg[31][amt_tag][0]/DIN (dffs1)               0.01       0.57 r
+  data arrival time                                                  0.57
+
+  clock clk_i (rise edge)                                20.00      20.00
+  clock network delay (ideal)                             0.00      20.00
+  clock uncertainty                                      -0.10      19.90
+  amt_entry_reg[31][amt_tag][0]/CLK (dffs1)               0.00      19.90 r
+  library setup time                                     -0.15      19.75
+  data required time                                                19.75
+  --------------------------------------------------------------------------
+  data required time                                                19.75
+  data arrival time                                                 -0.57
+  --------------------------------------------------------------------------
+  slack (MET)                                                       19.18
+
+
+  Startpoint: rob_amt_i[1][arch_reg][4]
+              (input port clocked by clk_i)
+  Endpoint: amt_entry_reg[0][amt_tag][0]
+            (rising edge-triggered flip-flop clocked by clk_i)
+  Path Group: input_grp
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  clock clk_i (rise edge)                                 0.00       0.00
+  clock network delay (ideal)                             0.00       0.00
+  input external delay                                    0.10       0.10 f
+  rob_amt_i[1][arch_reg][4] (in)                          0.05       0.15 f
+  U1919/Q (ib1s1)                                         0.09       0.24 r
+  U1940/Q (nor2s1)                                        0.41       0.65 f
+  U657/Q (nnd2s2)                                         0.16       0.81 r
+  U1654/Q (nor2s1)                                        0.47       1.28 f
+  U1551/Q (ib1s1)                                         0.26       1.54 r
+  U1492/Q (nnd4s1)                                        0.14       1.68 f
+  U1491/Q (or4s1)                                         0.31       1.99 f
+  U1486/Q (nor5s2)                                        0.38       2.37 r
+  U16/Q (oai221s2)                                        0.38       2.74 f
+  U14/Q (nnd2s2)                                          0.25       3.00 r
+  U1825/Q (oai22s2)                                       0.21       3.21 f
+  amt_entry_reg[0][amt_tag][0]/DIN (dffs1)                0.01       3.21 f
+  data arrival time                                                  3.21
+
+  clock clk_i (rise edge)                                20.00      20.00
+  clock network delay (ideal)                             0.00      20.00
+  clock uncertainty                                      -0.10      19.90
+  amt_entry_reg[0][amt_tag][0]/CLK (dffs1)                0.00      19.90 r
+  library setup time                                     -0.19      19.71
+  data required time                                                19.71
+  --------------------------------------------------------------------------
+  data required time                                                19.71
+  data arrival time                                                 -3.21
+  --------------------------------------------------------------------------
+  slack (MET)                                                       16.49
+
+
+  Startpoint: amt_entry_reg[0][amt_tag][0]
+              (rising edge-triggered flip-flop clocked by clk_i)
+  Endpoint: amt_o[0][amt_tag][0]
+            (output port clocked by clk_i)
+  Path Group: output_grp
+  Path Type: max
+
+  Des/Clust/Port     Wire Load Model       Library
+  ------------------------------------------------
+  AMT                tsmcwire              lec25dscc25_TT
+
+  Point                                                   Incr       Path
+  --------------------------------------------------------------------------
+  amt_entry_reg[0][amt_tag][0]/CLK (dffs1)                0.00       0.00 r
+  amt_entry_reg[0][amt_tag][0]/Q (dffs1)                  0.16       0.16 r
+  amt_entry_reg[0][amt_tag][0]/QN (dffs1)                 0.07       0.23 f
+  U1261/Q (oai222s3)                                      0.50       0.73 r
+  amt_o[0][amt_tag][0] (out)                              0.02       0.75 r
+  data arrival time                                                  0.75
+
+  max_delay                                              20.00      20.00
+  clock uncertainty                                      -0.10      19.90
+  output external delay                                  -0.10      19.80
+  data required time                                                19.80
+  --------------------------------------------------------------------------
+  data required time                                                19.80
+  data arrival time                                                 -0.75
+  --------------------------------------------------------------------------
+  slack (MET)                                                       19.05
+
+
+1
+Information: Updating graph... (UID-83)
+ 
+****************************************
+Report : reference
+Design : AMT
+Version: S-2021.06-SP1
+Date   : Wed Mar 30 19:31:19 2022
+****************************************
+
+Attributes:
+    b - black box (unknown)
+   bo - allows boundary optimization
+    d - dont_touch
+   mo - map_only
+    h - hierarchical
+    n - noncombinational
+    r - removable
+    s - synthetic operator
+    u - contains unmapped logic
+
+Reference          Library       Unit Area   Count    Total Area   Attributes
+-----------------------------------------------------------------------------
+and3s1             lec25dscc25_TT    66.355202      16  1061.683228
+aoi21s2            lec25dscc25_TT    49.766399      32  1592.524780
+aoi22s1            lec25dscc25_TT    58.060799       5   290.303993
+aoi22s2            lec25dscc25_TT    58.060799     186 10799.308548
+dffs1              lec25dscc25_TT   157.593994     192 30258.046875 n
+hi1s1              lec25dscc25_TT    33.177601       5   165.888004
+i1s1               lec25dscc25_TT    33.177601       5   165.888004
+i1s3               lec25dscc25_TT    41.472000       5   207.360001
+ib1s1              lec25dscc25_TT    33.177601     252  8360.755417
+nnd2s1             lec25dscc25_TT    41.472000       3   124.416000
+nnd2s2             lec25dscc25_TT    41.472000     193  8004.096024
+nnd4s1             lec25dscc25_TT    58.060799      16   928.972778
+nor2s1             lec25dscc25_TT    41.472000     177  7340.544022
+nor5s2             lec25dscc25_TT   149.298996       4   597.195984
+oai22s2            lec25dscc25_TT    58.060799     111  6444.748650
+oai211s2           lec25dscc25_TT    58.060799      80  4644.863892
+oai221s2           lec25dscc25_TT    74.649597      32  2388.787109
+oai222s3           lec25dscc25_TT   107.827003     192 20702.784668
+oai322s1           lec25dscc25_TT    93.398399       1    93.398399
+or4s1              lec25dscc25_TT    82.944000       2   165.888000
+-----------------------------------------------------------------------------
+Total 20 references                                 104337.454376
+1

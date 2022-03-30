@@ -1,0 +1,49 @@
+18:49:59    16 -->                                                             [tcl] ucliGUI::connect -toolargs -ucligui -toolexe ./simv -pid 810440 -toolin /tmp/vcs_20220330224947_810431_stzzzy..stdin -toolout /tmp/vcs_20220330224947_810431_stzzzy..stdout  
+18:49:59    17 -->                                                                 [tcl] set ucliGUI::state
+18:49:59    18 -->                                                                     [tcl] gui_update_simulator_buttons
+18:50:03    19 -->                                                                         [tcl] set ucliGUI::state
+18:50:03    20 -->                                                                             [tcl] ucliCore::getToolPID
+18:50:03    21 -->                                                                                 [tcl] synopsys::env hasTB
+18:50:03    22 -->                                                                                     [tcl] trigger_hier_stack_context_switch 0
+18:50:03    23 -->                                                                                         [tcl] synUtils::setDVEInitPhase 1
+18:50:03    24 -->                                                                                             [tcl] gui_get_env SIMSETUP::SIMVPD
+18:50:03    25 --> ...  [tcl] synopsys::dump -type VPD -file /afs/umich.edu/user/s/t/stzzzy/eecs470/group6w22/inter.vpd -locking
+18:50:03    26 --> ...      [tcl] synopsys::dump -autoflush on -fid VPD0
+18:50:03    27 --> ...          [tcl] set ::dve_fid VPD0
+18:50:03    28 --> ...              [tcl] synUtils::setDVEInitPhase 0
+18:50:03    29 --> ...                  [tcl] ucliCore::getToolPID
+18:50:03    30 --> ...                      [tcl] synUtils::sendTool -active _icl_setToolSocket /tmp/smlnpY20hp2
+18:50:03    31 --> ...                          [tcl] synUtils::sendTool -active {_icl_start_rpc -version "R-2020.12-SP2-1_Full64" -sync_file /tmp/vcs_dve_rpc.stzzzy.810440}
+18:50:03    32 --> ...                              [tcl] synUtils::sendTool -active {_icl_createSharedMemory /tmp/vcs_dve_general.stzzzy.810440}
+18:50:04    33 --> ...                                  [tcl] dveMisc::vbusExpand AMT_tb
+18:50:04    34 --> ...                                      [tcl] dveMisc::vbusExpand _vcs_unit__3599526094
+18:50:04    35 --> ...                                          [tcl] ucliGUI::vpdAddHierarchy -scope AMT_tb -depth 1 -file /afs/umich.edu/user/s/t/stzzzy/eecs470/group6w22/inter.vpd; synopsys::dump -flush VPD0
+18:50:05    36 --> ...                                              [tcl] synopsys::dump -add {AMT_tb.rt_num} -aggregates  -fid VPD0
+18:50:05    37 --> ...                                                  [tcl] synopsys::dump -add {AMT_tb.mt_entry} -aggregates  -fid VPD0
+18:50:05    38 --> ...                                                      [tcl] synopsys::dump -add {AMT_tb.amt_output} -aggregates  -fid VPD0
+18:50:05    39 --> ...                                                          [tcl] dveMisc::vbusExpand AMT_tb.check_amt_output
+18:50:05    40 --> ...                                                              [tcl] synopsys::dump -add {AMT_tb.check_amt_output.amt_output} -aggregates  -fid VPD0
+18:50:05    41 --> ...                                                                  [tcl] synopsys::dump -add {AMT_tb.correct} -aggregates  -fid VPD0
+18:50:05    42 --> ...                                                                      [tcl] synopsys::dump -add {AMT_tb.check_amt_output.correct} -aggregates  -fid VPD0
+18:50:05    43 --> ...                                                                          [tcl] ucliGUI::getSignalValues -scope AMT_tb -radix {decimal decimal decimal binary binary binary hexadecimal hexadecimal hexadecimal hexadecimal hexadecimal } -list {rt_num mt_entry phy_reg_idx clock reset rollback amt_input amt_output correct check_amt_output.amt_output check_amt_output.correct }
+18:50:05    44 --> ...                                                                              [tcl] config endofsim noexit
+18:50:05    45 --> ...                                                                                  [tcl] config onfail enable all
+18:50:05    46 --> ...                                                                                      [tcl] config syscaddplainmembers
+18:50:05    47 --> ...                                                                                          [tcl] config syscaddsourcenames
+18:50:05    48 --> ...                                                                                              [tcl] config syscaddstructtypes
+18:50:05    49 --> ...                                                                                                  [tcl] synopsys::listing -disable
+18:50:10    50 --> ...  [tcl] ucliGUI::vpdAddHierarchy -scope AMT_tb.check_amt_output -depth 1 -file /afs/umich.edu/user/s/t/stzzzy/eecs470/group6w22/inter.vpd; synopsys::dump -flush VPD0
+18:50:10    51 --> ...      [tcl] synopsys::dump -add {AMT_tb.check_amt_output.i} -aggregates  -fid VPD0
+18:50:10    52 --> ...          [tcl] ucliGUI::getSignalValues -scope AMT_tb.check_amt_output -radix {symbolic } -list {{i[31:0]} }
+18:50:22    53 --> ...              [tcl] synopsys::dump -add {AMT_tb} -scope "." -depth 1 -fid VPD0
+18:50:22    54 --> ...                  [tcl] synopsys::dump -add {_vcs_unit__3599526094 } -aggregates  -fid VPD0
+18:50:24    55 --> ...                      [tcl] synopsys::run
+18:50:24    56 --> ...                          [tcl] set ucliGUI::state
+18:50:24    57 --> ...                              [tcl] gui_update_simulator_buttons
+18:50:24    58 --> ...                                  [tcl] set ucliGUI::state
+18:50:24    59 --> ...                                      [tcl] set ucliGUI::state
+18:50:24    60 --> ...                                          [tcl] set ucliGUI::state
+18:50:24    61 --> ...                                              [tcl] catch {senv activeDomain} dveMisc::result 
+18:50:24    62 --> ...                                                  [tcl] set dveMisc::result
+18:50:24    63 --> ...                                                      [tcl] gui_update_simulator_buttons
+18:54:31    64 --> ...                                                          [tcl] dveMisc::vbusExpand AMT_tb.amt

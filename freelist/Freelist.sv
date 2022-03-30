@@ -11,44 +11,41 @@ module freelist #(
 
 	input DP_FL dp_fl_i,
     input ROB_FL rob_fl_i,
-    input [C_DP_NUM-1:0] [4:0] rd_idx
 
     `ifdef DEBUG
-	output logic   [`C_FL_ENTRY_NUM-1:0][$clog2(`C_PR_ENTRY)-1:0]   FL_table, next_FL_table,
-	output logic   [$clog2(`C_FL_ENTRY_NUM)-1:0]                 		FL_rollback_idx,
-	output logic   [$clog2(`C_FL_ENTRY_NUM)-1:0]                 		head, next_head,
-	output logic   [$clog2(`C_FL_ENTRY_NUM)-1:0]                 		tail, next_tail,
-	output logic   [`C_DP_NUM-1:0][$clog2(`C_FL_ENTRY_NUM)-1:0] 	FL_idx,		 		// the position of tail in freelist
+	output logic   [C_FL_ENTRY_NUM-1:0][$clog2(`C_PR_ENTRY)-1:0]   FL_table, next_FL_table,
+	output logic   [C_FL_IDX-1:0]                 		FL_rollback_idx,
+	output logic   [C_FL_IDX-1:0]                 		head, next_head,
+	output logic   [C_FL_IDX-1:0]                 		tail, next_tail,
+	output logic   [C_DP_NUM-1:0][$clog2(C_FL_ENTRY_NUM)-1:0] 	FL_idx,		 		// the position of tail in freelist
 	`endif
 
     output FL_DP fl_dp_o
 );
 
-    logic [C_FL_IDX - 1] dp_tail;
-    logic [C_FL_IDX - 1] rt_head;
+
 
 	`ifndef DEBUG
-    logic [`C_DP_NUM-1:0][$clog2(`C_FL_ENTRY_NUM)-1:0] 	FL_idx;	
-	logic [$clog2(`C_FL_ENTRY_NUM)-1:0]                 head, next_head;	// write, indicate where the tag should be retired in the freelist
-	logic [$clog2(`C_FL_ENTRY_NUM)-1:0]                 tail, next_tail;  	// read, indicate where the tag should be dispatched in the freelist
-	logic [$clog2(`C_FL_ENTRY_NUM)-1:0]                 		FL_rollback_idx;
+    logic [`C_DP_NUM-1:0][$clog2(C_FL_ENTRY_NUM)-1:0] 	FL_idx;	
+	logic [C_FL_IDX-1:0]                 head, next_head;	// write, indicate where the tag should be retired in the freelist
+	logic [C_FL_IDX-1:0]                 tail, next_tail;  	// read, indicate where the tag should be dispatched in the freelist
+	logic [C_FL_IDX-1:0]                 		FL_rollback_idx;
 	logic [`C_FL_ENTRY_NUM-1:0] [$clog2(`PHY_REG_NUM)-1:0]    FL_table, next_FL_table;
 	`endif
 
-    logic [$clog2(`C_FL_ENTRY_NUM)-1:0]                 	head_plus_one, head_plus_two;		// specify the num of bits
-	logic [$clog2(`C_FL_ENTRY_NUM)-1:0]                 	tail_plus_one, tail_plus_two;
-	logic [$clog2(`C_FL_ENTRY_NUM)-1:0]                 	dispatch_tail;		// next tail position when dispatch is enabled, virtually
-	logic [$clog2(`C_FL_ENTRY_NUM)-1:0]                 	retire_head;		// next head position when retire is enabled
+    logic [C_FL_IDX-1:0]                 	head_plus_one, head_plus_two;		// specify the num of bits
+	logic [C_FL_IDX-1:0]                 	tail_plus_one, tail_plus_two;
+	logic [C_FL_IDX-1:0]                 	dispatch_tail;		// next tail position when dispatch is enabled, virtually
+	logic [C_FL_IDX-1:0]                 	retire_head;		// next head position when retire is enabled
 
 
-    logic empty, full, almost_full;
 	logic first_rd_nz;
 	logic second_rd_nz;
 	logic first_told_nz;
 	logic second_told_nz;
 
-    assign first_rd_nz = (rd_idx[0] != `ZERO_REG);
-    assign second_rd_nz = (rd_idx[1] != `ZERO_REG);
+    assign first_rd_nz = (rob_fl_i.phy_reg[0] != `ZERO_REG);
+    assign second_rd_nz = (rob_fl_i.phy_reg[1] != `ZERO_REG);
 
     assign first_told_nz = (rob_fl_i.phy_reg[0] != `ZERO_REG);
     assign second_told_nz = (rob_fl_i.phy_reg[1] != `ZERO_REG);
@@ -69,19 +66,19 @@ module freelist #(
     always_comb begin
 		unique if (first_rd_nz && second_rd_nz && (dp_fl_i.dp_num == 2'b11)) begin
 			dispatch_tail = tail_plus_two;
-			T_idx = {next_FL_table[tail_plus_one], next_FL_table[tail]};
+			fl_dp_o.tag = {next_FL_table[tail_plus_one], next_FL_table[tail]};
 			FL_idx = {tail_plus_two, tail_plus_one};
 		end else if (first_rd_nz && (dp_fl_i.dp_num == 2'b01)) begin
 			dispatch_tail = tail_plus_one;
-			T_idx = {`ZERO_PREG, next_FL_table[tail]};
+			fl_dp_o.tag = {`ZERO_PREG, next_FL_table[tail]};
 			FL_idx = {tail_plus_one, tail_plus_one};
 		end else if (second_rd_nz && (dp_fl_i.dp_num == 2'b10)) begin
 			dispatch_tail = tail_plus_one;
-			T_idx = {next_FL_table[tail], `ZERO_PREG};
+			fl_dp_o.tag = {next_FL_table[tail], `ZERO_PREG};
 			FL_idx = {tail_plus_one, tail};
 		end else begin
 			dispatch_tail = tail;
-			T_idx 		 = {`ZERO_PREG, `ZERO_PREG};
+			fl_dp_o.tag 		 = {`ZERO_PREG, `ZERO_PREG};
 			FL_idx 		 = {tail, tail};
 		end
 	end
@@ -122,26 +119,6 @@ module freelist #(
 
 
 
-    logic [`C_PR_ENTRY-1:0] [$clog2(`C_FL_ENTRY_NUM)-1:0]  FL_CAM_table, next_FL_CAM_table;
-// assign the cam table according to FL_idx signal, clean the blocks that contain the same T_idx
-    always_comb begin
-        next_FL_CAM_table = FL_CAM_table;
-        
-        next_FL_CAM_table[T_idx[0]] = FL_idx[0];
-        next_FL_CAM_table[T_idx[1]] = FL_idx[1];
-    end
-
-    assign FL_rollback_idx = FL_CAM_table[rob_fl_i.tag];
-
-    always_ff @(posedge clk_i) begin
-        if (rst_i) begin    
-			for (int i=1; i<`C_PR_FL; i++) begin
-				FL_CAM_table[i] <= `SD 0; 	// initialize freelist CAM table to 0
-			end
-        end else begin
-            FL_CAM_table <= `SD next_FL_CAM_table;
-        end
-    end
 
 
 endmodule
