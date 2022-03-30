@@ -30,39 +30,40 @@ module VFL_sim #(
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-
+    VFL     [C_FL_ENTRY_NUM-1:0]    victim_freelist ;
 // ====================================================================
 // Signal Declarations End
-// ====================================================================
-
-// ====================================================================
-// Module Instantiations Start
-// ====================================================================
-// --------------------------------------------------------------------
-// Module name  :   sub_module_name
-// Description  :   sub module function
-// --------------------------------------------------------------------
-
-
-// --------------------------------------------------------------------
-
-
-// ====================================================================
-// Module Instantiations End
 // ====================================================================
 
 // ====================================================================
 // RTL Logic Start
 // ====================================================================
 
-// --------------------------------------------------------------------
-// Logic Divider
-// --------------------------------------------------------------------
     task victim_freelist_init();
         begin
             for (int unsigned entry_idx = 0; entry_idx < C_FL_ENTRY_NUM; entry_idx++) begin
-                fl_entry.tag    =   entry_idx + C_ARCH_REG_NUM - 1;
-                freelist.push_back(fl_entry);
+                victim_freelist[entry_idx]  =   entry_idx + C_ARCH_REG_NUM;
+            end
+        end
+    endtask
+
+    task victim_freelist_run();
+        begin
+            forever begin
+                @(posedge clk_i);
+                if (rst_i) begin
+                    victim_freelist_init();
+                end else begin
+                    for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
+                        if (rob_vfl_i[rt_idx].wr_en) begin
+                            for (int unsigned entry_idx = 0; entry_idx < C_FL_ENTRY_NUM; entry_idx++) begin
+                                if (rob_vfl_i[rt_idx].tag_old == victim_freelist[entry_idx].tag) begin
+                                    victim_freelist[entry_idx].tag  =   rob_vfl_i[rt_idx].tag;
+                                end
+                            end
+                        end
+                    end
+                end
             end
         end
     endtask

@@ -66,14 +66,14 @@ module FL_sim #(
 // --------------------------------------------------------------------
     task freelist_init();
         for (int unsigned entry_idx = 0; entry_idx < C_FL_ENTRY_NUM; entry_idx++) begin
-            fl_entry.tag    =   entry_idx + C_ARCH_REG_NUM - 1;
+            fl_entry.tag    =   entry_idx + C_ARCH_REG_NUM;
             freelist.push_back(fl_entry);
         end
     endtask
 
     task freelist_run();
         forever begin
-            @(negedge clk_i);
+            @(posedge clk_i);
             // System reset
             if (rst_i) begin
                 freelist.delete();
@@ -87,12 +87,13 @@ module FL_sim #(
             end else begin
                 // Retire
                 for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++)begin
-                    if (rob_fl_i.phy_reg[rt_idx] != `ZERO_REG)begin
+                    if ((rt_idx < rob_fl_i.rt_num) && (rob_fl_i.phy_reg[rt_idx] != `ZERO_REG))begin
                         fl_entry.tag[rt_idx] = rob_fl_i.phy_reg[rt_idx];
                         freelist.push_back(fl_entry);
                     end
                 end
 
+                `SD;
                 // Dispatch
                 avail_num   =   freelist.size();
                 if (avail_num > C_DP_NUM) begin
@@ -100,8 +101,6 @@ module FL_sim #(
                 end else begin
                     fl_dp_o.avail_num   =   avail_num;
                 end
-
-                #1;
 
                 for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
                     if(dp_idx < dp_fl_i.dp_num)begin

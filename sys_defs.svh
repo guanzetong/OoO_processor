@@ -695,8 +695,9 @@ typedef struct packed {
 } FL_ENTRY;
 
 typedef struct packed {
+    logic                                           wr_en       ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;
-} ROB_VFL;
+} ROB_VFL;  // Per-Channel
 
 // Interface End
