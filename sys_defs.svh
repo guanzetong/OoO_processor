@@ -621,9 +621,10 @@ typedef struct packed {
 } PRF_RS; // Per-Channel
 
 typedef struct packed {
+    logic                                           start       ;
     logic                                           valid       ;
     IS_INST                                         is_inst     ;
-    // logic   [`XLEN-1:0]                             pc          ;
+git     // logic   [`XLEN-1:0]                             pc          ;
     // INST                                            inst        ;
     // logic   [`XLEN-1:0]                             rs1_value   ;
     // logic   [`XLEN-1:0]                             rs2_value   ;
@@ -642,8 +643,10 @@ typedef struct packed {
 typedef struct packed {
     logic                                           valid       ;
     logic   [`XLEN-1:0]                             pc          ;
+    logic                                           write_reg   ;
     logic   [`XLEN-1:0]                             rd_value    ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    logic                                           br_inst     ;
     logic                                           br_result   ;
     logic   [`XLEN-1:0]                             br_target   ;
     logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
@@ -651,7 +654,7 @@ typedef struct packed {
 } FU_BC; // Per-Channel
 
 typedef struct packed {
-    logic                                           ready       ;
+    logic                                           broadcasted       ;
 } BC_FU; // Per-Channel
 
 typedef struct packed {
