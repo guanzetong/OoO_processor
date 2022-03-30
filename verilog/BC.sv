@@ -99,23 +99,28 @@ module BC #(
     logic [C_FU_NUM-1:0] valid;
     logic [C_CDB_NUM-1:0][C_PE_OUT_WIDTH-1:0] mux_select;
     logic [C_CDB_NUM-1:0] mux_valid;
-    logic [C_FU_NUM-1:0][`XLEN-1:0]  result ;
-
     bc_pe_mult pe_0(
-        .bit_i(fu_bc_i.write_reg),
+        .bit_i(valid),
         .enc_o(mux_select),
         .valid_o(mux_valid)
     );
     assign valid = {alu_valid_i, mult_valid_i, branch_valid_i, load_valid_i, store_valid_i};
     assign result = {alu_result_i, mult_result_i, branch_result_i, load_result_i, store_result_i};
     always_ff @(posedge clk_i) begin
-        bc_fu_o.broadcasted = 0;
-        for (i = 0; i < C_CDB_NUM; i++)begin
-            bc_prf_o[i].wr_addr = fu_bc_i[mux_select[i]].tag ;
-            bc_prf_o[i].data_in = fu_bc_i[mux_select[i]].rd_value ;
-            bc_prf_o[i].wr_en = mux_valid[i] ;
-            bc_fu_o[mux_select[i]].broadcasted = 1'b1;
+        if(rst_i = 0) begin
+            counter = 0;
         end
+        else begin
+            counter = counter + 1;
+            for(i = 0; i < C_FU_NUM; i++) begin
+                valid[i] = fu_bc_i[(i+counter)%C_FU_NUM].valid;
+            bc_fu_o.broadcasted = 0;
+            for (i = 0; i < C_CDB_NUM; i++)begin
+                bc_prf_o[i].wr_addr = fu_bc_i[mux_select[i]].tag ;
+                bc_prf_o[i].data_in = fu_bc_i[mux_select[i]].rd_value ;
+                bc_prf_o[i].wr_en = mux_valid[i] ;
+                bc_fu_o[(mux_select[i]+counter)%C_FU_NUM].broadcasted = 1'b1;
+            end
     end
 
 endmodule // BC
