@@ -18,13 +18,14 @@ endclass // gen_item
 // Driver Start
 // ====================================================================
 class driver;
-    virtual pipeline_dp_if      vif         ;
-    mailbox                     drv_mbx     ;
-    event                       drv_done    ;
-    int                         pc          ;
-    logic   [][64-1:0]          program_mem ;
-
-    int                         inst_type   ;   // 0: R, 1: I, 2: S, 
+    virtual pipeline_dp_if  vif                 ;
+    mailbox                 drv_mbx             ;
+    event                   drv_done            ;
+    logic   [`XLEN-1:0]     pc                  ;
+    logic   [`XLEN-1:0]     inst_pc             ;
+    logic   [`XLEN-1:0]     program_mem_addr    ;
+    logic   [64-1:0]        program_mem_data    ;
+    logic   [64-1:0]        program_mem     [`MEM_64BIT_LINES-1:0];
 
     task run();
         $display("T=%0t [Driver] starting ...", $time);
@@ -32,38 +33,44 @@ class driver;
         pc  =   0;
         @(negedge vif.clk_i);
 
+        $display("T=%0t [Driver] Reading program.mem", $time);
+        $readmemh("../program.mem", program_mem);
+
         forever begin
-            gen_item    item    ;
+            // gen_item    item    ;
             
-            $display("T=%0t [Driver] waiting for item from Generator ...", $time);
-            drv_mbx.get(item);
+            // $display("T=%0t [Driver] waiting for item from Generator ...", $time);
+            // drv_mbx.get(item);
 
-            item.print("[Driver]");
+            // item.print("[Driver]");
 
-            // Dispatch
-            dispatch(item.dp_num);
+            // Fetch Instructions
+            vif.fiq_dp_i.avail_num =   `DP_NUM;
 
+            for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
+                inst_pc                     =   pc + dp_idx * 4;
+                program_mem_addr            =   {inst_pc[`XLEN-1:3], 3'b0};
+                program_mem_data            =   program_mem[program_mem_addr];
+                vif.fiq_dp_i.inst[dp_idx]   =   inst_pc[2] ? program_mem_data[63:32] : program_mem_data[31:0];
+            end
+
+            // Move PC
+            @(posedge vif.clk_i);
+            if (vif.br_mis_mon_o.valid[0]) begin
+                pc  =   vif.br_mis_mon_o.br_target[0];
+            end else begin
+                pc  =   pc + vif.dp_fiq_o.dp_num * 4;
+            end
+
+            @(negedge vif.clk_i);
         end
-    endtask //
+    endtask // run()
 
     task init();
         $display("T=%0t [Driver] Reading program.mem", $time);
-
+        $readmemh("../program.mem", program_mem);
     endtask
 
-    task dispatch(int dp_num);
-        begin
-            vif.fiq_dp.avail_num =   dp_num;
-            for (int dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
-                vif.fiq_dp.thread_idx[dp_idx]   =   0;
-                vif.fiq_dp.br_predict[dp_idx]   =   0;
-                vif.fiq_dp.pc[dp_idx]           =   pc + dp_idx * 4;
-
-                inst_type   =   $urandom % 4;
-            end
-
-        end
-    endtask
 endclass //
 // ====================================================================
 // Driver End
@@ -151,7 +158,7 @@ class env;
         fork
             d0.run();
             m0.run();
-            g0.run();
+            // g0.run();
             s0.run();
         join_any
     endtask // run()
@@ -181,17 +188,37 @@ endclass // test
 // Interface Start
 // ====================================================================
 interface pipeline_dp_if (input bit clk_i);
-    logic                       rst_i       ;
-    FIQ_DP                      fiq_dp      ;
-    DP_FIQ                      dp_fiq      ;
-    CDB                         cdb         ;
-    ROB_AMT [C_RT_NUM-1:0]      rob_amt     ;
-    ROB_FL                      rob_fl      ;
-    FU_IB   [C_FU_NUM-1:0]      fu_ib       ;
-    IB_FU   [C_FU_NUM-1:0]      ib_fu       ;
-    BC_PRF                      bc_prf      ;
-    BR_MIS                      br_mis      ;
-    logic                       exception_i ;
+    logic                                       rst_i               ;   // Reset
+    FIQ_DP                                      fiq_dp              ;   // From FIQ to DP
+    DP_FIQ                                      dp_fiq              ;   // From DP to FIQ
+    logic                                       exception_i         ;   // External exception
+    // Testing
+    //      Dispatch
+    DP_RS                                       dp_rs_mon_o         ;   // From Dispatcher to RS
+    //      Issue
+    RS_IB                                       rs_ib_mon_o         ;   // From RS to IB
+    //      Execute
+    IB_FU   [`FU_NUM-1:0]                       ib_fu_mon_o         ;   // From IB to FU
+    //      Complete
+    FU_BC                                       fu_bc_mon_o         ;   // From FU to BC
+    CDB                                         cdb_mon_o           ;   // CDB
+    //      Retire
+    logic   [`RT_NUM-1:0][`XLEN-1:0]            rt_pc_o             ;   // PC of retired instructions
+    logic   [`RT_NUM-1:0]                       rt_valid_o          ;   // Retire valid
+    ROB_AMT [`RT_NUM-1:0]                       rob_amt_mon_o       ;   // From ROB to AMT
+    ROB_FL                                      rob_fl_mon_o        ;   // From ROB to FL
+    ROB_VFL                                     rob_vfl_mon_o       ;   // From ROB to VFL
+    BR_MIS                                      br_mis_mon_o        ;   // Branch Misprediction
+    //      Contents
+    ROB_ENTRY   [`ROB_ENTRY_NUM-1:0]            rob_mon_o           ;   // ROB contents monitor
+    RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ;   // RS contents monitor
+    MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ;   // Map Table contents monitor
+    IS_INST     [`ALU_Q_SIZE  -1:0]             ALU_queue_mon_o     ;   // IB queue monitor
+    IS_INST     [`MULT_Q_SIZE -1:0]             MULT_queue_mon_o    ;   // IB queue monitor
+    IS_INST     [`BR_Q_SIZE   -1:0]             BR_queue_mon_o      ;   // IB queue monitor
+    IS_INST     [`LOAD_Q_SIZE -1:0]             LOAD_queue_mon_o    ;   // IB queue monitor
+    IS_INST     [`STORE_Q_SIZE-1:0]             STORE_queue_mon_o   ;   // IB queue monitor
+    logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]  prf_mon_o           ;   // Physical Register File monitor
 endinterface // pipeline_dp_if
 // ====================================================================
 // Interface End
@@ -231,18 +258,31 @@ module pipeline_dp_tb;
 // DUT Instantiation
 // --------------------------------------------------------------------
     pipeline_dp dut (
-        .clk_i          (    clk_i          ),
-        .rst_i          (_if.rst_i          ),
-        .fiq_dp         (_if.fiq_dp         ),  // input
-        .dp_fiq         (_if.dp_fiq         ),
-        .cdb            (_if.cdb            ),  // input
-        .rob_amt        (_if.rob_amt        ),
-        .rob_fl         (_if.rob_fl         ),
-        .fu_ib          (_if.fu_ib          ),  // input
-        .ib_fu          (_if.ib_fu          ),
-        .bc_prf         (_if.bc_prf         ),
-        .br_mis         (_if.br_mis         ),
-        .exception_i    (_if.exception_i    )   // input
+        .clk_i              (   clk_i               ),
+        .rst_i              (_if.rst_i              ),
+        .fiq_dp             (_if.fiq_dp             ),
+        .dp_fiq             (_if.dp_fiq             ),
+        .exception_i        (_if.exception_i        ),
+        .dp_rs_mon_o        (_if.dp_rs_mon_o        ),
+        .rs_ib_mon_o        (_if.rs_ib_mon_o        ),
+        .ib_fu_mon_o        (_if.ib_fu_mon_o        ),
+        .fu_bc_mon_o        (_if.fu_bc_mon_o        ),
+        .cdb_mon_o          (_if.cdb_mon_o          ),
+        .rt_pc_o            (_if.rt_pc_o            ),
+        .rt_valid_o         (_if.rt_valid_o         ),
+        .rob_amt_mon_o      (_if.rob_amt_mon_o      ),
+        .rob_fl_mon_o       (_if.rob_fl_mon_o       ),
+        .rob_vfl_mon_o      (_if.rob_vfl_mon_o      ),
+        .br_mis_mon_o       (_if.br_mis_mon_o       ),
+        .rob_mon_o          (_if.rob_mon_o          ),
+        .rs_mon_o           (_if.rs_mon_o           ),
+        .mt_mon_o           (_if.mt_mon_o           ),
+        .ALU_queue_mon_o    (_if.ALU_queue_mon_o    ),
+        .MULT_queue_mon_o   (_if.MULT_queue_mon_o   ),
+        .BR_queue_mon_o     (_if.BR_queue_mon_o     ),
+        .LOAD_queue_mon_o   (_if.LOAD_queue_mon_o   ),
+        .STORE_queue_mon_o  (_if.STORE_queue_mon_o  ),
+        .prf_mon_o          (_if.prf_mon_o          )
     );
 // --------------------------------------------------------------------
 

@@ -13,6 +13,7 @@
 `timescale 1ns/100ps
 
 module PRF # ( 
+    parameter   C_XLEN              =   `XLEN
     parameter   C_DP_NUM            =   `DP_NUM         ,
     parameter   C_THREAD_NUM        =   `THREAD_NUM     ,
     parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM  ,
@@ -22,23 +23,22 @@ module PRF # (
     input   logic                          clk_i                ,   // Clock
     input   logic                          rst_i                ,   // Reset
     input   RS_PRF                         rs_prf_i             ,  
-    //per_channel 
     output  PRF_RS                         prf_rs_o             ,
-    //per_channel
-    input   BC_PRF                         bc_prf_i              
-    //per_channel
+    input   BC_PRF                         bc_prf_i             ,
+    // For Testing
+    output  logic  [C_PHY_REG_NUM-1:0] [C_XLEN-1:0]     prf_mon_o
 );
 
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
 
-    logic  [`DP_NUM-1:0][`DP_NUM-1:0]         hit1     ;
-    logic  [`DP_NUM-1:0][`DP_NUM-1:0]         hit2     ;
-    logic  [31:0] [`XLEN-1:0]                 registers;   
+    logic  [C_DP_NUM-1:0][C_DP_NUM-1:0]         hit1     ;
+    logic  [C_DP_NUM-1:0][C_DP_NUM-1:0]         hit2     ;
+    logic  [C_PHY_REG_NUM-1:0] [C_XLEN-1:0]     registers;   
     // 32, 64-bit Registers   
-    logic  [`XLEN-1:0]                        rd1_reg  ;
-    logic  [`XLEN-1:0]                        rd2_reg  ;
+    logic  [C_XLEN-1:0]                         rd1_reg  ;
+    logic  [C_XLEN-1:0]                         rd2_reg  ;
 
     assign  rd1_reg = registers[rs_prf_i.rd_addr1];
     assign  rd2_reg = registers[rs_prf_i.rd_addr2];
@@ -122,6 +122,8 @@ module PRF # (
             end//if
         end//for
     end//ff
+
+    assign  prf_mon_o   =   registers   ;
 
 // ====================================================================
 // RTL Logic End

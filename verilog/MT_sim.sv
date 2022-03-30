@@ -51,7 +51,7 @@ module MT_sim #(
 
     task map_table_run();
         forever begin
-            @(negedge clk_i);
+            @(posedge clk_i);
             // System reset
             if (rst_i) begin
                 for (int unsigned entry_idx = 0; entry_idx < C_ARCH_REG_NUM; entry_idx++) begin
@@ -77,6 +77,7 @@ module MT_sim #(
                     end
                 end
 
+                @(negedge clk_i);
                 // Dispatch, read tags and also update.
                 for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
                     // Read RS1, RS2 and RD tags
