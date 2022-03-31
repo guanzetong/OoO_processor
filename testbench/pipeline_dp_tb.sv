@@ -55,9 +55,9 @@ class driver;
 
             for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
                 inst_pc                 =   pc + dp_idx * 4;
-                program_mem_addr        =   {inst_pc[`XLEN-1:3], 3'b0};
+                program_mem_addr        =   {3'b0, inst_pc[`XLEN-1:3]};
                 program_mem_data        =   program_mem[program_mem_addr];
-                vif.fiq_dp.pc           =   inst_pc;
+                vif.fiq_dp.pc[dp_idx]   =   inst_pc;
                 vif.fiq_dp.inst[dp_idx] =   inst_pc[2] ? program_mem_data[63:32] : program_mem_data[31:0];
             end
 

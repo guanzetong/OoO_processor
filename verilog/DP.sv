@@ -478,6 +478,7 @@ module decoder#(
                     rs1_select      =   RS1_USED        ;
                     rs2_select      =   RS2_USED        ;
                     alu_func        =   ALU_MUL         ;
+                    alu             =   `FALSE          ;
                     mult            =   `TRUE           ;
                 end
                 `RV32_MULH: begin
@@ -485,6 +486,7 @@ module decoder#(
                     rs1_select      =   RS1_USED        ;
                     rs2_select      =   RS2_USED        ;
                     alu_func        =   ALU_MULH        ;
+                    alu             =   `FALSE          ;
                     mult            =   `TRUE           ;
                 end
                 `RV32_MULHSU: begin
@@ -492,6 +494,7 @@ module decoder#(
                     rs1_select      =   RS1_USED        ;
                     rs2_select      =   RS2_USED        ;
                     alu_func        =   ALU_MULHSU      ;
+                    alu             =   `FALSE          ;
                     mult            =   `TRUE           ;
                 end
                 `RV32_MULHU: begin
@@ -499,6 +502,7 @@ module decoder#(
                     rs1_select      =   RS1_USED        ;
                     rs2_select      =   RS2_USED        ;
                     alu_func        =   ALU_MULHU       ;
+                    alu             =   `FALSE          ;
                     mult            =   `TRUE           ;
                 end
                 `RV32_CSRRW, `RV32_CSRRS, `RV32_CSRRC: begin

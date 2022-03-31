@@ -296,6 +296,9 @@ module pipeline_dp (
     assign  rob_fl_mon_o    =   rob_fl      ;
     assign  rob_vfl_mon_o   =   rob_vfl     ;
     assign  br_mis_mon_o    =   br_mis      ;
+
+    assign  br_mis.valid[`THREAD_NUM-1:1]       =   'b0 ;
+    assign  br_mis.br_target[`THREAD_NUM-1:1]   =   'b0 ;
 // --------------------------------------------------------------------
 // Logic Divider
 // --------------------------------------------------------------------

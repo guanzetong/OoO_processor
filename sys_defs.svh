@@ -347,9 +347,9 @@ typedef struct packed {
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
 
-`define ALU_CYCLE       1
+`define ALU_CYCLE       2
 `define MULT_CYCLE      2
-`define BR_CYCLE        1
+`define BR_CYCLE        2
 //////////////////////////////////////////////
 // 
 // Interfaces between modules
@@ -526,7 +526,6 @@ typedef struct packed {
 typedef struct packed {
     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs1          ;   // used to index mt entry for source register 1
     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs2          ;   // used to index mt entry for source register 2
-    logic                                           read_en      ;
     logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx   ;   // used for SMT 
 } DP_MT_READ; // Per-Channel
 

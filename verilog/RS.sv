@@ -376,6 +376,8 @@ module RS #(
                     rs_ib_o[is_idx].is_inst.halt        =   rs_array[entry_idx].dec_inst.halt       ;
                     rs_ib_o[is_idx].is_inst.illegal     =   rs_array[entry_idx].dec_inst.illegal    ;
                     rs_ib_o[is_idx].is_inst.csr_op      =   rs_array[entry_idx].dec_inst.csr_op     ;
+                    rs_ib_o[is_idx].is_inst.alu         =   rs_array[entry_idx].dec_inst.alu        ;
+                    rs_ib_o[is_idx].is_inst.mult        =   rs_array[entry_idx].dec_inst.mult       ;
                 end
             end
         end

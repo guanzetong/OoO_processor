@@ -36,29 +36,40 @@ module alu_comb(
             ALU_SRL:      result = opa >> opb[4:0];
             ALU_SLL:      result = opa << opb[4:0];
             ALU_SRA:      result = signed_opa >>> opb[4:0]; // arithmetic from logical shift
-
             default:      result = `XLEN'hfacebeec;  // here to prevent latches
         endcase
     end
 endmodule // alu_comb
 
 module alu #( 
-    parameter   C_CYCLE              =   `ALU_CYCLE              ,
-    parameter   C_COUNTER_LEN        =   $clog2(C_CYCLE)    
+    parameter   C_CYCLE =   `ALU_CYCLE              
 )(
-    input logic              clk_i,
-    input logic              rst_i,
-    input IB_FU              ib_fu_i,
-    output FU_IB             fu_ib_o,
-    output FU_BC             fu_bc_o,
-    input  BC_FU             bc_fu_i
+    input   logic       clk_i   ,
+    input   logic       rst_i   ,
+    input   IB_FU       ib_fu_i ,
+    output  FU_IB       fu_ib_o ,
+    output  FU_BC       fu_bc_o ,
+    input   BC_FU       bc_fu_i
 );
-    logic                       started;
-    logic [C_COUNTER_LEN-1:0]   counter;
-    logic [`XLEN-1:0]           rd_value;
-    IB_FU                       ib_fu;
 
-	logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
+    logic   [`XLEN-1:0]         rd_value        ;
+    IB_FU                       ib_fu           ;
+    logic   [C_CYCLE-1:0]       valid_sh        ;
+    logic                       ex_start        ;
+    logic                       ex_end          ;
+
+	logic   [`XLEN-1:0]         opa_mux_out, opb_mux_out;
+
+    //
+    // Latch valid instruction
+    //
+    always_ff @(posedge clk_i) begin
+        if (ex_start) begin
+            ib_fu   <=  `SD ib_fu_i;
+        end else begin
+            ib_fu   <=  `SD ib_fu;
+        end
+    end
 
     //
     // ALU opA mux
@@ -72,9 +83,10 @@ module alu #(
             OPA_IS_ZERO: opa_mux_out = 0;
         endcase
     end
-     //
-     // ALU opB mux
-     //
+
+    //
+    // ALU opB mux
+    //
     always_comb begin
         // Default value, Set only because the case isnt full.  If you see this
         // value on the output of the mux you have an invalid opb_select
@@ -96,34 +108,51 @@ module alu #(
         .result(rd_value)
     );
 
+    assign  ex_start    =   ib_fu_i.valid && fu_ib_o.ready;
+    assign  ex_end      =   fu_bc_o.valid && bc_fu_i.broadcasted;
+
+    // Output valid shift register
     always_ff @(posedge clk_i) begin
-        if(rst_i | bc_fu_i.broadcasted) begin
-            started <= 1'b0;
-            fu_ib_o.ready <= 1'b1;
-            fu_bc_o.valid <= 1'b0;
-        end
-        else if(ib_fu_i.valid & fu_ib_o.ready & !started) begin
-            started <= 1'b1;
-            counter <= 0;
-            ib_fu <= ib_fu_i;
-            fu_ib_o.ready <= 1'b0;
-        end
-        else if(started && (counter < C_CYCLE)) begin
-            counter <= counter + 1;
-        end
-        else begin
-            fu_bc_o.valid <= 1'b1;
-            fu_bc_o.pc <= ib_fu.is_inst.pc;
-            fu_bc_o.write_reg <= 1'b1;
-            fu_bc_o.rd_value <= rd_value;
-            fu_bc_o.tag <= ib_fu.is_inst.tag;
-            fu_bc_o.br_inst <= 1'b0;
-            fu_bc_o.br_result <= 1'b0;
-            fu_bc_o.br_target <= 'b0;
-            fu_bc_o.thread_idx <= ib_fu.is_inst.thread_idx;
-            fu_bc_o.rob_idx <= ib_fu.is_inst.rob_idx;
+        // System reset
+        if (rst_i) begin
+            valid_sh    <=  `SD 'b0;
+        // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
+        end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
+            valid_sh    <=  `SD valid_sh;
+        // Shift
+        end else begin
+            if (C_CYCLE == 1) begin
+                valid_sh    <=  `SD ex_start;
+            end else begin
+                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            end
         end
     end
+
+    // Input ready
+    always_comb begin
+        fu_ib_o.ready   =   1'b0;
+        if (valid_sh == 'b0) begin
+            fu_ib_o.ready   =   1'b1;
+        end else if (ex_end) begin
+            fu_ib_o.ready   =   1'b1;
+        end
+    end
+
+    // Output to Broadcaster
+    always_comb begin
+        fu_bc_o.valid       =   valid_sh[C_CYCLE-1]         ;
+        fu_bc_o.pc          =   ib_fu.is_inst.pc            ;
+        fu_bc_o.write_reg   =   1'b1                        ;
+        fu_bc_o.rd_value    =   rd_value                    ;
+        fu_bc_o.tag         =   ib_fu.is_inst.tag           ;
+        fu_bc_o.br_inst     =   1'b0                        ;
+        fu_bc_o.br_result   =   1'b0                        ;
+        fu_bc_o.br_target   =   'b0                         ;
+        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx    ;
+        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
+    end
+
 endmodule // alu
 
 
@@ -147,21 +176,10 @@ module mult_comb(
 
     always_comb begin
         case (func)
-            // ALU_ADD:      result = opa + opb;
-            // ALU_SUB:      result = opa - opb;
-            // ALU_AND:      result = opa & opb;
-            // ALU_SLT:      result = signed_opa < signed_opb;
-            // ALU_SLTU:     result = opa < opb;
-            // ALU_OR:       result = opa | opb;
-            // ALU_XOR:      result = opa ^ opb;
-            // ALU_SRL:      result = opa >> opb[4:0];
-            // ALU_SLL:      result = opa << opb[4:0];
-            // ALU_SRA:      result = signed_opa >>> opb[4:0]; // arithmetic from logical shift
             ALU_MUL:      result = signed_mul[`XLEN-1:0];
             ALU_MULH:     result = signed_mul[2*`XLEN-1:`XLEN];
             ALU_MULHSU:   result = mixed_mul[2*`XLEN-1:`XLEN];
             ALU_MULHU:    result = unsigned_mul[2*`XLEN-1:`XLEN];
-
             default:      result = `XLEN'hfacebeec;  // here to prevent latches
         endcase
     end
@@ -169,22 +187,33 @@ endmodule // mult_comb
 
 
 module mult #( 
-    parameter   C_CYCLE              =   `MULT_CYCLE              ,
-    parameter   C_COUNTER_LEN        =   $clog2(C_CYCLE)    
+    parameter   C_CYCLE     =   `MULT_CYCLE              
 )(
-    input logic              clk_i,
-    input logic              rst_i,
-    input IB_FU              ib_fu_i,
-    output FU_IB             fu_ib_o,
-    output FU_BC             fu_bc_o,
-    input  BC_FU             bc_fu_i
+    input   logic           clk_i       ,
+    input   logic           rst_i       ,
+    input   IB_FU           ib_fu_i     ,
+    output  FU_IB           fu_ib_o     ,
+    output  FU_BC           fu_bc_o     ,
+    input   BC_FU           bc_fu_i     
 );
-    logic                       started;
-    logic [C_COUNTER_LEN-1:0]   counter;
-    logic [`XLEN-1:0]           rd_value;
-    IB_FU                       ib_fu;
+    logic   [`XLEN-1:0]     rd_value        ;
+    IB_FU                   ib_fu           ;
+    logic   [C_CYCLE-1:0]   valid_sh        ;
+    logic                   ex_start        ;
+    logic                   ex_end          ;
 
-	logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
+	logic   [`XLEN-1:0]     opa_mux_out, opb_mux_out;
+
+    //
+    // Latch valid instruction
+    //
+    always_ff @(posedge clk_i) begin
+        if (ex_start) begin
+            ib_fu   <=  `SD ib_fu_i;
+        end else begin
+            ib_fu   <=  `SD ib_fu;
+        end
+    end
 
     //
     // MULT opA mux
@@ -198,9 +227,10 @@ module mult #(
             OPA_IS_ZERO: opa_mux_out = 0;
         endcase
     end
-     //
-     // MULT opB mux
-     //
+
+    //
+    // MULT opB mux
+    //
     always_comb begin
         // Default value, Set only because the case isnt full.  If you see this
         // value on the output of the mux you have an invalid opb_select
@@ -215,40 +245,59 @@ module mult #(
         endcase 
     end
 
+    //
+    // Combinatorial Multiplier
+    //
     mult_comb mult_comb_module(
-        .opa(opa_mux_out),
-        .opb(opb_mux_out),
-        .func(ib_fu.is_inst.alu_func),
-        .result(rd_value)
+        .opa    ( opa_mux_out               ),
+        .opb    ( opb_mux_out               ),
+        .func   ( ib_fu.is_inst.alu_func    ),
+        .result ( rd_value                  )
     );
 
+    assign  ex_start    =   ib_fu_i.valid && fu_ib_o.ready;
+    assign  ex_end      =   fu_bc_o.valid && bc_fu_i.broadcasted;
+
+    // Output valid shift register
     always_ff @(posedge clk_i) begin
-        if(rst_i | bc_fu_i.broadcasted) begin
-            started <= 1'b0;
-            fu_ib_o.ready <= 1'b1;
-            fu_bc_o.valid <= 1'b0;
+        // System reset
+        if (rst_i) begin
+            valid_sh    <=  `SD 'b0;
+        // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
+        end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
+            valid_sh    <=  `SD valid_sh;
+        // Shift
+        end else begin
+            if (C_CYCLE == 1) begin
+                valid_sh    <=  `SD ex_start;
+            end else begin
+                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            end
         end
-        else if(ib_fu_i.valid & fu_ib_o.ready & !started) begin
-            started <= 1'b1;
-            counter <= 0;
-            ib_fu <= ib_fu_i;
-            fu_ib_o.ready <= 1'b0;
+    end
+
+    // Input ready
+    always_comb begin
+        fu_ib_o.ready   =   1'b0;
+        if (valid_sh == 'b0) begin
+            fu_ib_o.ready   =   1'b1;
+        end else if (ex_end) begin
+            fu_ib_o.ready   =   1'b1;
         end
-        else if(started && (counter < C_CYCLE)) begin
-            counter <= counter + 1;
-        end
-        else begin
-            fu_bc_o.valid <= 1'b1;
-            fu_bc_o.pc <= ib_fu.is_inst.pc;
-            fu_bc_o.write_reg <= 1'b1;
-            fu_bc_o.rd_value <= rd_value;
-            fu_bc_o.tag <= ib_fu.is_inst.tag;
-            fu_bc_o.br_inst <= 1'b0;
-            fu_bc_o.br_result <= 1'b0;
-            fu_bc_o.br_target <= 'b0;
-            fu_bc_o.thread_idx <= ib_fu.is_inst.thread_idx;
-            fu_bc_o.rob_idx <= ib_fu.is_inst.rob_idx;
-        end
+    end
+
+    // Output to Broadcaster
+    always_comb begin
+        fu_bc_o.valid       =   valid_sh[C_CYCLE-1]         ;
+        fu_bc_o.pc          =   ib_fu.is_inst.pc            ;
+        fu_bc_o.write_reg   =   1'b1                        ;
+        fu_bc_o.rd_value    =   rd_value                    ;
+        fu_bc_o.tag         =   ib_fu.is_inst.tag           ;
+        fu_bc_o.br_inst     =   1'b0                        ;
+        fu_bc_o.br_result   =   1'b0                        ;
+        fu_bc_o.br_target   =   'b0                         ;
+        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx    ;
+        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
     end
 
 endmodule // mult
@@ -290,24 +339,40 @@ endmodule // branch_condition
 
 
 module branch #( 
-    parameter   C_CYCLE              =   `BR_CYCLE              ,
-    parameter   C_COUNTER_LEN        =   $clog2(C_CYCLE)    
+    parameter   C_CYCLE =   `BR_CYCLE   
 )(
-    input logic              clk_i,
-    input logic              rst_i,
-    input IB_FU              ib_fu_i,
-    output FU_IB             fu_ib_o,
-    output FU_BC             fu_bc_o,
-    input  BC_FU             bc_fu_i
+    input   logic           clk_i   ,
+    input   logic           rst_i   ,
+    input   IB_FU           ib_fu_i ,
+    output  FU_IB           fu_ib_o ,
+    output  FU_BC           fu_bc_o ,
+    input   BC_FU           bc_fu_i 
 );
-    logic                       started;
-    logic [C_COUNTER_LEN-1:0]  counter;
-    logic                       br_result;
-    logic [`XLEN-1:0]           br_target;
-    IB_FU                       ib_fu;
-    logic                       brcond_result;
+
+
+
+    logic   [`XLEN-1:0]     rd_value        ;
+    IB_FU                   ib_fu           ;
+    logic   [C_CYCLE-1:0]   valid_sh        ;
+    logic                   ex_start        ;
+    logic                   ex_end          ;
+
+    logic                   br_result       ;
+    logic [`XLEN-1:0]       br_target       ;
+    logic                   brcond_result   ;
 
 	logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
+
+    //
+    // Latch valid instruction
+    //
+    always_ff @(posedge clk_i) begin
+        if (ex_start) begin
+            ib_fu   <=  `SD ib_fu_i;
+        end else begin
+            ib_fu   <=  `SD ib_fu;
+        end
+    end
 
     //
     // ALU opA mux
@@ -321,9 +386,10 @@ module branch #(
             OPA_IS_ZERO: opa_mux_out = 0;
         endcase
     end
-     //
-     // ALU opB mux
-     //
+
+    //
+    // ALU opB mux
+    //
     always_comb begin
         // Default value, Set only because the case isnt full.  If you see this
         // value on the output of the mux you have an invalid opb_select
@@ -339,55 +405,70 @@ module branch #(
     end
 
     alu_comb alu_comb_module(
-        .opa(opa_mux_out),
-        .opb(opb_mux_out),
-        .func(ib_fu.is_inst.alu_func),
-        .result(br_target)
+        .opa    (opa_mux_out            ),
+        .opb    (opb_mux_out            ),
+        .func   (ib_fu.is_inst.alu_func ),
+        .result (br_target              )
     );
-     //
-     // instantiate the branch condition tester
-     //
+
+    //
+    // instantiate the branch condition tester
+    //
     branch_condition branch_condition_module (// Inputs
-        .rs1(ib_fu.is_inst.rs1_value), 
-        .rs2(ib_fu.is_inst.rs2_value),
-        .func(ib_fu.is_inst.inst.b.funct3), // inst bits to determine check
+        .rs1    (ib_fu.is_inst.rs1_value        ), 
+        .rs2    (ib_fu.is_inst.rs2_value        ),
+        .func   (ib_fu.is_inst.inst.b.funct3    ), // inst bits to determine check
 
         // Output
-        .cond(brcond_result)
+        .cond   (brcond_result                  )
     );
-     // ultimate "take branch" signal:
-     //	unconditional, or conditional and the condition is true
-    assign br_result = ib_fu.is_inst.uncond_br
-                                  | (ib_fu.is_inst.cond_br & brcond_result);
+
+    // ultimate "take branch" signal:
+    //	unconditional, or conditional and the condition is true
+    assign br_result    =   ib_fu.is_inst.uncond_br
+                        | (ib_fu.is_inst.cond_br & brcond_result);
+
+    // Output valid shift register
     always_ff @(posedge clk_i) begin
-        if(rst_i | bc_fu_i.broadcasted) begin
-            started <= 1'b0;
-            fu_ib_o.ready <= 1'b1;
-            fu_bc_o.valid <= 1'b0;
-        end
-        else if(ib_fu_i.valid & fu_ib_o.ready & !started) begin
-            started <= 1'b1;
-            counter <= 0;
-            ib_fu <= ib_fu_i;
-            fu_ib_o.ready <= 1'b0;
-        end
-        else if(started && (counter < C_CYCLE)) begin
-            counter <= counter + 1;
-        end
-        else begin
-            fu_bc_o.valid <= 1'b1;
-            fu_bc_o.pc <= ib_fu.is_inst.pc;
-            fu_bc_o.write_reg <= 1'b0;
-            fu_bc_o.tag <= ib_fu.is_inst.tag;
-            fu_bc_o.br_inst <= 1'b1;
-            fu_bc_o.br_result <= br_result;
-            fu_bc_o.br_target <= br_target;
-            fu_bc_o.thread_idx <= ib_fu.is_inst.thread_idx;
-            fu_bc_o.rob_idx <= ib_fu.is_inst.rob_idx;
+        // System reset
+        if (rst_i) begin
+            valid_sh    <=  `SD 'b0;
+        // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
+        end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
+            valid_sh    <=  `SD valid_sh;
+        // Shift
+        end else begin
+            if (C_CYCLE == 1) begin
+                valid_sh    <=  `SD ex_start;
+            end else begin
+                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            end
         end
     end
 
-    assign  fu_bc_o.rd_value    =   'b0;
+    // Input ready
+    always_comb begin
+        fu_ib_o.ready   =   1'b0;
+        if (valid_sh == 'b0) begin
+            fu_ib_o.ready   =   1'b1;
+        end else if (ex_end) begin
+            fu_ib_o.ready   =   1'b1;
+        end
+    end
+
+    // Output to Broadcaster
+    always_comb begin
+        fu_bc_o.valid       =   valid_sh[C_CYCLE-1]         ;
+        fu_bc_o.pc          =   ib_fu.is_inst.pc            ;
+        fu_bc_o.write_reg   =   ib_fu.is_inst.uncond_br     ;
+        fu_bc_o.rd_value    =   ib_fu.is_inst.npc           ;
+        fu_bc_o.tag         =   ib_fu.is_inst.tag           ;
+        fu_bc_o.br_inst     =   1'b1                        ;
+        fu_bc_o.br_result   =   br_result                   ;
+        fu_bc_o.br_target   =   br_target                   ;
+        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx    ;
+        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
+    end
 endmodule // branch
 
 

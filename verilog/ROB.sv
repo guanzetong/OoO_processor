@@ -272,7 +272,8 @@ module ROB # (
 // Branch miprediction detection & flush
 // --------------------------------------------------------------------
     always_comb begin
-        br_mis_valid_o    =   1'b0;
+        br_mis_valid_o  =   1'b0;
+        br_target_o     =   'b0;
         for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             br_mispredict[idx]  =   (rob_array[idx].br_predict 
                                     != rob_array[idx].br_result);

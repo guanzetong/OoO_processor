@@ -103,15 +103,16 @@ module PRF # (
   // --------------------------------------------------------------------
   // Write port
   // --------------------------------------------------------------------
-
     always_ff @(posedge clk_i) begin
-        for (int unsigned idx = 0 ; idx < C_CDB_NUM; idx++) begin
-            if (rst_i) begin
-                registers[bc_prf_i[idx].wr_addr] <= `SD 'b0;
-            end if (bc_prf_i[idx].wr_en) begin
-                registers[bc_prf_i[idx].wr_addr] <= `SD bc_prf_i[idx].data_in;
-            end//if
-        end//for
+        if (rst_i) begin
+            registers   <=  `SD 'b0;
+        end else begin
+            for (int unsigned idx = 0 ; idx < C_CDB_NUM; idx++) begin
+                if (bc_prf_i[idx].wr_en) begin
+                    registers[bc_prf_i[idx].wr_addr] <= `SD bc_prf_i[idx].data_in;
+                end//if
+            end//for
+        end
     end//ff
 
     assign  prf_mon_o   =   registers   ;
