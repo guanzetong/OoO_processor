@@ -45,13 +45,13 @@ class driver;
             // item.print("[Driver]");
 
             // Fetch Instructions
-            vif.fiq_dp_i.avail_num =   `DP_NUM;
+            vif.fiq_dp.avail_num =   `DP_NUM;
 
             for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
                 inst_pc                     =   pc + dp_idx * 4;
                 program_mem_addr            =   {inst_pc[`XLEN-1:3], 3'b0};
                 program_mem_data            =   program_mem[program_mem_addr];
-                vif.fiq_dp_i.inst[dp_idx]   =   inst_pc[2] ? program_mem_data[63:32] : program_mem_data[31:0];
+                vif.fiq_dp.inst[dp_idx]   =   inst_pc[2] ? program_mem_data[63:32] : program_mem_data[31:0];
             end
 
             // Move PC
@@ -59,7 +59,7 @@ class driver;
             if (vif.br_mis_mon_o.valid[0]) begin
                 pc  =   vif.br_mis_mon_o.br_target[0];
             end else begin
-                pc  =   pc + vif.dp_fiq_o.dp_num * 4;
+                pc  =   pc + vif.dp_fiq.dp_num * 4;
             end
 
             @(negedge vif.clk_i);
@@ -123,9 +123,9 @@ endclass
 // ====================================================================
 class env;
     driver          d0          ;   // driver     handle
-    monitor         m0          ;   // monitor    handle
+    // monitor         m0          ;   // monitor    handle
     generator       g0          ;   // generator  handle
-    scoreboard      s0          ;   // scoreboard handle
+    // scoreboard      s0          ;   // scoreboard handle
 
     mailbox         drv_mbx     ;   // Connect generator  <-> driver
     mailbox         scb_mbx     ;   // Connect monitor    <-> scoreboard
@@ -135,17 +135,17 @@ class env;
 
     function new();
         d0          =   new         ;
-        m0          =   new         ;
+        // m0          =   new         ;
         g0          =   new         ;
-        s0          =   new         ;
+        // s0          =   new         ;
         
         drv_mbx     =   new()       ;
         scb_mbx     =   new()       ;
 
         d0.drv_mbx  =   drv_mbx     ;
         g0.drv_mbx  =   drv_mbx     ;
-        m0.scb_mbx  =   scb_mbx     ;
-        s0.scb_mbx  =   scb_mbx     ;
+        // m0.scb_mbx  =   scb_mbx     ;
+        // s0.scb_mbx  =   scb_mbx     ;
 
         d0.drv_done =   drv_done    ;
         g0.drv_done =   drv_done    ;
@@ -153,13 +153,13 @@ class env;
 
     virtual task run();
         d0.vif  =   vif;
-        m0.vif  =   vif;
+        // m0.vif  =   vif;
 
         fork
             d0.run();
-            m0.run();
+            // m0.run();
             // g0.run();
-            s0.run();
+            // s0.run();
         join_any
     endtask // run()
 endclass // env
@@ -297,8 +297,6 @@ module pipeline_dp_tb;
     initial begin
         _if.rst_i       =   1;
         _if.fiq_dp      =   0;
-        _if.cdb         =   0;
-        _if.fu_ib       =   0;
         _if.exception_i =   0;
         // Apply reset and start stimulus
         #50 _if.rst_i   =   0;

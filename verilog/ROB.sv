@@ -367,9 +367,9 @@ module ROB # (
     always_comb begin
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             if (head + idx >= C_ROB_ENTRY_NUM) begin
-                retire_pc_o[idx]    =   rob_array[head+idx-C_ROB_ENTRY_NUM].pc;
+                rt_pc_o[idx]    =   rob_array[head+idx-C_ROB_ENTRY_NUM].pc;
             end else begin
-                retire_pc_o[idx]    =   rob_array[head+idx].pc;
+                rt_pc_o[idx]    =   rob_array[head+idx].pc;
             end
             
             if (idx < rt_num) begin

@@ -341,6 +341,10 @@ typedef struct packed {
 `define BR_Q_SIZE       8
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
+
+`define ALU_CYCLE       1
+`define MULT_CYCLE      2
+`define BR_CYCLE        1
 //////////////////////////////////////////////
 // 
 // Interfaces between modules
@@ -624,7 +628,7 @@ typedef struct packed {
     logic                                           start       ;
     logic                                           valid       ;
     IS_INST                                         is_inst     ;
-git     // logic   [`XLEN-1:0]                             pc          ;
+    // logic   [`XLEN-1:0]                             pc          ;
     // INST                                            inst        ;
     // logic   [`XLEN-1:0]                             rs1_value   ;
     // logic   [`XLEN-1:0]                             rs2_value   ;

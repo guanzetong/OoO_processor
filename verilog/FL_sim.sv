@@ -25,7 +25,7 @@ module FL_sim #(
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_FL_NUM_WIDTH  =   $clog2(FL_ENTRY_NUM)    ;
+    localparam  C_FL_NUM_WIDTH  =   $clog2(C_FL_ENTRY_NUM)  ;
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -78,7 +78,7 @@ module FL_sim #(
             if (rst_i) begin
                 freelist.delete();
                 freelist_init();
-            end else if (roll_back_i) begin
+            end else if (rollback_i) begin
                 freelist.delete();
                 for (int unsigned entry_idx = 0; entry_idx < C_FL_ENTRY_NUM; entry_idx++) begin
                     fl_entry.tag =  vfl_i[entry_idx].tag;

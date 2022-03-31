@@ -12,11 +12,11 @@ module VFL_sim #(
     parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    ,
     parameter   C_FL_ENTRY_NUM      =   C_PHY_REG_NUM - C_PHY_REG_NUM
 ) (
-    input   logic                           clk_i       ,   //  Clock
-    input   logic                           rst_i       ,   //  Reset
-    input   ROB_VFL [C_RT_NUM-1:0]          rob_vfl_i   ,
-    output  VFL     [C_FL_ENTRY_NUM-1:0]    vlf_o       ,
-    input   logic                           roll_back_i 
+    input   logic                               clk_i       ,   //  Clock
+    input   logic                               rst_i       ,   //  Reset
+    input   ROB_VFL     [C_RT_NUM-1:0]          rob_vfl_i   ,
+    output  FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    vfl_o       ,
+    input   logic                               roll_back_i 
 );
 
 // ====================================================================
@@ -30,7 +30,7 @@ module VFL_sim #(
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-    VFL     [C_FL_ENTRY_NUM-1:0]    victim_freelist ;
+    FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    victim_freelist ;
 // ====================================================================
 // Signal Declarations End
 // ====================================================================
@@ -72,6 +72,8 @@ module VFL_sim #(
         victim_freelist_init();
         victim_freelist_run();
     end
+
+    assign  vfl_o   =   victim_freelist;
 // ====================================================================
 // RTL Logic End
 // ====================================================================

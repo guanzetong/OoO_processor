@@ -22,7 +22,7 @@ module IB_channel #(
     output  IB_FU   [C_OUT_NUM-1:0] ib_fu_o         ,   // Issue channel to FU
     // Flush
     input   BR_MIS                  br_mis_i        ,   // Branch Misprediction
-    input   logic                   exception_i         // External Exception
+    input   logic                   exception_i     ,   // External Exception
     // For Testing
     output  IS_INST [C_SIZE-1:0]    queue_mon_o     
 );

@@ -92,9 +92,9 @@ module DP # (
                 .mult       (dp_rs_o.dec_inst[dec_idx].mult         ),
                 .alu        (dp_rs_o.dec_inst[dec_idx].alu          ),
 
-                .rd         (dp_rs_o.dec_inst[dec_idx].rd           ),
-                .rs1        (dp_rs_o.dec_inst[dec_idx].rs1          ),
-                .rs2        (dp_rs_o.dec_inst[dec_idx].rs2          )
+                .rd         (dp_mt_write_o[dec_idx].rd              ),
+                .rs1        (dp_mt_read_o[dec_idx].rs1              ),
+                .rs2        (dp_mt_read_o[dec_idx].rs2              )
                 // outputs
             );
         end
@@ -115,7 +115,7 @@ module DP # (
             fl_idx  =   0;
             route   =   0;
             for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
-                if ((dp_idx < dp_num) && (dp_rs_o.dec_inst[idx].rd != `ZERO_REG)) begin
+                if ((dp_idx < dp_num) && (dp_mt_write_o[dp_idx].rd != `ZERO_REG)) begin
                     route[dp_idx]   =   fl_idx;
                     fl_idx++;
                 end
@@ -160,7 +160,7 @@ module DP # (
         dp_fl_o.dp_num   =   dp_num    ;
 
         for (int idx = 0; idx < C_DP_NUM; idx++) begin
-            if(idx < dp_num && (dp_rs_o.dec_inst[idx].rd == `ZERO_REG))begin
+            if(idx < dp_num && (dp_mt_write_o[idx].rd == `ZERO_REG))begin
                 dp_fl_o.dp_num-- ;
             end//if    
         end//for
@@ -191,19 +191,16 @@ module DP # (
                 dp_mt_write_o[idx].wr_en    =   1'b0;
             end
             dp_mt_write_o[idx].thread_idx   =   fiq_dp_i.thread_idx[idx]   ;
-            dp_mt_write_o[idx].rd           =   dp_rs_o.dec_inst[idx].rd   ;
             dp_mt_read_o[idx].thread_idx    =   fiq_dp_i.thread_idx[idx]   ;
-            dp_mt_read_o[idx].rs1           =   dp_rs_o.dec_inst[idx].rs1  ;
-            dp_mt_read_o[idx].rs2           =   dp_rs_o.dec_inst[idx].rs2  ;
 
             // DP_ROB
             dp_rob_o.tag_old[idx]           =   mt_dp_i[idx].tag_old        ;
             dp_rob_o.br_predict[idx]        =   fiq_dp_i.br_predict[idx]    ;   
             dp_rob_o.pc[idx]                =   fiq_dp_i.pc[idx]            ;
-            dp_rob_o.rd[idx]                =   dp_rs_o.dec_inst[idx].rd    ;
+            dp_rob_o.rd[idx]                =   dp_mt_write_o[idx].rd    ;
 
             // Free List routing
-            if(dp_rs_o.dec_inst[idx].rd == `ZERO_REG)begin
+            if(dp_mt_write_o[idx].rd == `ZERO_REG)begin
                 dp_rs_o.dec_inst[idx].tag   =   `ZERO_REG   ;
                 dp_rob_o.tag[idx]           =   `ZERO_REG   ;
                 dp_mt_write_o[idx].tag      =   `ZERO_REG   ;
@@ -297,8 +294,8 @@ module decoder#(
         // - invalid instructions should clear valid_inst.
         // - These defaults are equivalent to a noop
         // * see sys_defs.vh for the constants used here
-        opa_selec   =   OPA_IS_RS1  ;
-        opb_selec   =   OPB_IS_RS2  ;
+        opa_select  =   OPA_IS_RS1  ;
+        opb_select  =   OPB_IS_RS2  ;
         alu_func    =   ALU_ADD     ;
 
         rd          =   RD_NONE     ;

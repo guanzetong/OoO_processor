@@ -74,7 +74,7 @@ module pipeline_dp (
     FU_IB       [`FU_NUM-1:0]               fu_ib           ;
     IB_FU       [`FU_NUM-1:0]               ib_fu           ;
     BC_PRF                                  bc_prf          ;
-    VFL_ENTRY   [`FL_ENTRY_NUM-1:0]         vfl             ;
+    FL_ENTRY    [`FL_ENTRY_NUM-1:0]         vfl             ;
     AMT_ENTRY   [`ARCH_REG_NUM-1:0]         amt             ;
 
 // ====================================================================
@@ -220,10 +220,12 @@ module pipeline_dp (
 // Description  :   Arch. Map Table
 // --------------------------------------------------------------------
     FU FU_inst (
-        .fu_bc          (fu_bc        ),
-        .bc_fu          (bc_fu        ),
-        .fu_ib          (fu_ib        ),
-        .ib_fu          (ib_fu        )
+        .clk_i          (clk_i      ),
+        .rst_i          (rst_i      ),
+        .ib_fu_i        (fu_bc      ),
+        .fu_ib_o        (bc_fu      ),
+        .fu_bc_o        (fu_ib      ),
+        .bc_fu_i        (ib_fu      )
     );
 // --------------------------------------------------------------------
 
@@ -234,9 +236,9 @@ module pipeline_dp (
     BC_sim BC_inst (
         .clk_i          (clk_i      ),
         .rst_i          (rst_i      ),
-        .fu_bc          (fu_bc      ),
-        .bc_fu          (bc_fu      ),
-        .bc_prf         (bc_prf     ),
+        .fu_bc_i        (fu_bc      ),
+        .bc_fu_o        (bc_fu      ),
+        .bc_prf_o       (bc_prf     ),
         .cdb_o          (cdb        )
     );
 // --------------------------------------------------------------------
@@ -264,7 +266,7 @@ module pipeline_dp (
         .clk_i          (clk_i                          ),
         .rst_i          (rst_i                          ),
         .rob_vfl_i      (rob_vfl                        ),
-        .vlf_o          (vlf                            ),
+        .vfl_o          (vfl                            ),
         .roll_back_i    (exception_i || br_mis.valid[0] )
     );
 // --------------------------------------------------------------------

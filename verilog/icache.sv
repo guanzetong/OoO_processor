@@ -53,7 +53,7 @@ module icache(
             current_mem_tag  <= `SD 0;
             miss_outstanding <= `SD 0;
 
-            valids <= `SD b0;  
+            valids <= `SD 'b0;  
         end else begin
             last_index              <= `SD current_index;
             last_tag                <= `SD current_tag;

@@ -85,17 +85,22 @@ module BC_sim #(
                     end
 
                     if (fu_bc_i[fu_true_idx].valid) begin
-                        bc_fu_o[fu_true_idx].ready  =   1'b1;
+                        bc_fu_o[fu_true_idx].broadcasted  =   1'b1;
                         cdb_o[cp_num].valid         =   fu_bc_i[fu_true_idx].valid      ;
                         cdb_o[cp_num].pc            =   fu_bc_i[fu_true_idx].pc         ;
                         cdb_o[cp_num].tag           =   fu_bc_i[fu_true_idx].tag        ;
                         cdb_o[cp_num].rob_idx       =   fu_bc_i[fu_true_idx].rob_idx    ;
                         cdb_o[cp_num].thread_idx    =   fu_bc_i[fu_true_idx].thread_idx ;
-                        cdb_o[cp_num].br_result     =   fu_bc_i[fu_true_idx].br_result  ;
-                        cdb_o[cp_num].br_target     =   fu_bc_i[fu_true_idx].br_target  ;
+                        if (fu_bc_i[fu_true_idx].br_inst) begin
+                            cdb_o[cp_num].br_result     =   'b0 ;
+                            cdb_o[cp_num].br_target     =   'b0 ;
+                        end else begin
+                            cdb_o[cp_num].br_result     =   fu_bc_i[fu_true_idx].br_result  ;
+                            cdb_o[cp_num].br_target     =   fu_bc_i[fu_true_idx].br_target  ;
+                        end
                         bc_prf_o[cp_num].wr_addr    =   fu_bc_i[fu_true_idx].tag        ;
                         bc_prf_o[cp_num].data_in    =   fu_bc_i[fu_true_idx].rd_value   ;
-                        bc_prf_o[cp_num].wr_en      =   fu_bc_i[fu_true_idx].valid      ;
+                        bc_prf_o[cp_num].wr_en      =   fu_bc_i[fu_true_idx].write_reg  ;
                         cp_num++;
                     end
 

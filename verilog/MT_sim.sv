@@ -66,12 +66,12 @@ module MT_sim #(
                 end
             // Normal
             end else begin
-                // Complete, assert the ready bit of completed tag
+                // Complete, assert the tag_ready bit of completed tag
                 for (int unsigned cp_idx = 0; cp_idx < C_CDB_NUM; cp_idx++) begin
                     if (cdb_i[cp_idx].valid) begin
                         for (int unsigned entry_idx = 0; entry_idx < C_ARCH_REG_NUM; entry_idx++) begin
                             if (mt_entry[entry_idx].tag == cdb_i[cp_idx].tag) begin
-                                mt_entry[entry_idx].ready   =   1'b1;
+                                mt_entry[entry_idx].tag_ready   =   1'b1;
                             end
                         end
                     end

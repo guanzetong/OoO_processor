@@ -55,10 +55,11 @@ HEADERS     = $(wildcard *.svh)
 # TESTBENCH	= testbench/test_tb.sv
 # TESTBENCH	= testbench/adder_tb.sv
 # TESTBENCH	= testbench/pe_mult_tb.sv
-TESTBENCH	= testbench/IB_tb.sv
-# PIPEFILES   = $(wildcard verilog/*.sv)
+# TESTBENCH	= testbench/IB_tb.sv
+TESTBENCH	= testbench/pipeline_dp_tb.sv
+PIPEFILES   = $(wildcard verilog/*.sv)
 # PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
-PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
+# PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
 
 SIMFILES    = $(PIPEFILES)
 
@@ -73,7 +74,7 @@ export PIPEFILES
 # export PIPELINE_NAME = binary_encoder
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
-export PIPELINE_NAME = IB
+export PIPELINE_NAME = pipeline_dp
 
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
