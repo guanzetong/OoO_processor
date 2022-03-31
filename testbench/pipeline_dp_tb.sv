@@ -34,35 +34,49 @@ class driver;
         @(negedge vif.clk_i);
 
         $display("T=%0t [Driver] Reading program.mem", $time);
-        $readmemh("../program.mem", program_mem);
+        $readmemh("program.mem", program_mem);
+
+        // for (int unsigned addr = 0; addr < `MEM_64BIT_LINES; addr++) begin
+        //     $display("addr=%0d\tdata=%16h", addr, program_mem[addr]);
+        // end
 
         forever begin
-            // gen_item    item    ;
+            gen_item    item    ;
             
-            // $display("T=%0t [Driver] waiting for item from Generator ...", $time);
-            // drv_mbx.get(item);
+            $display("T=%0t [Driver] waiting for item from Generator ...", $time);
+            drv_mbx.get(item);
 
             // item.print("[Driver]");
 
             // Fetch Instructions
+            // $display("T=%0t [Driver] Feeding instructions", $time);
+
             vif.fiq_dp.avail_num =   `DP_NUM;
 
             for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
-                inst_pc                     =   pc + dp_idx * 4;
-                program_mem_addr            =   {inst_pc[`XLEN-1:3], 3'b0};
-                program_mem_data            =   program_mem[program_mem_addr];
-                vif.fiq_dp.inst[dp_idx]   =   inst_pc[2] ? program_mem_data[63:32] : program_mem_data[31:0];
+                inst_pc                 =   pc + dp_idx * 4;
+                program_mem_addr        =   {inst_pc[`XLEN-1:3], 3'b0};
+                program_mem_data        =   program_mem[program_mem_addr];
+                vif.fiq_dp.pc           =   inst_pc;
+                vif.fiq_dp.inst[dp_idx] =   inst_pc[2] ? program_mem_data[63:32] : program_mem_data[31:0];
             end
 
             // Move PC
             @(posedge vif.clk_i);
-            if (vif.br_mis_mon_o.valid[0]) begin
+            if (vif.rst_i) begin
+                pc  =   0;
+            end else if (vif.br_mis_mon_o.valid[0]) begin
                 pc  =   vif.br_mis_mon_o.br_target[0];
             end else begin
                 pc  =   pc + vif.dp_fiq.dp_num * 4;
             end
 
+            $display("T=%0t [Driver] PC=%0d, dp_num=%0d", $time, pc, vif.dp_fiq.dp_num);
+
             @(negedge vif.clk_i);
+            vif.fiq_dp      =   0;
+            vif.exception_i =   0;
+            ->drv_done;
         end
     endtask // run()
 
@@ -87,7 +101,33 @@ endclass //
 // ====================================================================
 // Monitor Start
 // ====================================================================
+class monitor;
+    virtual pipeline_dp_if  vif         ;
+    mailbox                 scb_mbx     ;
+    logic   [`XLEN-1:0]     wfi_pc      ;
 
+    task run();
+        $display("T=%0t [Monitor] starting ...", $time);
+        forever begin
+            @(posedge vif.clk_i);
+            for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
+                if (dp_idx < vif.dp_rs_mon_o.dp_num 
+                && vif.dp_rs_mon_o.dec_inst[dp_idx].halt == `TRUE) begin
+                    wfi_pc  =   vif.dp_rs_mon_o.dec_inst[dp_idx].pc;
+                end
+            end
+
+            for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
+                if (vif.rt_valid_o[rt_idx]
+                && vif.rt_pc_o[rt_idx] == wfi_pc) begin
+                    $display("T=%0t [Monitor] WFI instruction retired, exit program", $time);
+                    $finish;
+                end
+            end
+        end
+    endtask
+
+endclass
 // ====================================================================
 // Monitor End
 // ====================================================================
@@ -123,7 +163,7 @@ endclass
 // ====================================================================
 class env;
     driver          d0          ;   // driver     handle
-    // monitor         m0          ;   // monitor    handle
+    monitor         m0          ;   // monitor    handle
     generator       g0          ;   // generator  handle
     // scoreboard      s0          ;   // scoreboard handle
 
@@ -135,7 +175,7 @@ class env;
 
     function new();
         d0          =   new         ;
-        // m0          =   new         ;
+        m0          =   new         ;
         g0          =   new         ;
         // s0          =   new         ;
         
@@ -144,7 +184,7 @@ class env;
 
         d0.drv_mbx  =   drv_mbx     ;
         g0.drv_mbx  =   drv_mbx     ;
-        // m0.scb_mbx  =   scb_mbx     ;
+        m0.scb_mbx  =   scb_mbx     ;
         // s0.scb_mbx  =   scb_mbx     ;
 
         d0.drv_done =   drv_done    ;
@@ -153,12 +193,12 @@ class env;
 
     virtual task run();
         d0.vif  =   vif;
-        // m0.vif  =   vif;
+        m0.vif  =   vif;
 
         fork
             d0.run();
-            // m0.run();
-            // g0.run();
+            m0.run();
+            g0.run();
             // s0.run();
         join_any
     endtask // run()

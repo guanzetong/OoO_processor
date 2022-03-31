@@ -10,8 +10,6 @@
 `ifndef __PRF_V__
 `define __PRF_V__
 
-`timescale 1ns/100ps
-
 module PRF # ( 
     parameter   C_XLEN              =   `XLEN           ,
     parameter   C_IS_NUM            =   `IS_NUM         ,

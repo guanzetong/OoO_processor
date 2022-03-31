@@ -10,7 +10,7 @@ module VFL_sim #(
     parameter   C_RT_NUM            =   `RT_NUM         ,
     parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM   ,
     parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    ,
-    parameter   C_FL_ENTRY_NUM      =   C_PHY_REG_NUM - C_PHY_REG_NUM
+    parameter   C_FL_ENTRY_NUM      =   C_PHY_REG_NUM - C_ARCH_REG_NUM
 ) (
     input   logic                               clk_i       ,   //  Clock
     input   logic                               rst_i       ,   //  Reset

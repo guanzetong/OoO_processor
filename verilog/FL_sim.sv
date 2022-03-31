@@ -18,14 +18,14 @@ module FL_sim #(
     output  FL_DP                               fl_dp_o         ,
     input   DP_FL                               dp_fl_i         ,
     input   ROB_FL                              rob_fl_i        ,
-    input   VFL_ENTRY   [C_FL_ENTRY_NUM-1:0]    vfl_i           ,
+    input   FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    vfl_i           ,
     input   logic                               rollback_i      
 );
 
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_FL_NUM_WIDTH  =   $clog2(C_FL_ENTRY_NUM)  ;
+    localparam  C_FL_NUM_WIDTH  =   $clog2(C_FL_ENTRY_NUM+1)  ;
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -78,12 +78,16 @@ module FL_sim #(
             if (rst_i) begin
                 freelist.delete();
                 freelist_init();
+                fl_dp_o.avail_num   =   C_DP_NUM;
+                // $display("Reset Freelist size=%0d", freelist.size());
             end else if (rollback_i) begin
                 freelist.delete();
                 for (int unsigned entry_idx = 0; entry_idx < C_FL_ENTRY_NUM; entry_idx++) begin
                     fl_entry.tag =  vfl_i[entry_idx].tag;
                     freelist.push_back(fl_entry);
                 end
+                fl_dp_o.avail_num   =   C_DP_NUM;
+                // $display("Rollback Freelist size=%0d", freelist.size());
             end else begin
                 // Retire
                 for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++)begin
@@ -96,11 +100,14 @@ module FL_sim #(
                 `SD;
                 // Dispatch
                 avail_num   =   freelist.size();
+                // $display("Normal Freelist size=%0d", freelist.size());
                 if (avail_num > C_DP_NUM) begin
                     fl_dp_o.avail_num   =   C_DP_NUM;
                 end else begin
                     fl_dp_o.avail_num   =   avail_num;
                 end
+                // $display("avail num=%0d", avail_num);
+                // $display("FL avail num=%0d", fl_dp_o.avail_num);
 
                 for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
                     if(dp_idx < dp_fl_i.dp_num)begin

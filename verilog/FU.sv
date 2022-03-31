@@ -13,8 +13,6 @@
 `ifndef __FU_MODULE_V__
 `define __FU_MODULE_V__
 
-`timescale 1ns/100ps
-
 module alu_comb(
     input [`XLEN-1:0] opa,
     input [`XLEN-1:0] opb,
@@ -121,6 +119,7 @@ module alu #(
             fu_bc_o.tag <= ib_fu.is_inst.tag;
             fu_bc_o.br_inst <= 1'b0;
             fu_bc_o.br_result <= 1'b0;
+            fu_bc_o.br_target <= 'b0;
             fu_bc_o.thread_idx <= ib_fu.is_inst.thread_idx;
             fu_bc_o.rob_idx <= ib_fu.is_inst.rob_idx;
         end
@@ -246,6 +245,7 @@ module mult #(
             fu_bc_o.tag <= ib_fu.is_inst.tag;
             fu_bc_o.br_inst <= 1'b0;
             fu_bc_o.br_result <= 1'b0;
+            fu_bc_o.br_target <= 'b0;
             fu_bc_o.thread_idx <= ib_fu.is_inst.thread_idx;
             fu_bc_o.rob_idx <= ib_fu.is_inst.rob_idx;
         end
@@ -387,6 +387,8 @@ module branch #(
             fu_bc_o.rob_idx <= ib_fu.is_inst.rob_idx;
         end
     end
+
+    assign  fu_bc_o.rd_value    =   'b0;
 endmodule // branch
 
 
@@ -723,6 +725,13 @@ module FU #(
     //     .proc2Dmem_request_o(proc2Dmem_request_o[C_STORE_NUM+C_LOAD_NUM-1:C_LOAD_NUM]),
     //     .proc2Dmem_recieved_i(proc2Dmem_recieved_i[C_STORE_NUM+C_LOAD_NUM-1:C_LOAD_NUM])
     // );
+
+    always_comb begin
+        for (int unsigned fu_idx = C_LOAD_BASE; fu_idx < C_FU_NUM; fu_idx++) begin
+            fu_ib_o[fu_idx].ready   =   1'b1;
+            fu_bc_o[fu_idx]         =   'b0;
+        end
+    end
 
 
 endmodule // module fu_module

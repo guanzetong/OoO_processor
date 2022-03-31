@@ -8,8 +8,6 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`timescale 1ns/100ps
-
 module DP # ( 
     parameter       C_DP_NUM                =   `DP_NUM         ,
     parameter       C_THREAD_NUM            =   `THREAD_NUM     ,
@@ -352,68 +350,68 @@ module decoder#(
                 `RV32_LBU, `RV32_LHU: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     rd_mem          =   `TRUE           ;
                     alu             =   `FALSE          ;
                 end
                 `RV32_SB, `RV32_SH, `RV32_SW: begin
                     rs1_select      =   RS1_USED        ;
                     rs2_select      =   RS2_USED        ;
-                    opa_select      =   OPB_IS_S_IMM    ;
+                    opb_select      =   OPB_IS_S_IMM    ;
                     wr_mem          =   `TRUE           ;
                     alu             =   `FALSE          ;
                 end
                 `RV32_ADDI: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                 end
                 `RV32_SLTI: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     alu_func        =   ALU_SLT         ;
                 end
                 `RV32_SLTIU: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     alu_func        =   ALU_SLTU        ;
                 end
                 `RV32_ANDI: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     alu_func        =   ALU_AND         ;
                 end
                 `RV32_ORI: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     alu_func        =   ALU_OR          ;
                 end
                 `RV32_XORI: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     alu_func        =   ALU_XOR         ;
                 end
                 `RV32_SLLI: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     alu_func        =   ALU_SLL         ;
                 end
                 `RV32_SRLI: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     alu_func        =   ALU_SRL         ;
                 end
                 `RV32_SRAI: begin
                     rd_select       =   RD_USED         ;
                     rs1_select      =   RS1_USED        ;
-                    opa_select      =   OPB_IS_I_IMM    ;
+                    opb_select      =   OPB_IS_I_IMM    ;
                     alu_func        =   ALU_SRA         ;
                 end
                 `RV32_ADD: begin

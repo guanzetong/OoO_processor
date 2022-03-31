@@ -62,7 +62,7 @@ module pipeline_dp (
     // DP_FIQ                               dp_fiq          ;
     RS_DP                                   rs_dp           ;
     DP_RS                                   dp_rs           ;
-    CDB                                     cdb             ;
+    CDB         [`CDB_NUM-1:0]              cdb             ;
     RS_IB       [`IS_NUM-1:0]               rs_ib           ;
     IB_RS                                   ib_rs           ;
     RS_PRF      [`IS_NUM-1:0]               rs_prf          ;
@@ -70,12 +70,15 @@ module pipeline_dp (
     BR_MIS                                  br_mis          ;
     ROB_AMT     [`RT_NUM-1:0]               rob_amt         ;
     ROB_FL                                  rob_fl          ;
-    ROB_VFL                                 rob_vfl         ;
+    ROB_VFL     [`RT_NUM-1:0]               rob_vfl         ;
     FU_IB       [`FU_NUM-1:0]               fu_ib           ;
     IB_FU       [`FU_NUM-1:0]               ib_fu           ;
-    BC_PRF                                  bc_prf          ;
+    BC_PRF      [`CDB_NUM-1:0]              bc_prf          ;
     FL_ENTRY    [`FL_ENTRY_NUM-1:0]         vfl             ;
     AMT_ENTRY   [`ARCH_REG_NUM-1:0]         amt             ;
+    MT_DP       [`DP_NUM-1:0]               mt_dp           ;
+    FU_BC       [`FU_NUM-1:0]               fu_bc           ;
+    BC_FU       [`FU_NUM-1:0]               bc_fu           ;
 
 // ====================================================================
 // Signal Declarations End
@@ -188,10 +191,10 @@ module pipeline_dp (
 // Module name  :   MT
 // Description  :   Map Table
 // --------------------------------------------------------------------
-    MT MT_sim (
+    MT_sim MT_inst (
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
-        .rollback_i     (rollback_i     ),    
+        .rollback_i     (exception_i || br_mis.valid[0]     ),    
         .cdb_i          (cdb            ),
         .dp_mt_read_i   (dp_mt_read     ),
         .dp_mt_write_i  (dp_mt_write    ),
@@ -222,10 +225,10 @@ module pipeline_dp (
     FU FU_inst (
         .clk_i          (clk_i      ),
         .rst_i          (rst_i      ),
-        .ib_fu_i        (fu_bc      ),
-        .fu_ib_o        (bc_fu      ),
-        .fu_bc_o        (fu_ib      ),
-        .bc_fu_i        (ib_fu      )
+        .ib_fu_i        (ib_fu      ),
+        .fu_ib_o        (fu_ib      ),
+        .fu_bc_o        (fu_bc      ),
+        .bc_fu_i        (bc_fu      )
     );
 // --------------------------------------------------------------------
 

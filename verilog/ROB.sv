@@ -9,8 +9,6 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-`timescale 1ns/100ps
-
 module ROB # ( 
     parameter   C_DP_NUM            =   `DP_NUM         ,
     parameter   C_CDB_NUM           =   `CDB_NUM        ,
@@ -30,7 +28,7 @@ module ROB # (
     output  ROB_VFL [C_RT_NUM-1:0]          rob_vfl_o           ,   // To Victim Free List - ROB_VFL
     input   logic                           exception_i         ,   // From Exception Controller
     output  logic                           br_mis_valid_o      ,
-    output  logic                           br_target_o         ,
+    output  logic   [C_XLEN-1:0]            br_target_o         ,
 
     // For testing
     output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
@@ -280,8 +278,8 @@ module ROB # (
                                     != rob_array[idx].br_result);
             // Once the mispredicted branch retires, flush the ROB entries
             if (rt_sel[idx] && br_mispredict[idx]) begin
-                br_mis_valid_o    =   1'b1;
-                br_target_o =   rob_array[idx].br_target;
+                br_mis_valid_o  =   1'b1;
+                br_target_o     =   rob_array[idx].br_target;
             end
         end
     end
@@ -293,16 +291,19 @@ module ROB # (
         for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             // System synchronous reset
             if (rst_i) begin
-                rob_array[idx].valid        <=  `SD 1'b0;
-                rob_array[idx].complete     <=  `SD 1'b0;
+                // rob_array[idx].valid        <=  `SD 1'b0;
+                // rob_array[idx].complete     <=  `SD 1'b0;
+                rob_array[idx]  <=  `SD 'b0;
             // Precise state by exception
             end else if (exception_i) begin
-                rob_array[idx].valid        <=  `SD 1'b0;
-                rob_array[idx].complete     <=  `SD 1'b0;
+                // rob_array[idx].valid        <=  `SD 1'b0;
+                // rob_array[idx].complete     <=  `SD 1'b0;
+                rob_array[idx]  <=  `SD 'b0;
             // Flush by branch misprediction
             end else if (br_mis_valid_o) begin
-                rob_array[idx].valid        <=  `SD 1'b0;
-                rob_array[idx].complete     <=  `SD 1'b0;
+                // rob_array[idx].valid        <=  `SD 1'b0;
+                // rob_array[idx].complete     <=  `SD 1'b0;
+                rob_array[idx]  <=  `SD 'b0;
             // Dispatch
             end else if (dp_sel[idx]) begin
                 rob_array[idx].valid        <=  `SD 1'b1;
@@ -322,15 +323,16 @@ module ROB # (
                 end
             // Retire
             end else if (rt_sel[idx]) begin
-                rob_array[idx].valid        <=  `SD 1'b0;
-                rob_array[idx].complete     <=  `SD 1'b0; 
+                // rob_array[idx].valid        <=  `SD 1'b0;
+                // rob_array[idx].complete     <=  `SD 1'b0; 
+                rob_array[idx]  <=  `SD 'b0;
             // Complete
             end else if (cp_sel[idx] && rob_array[idx].valid) begin
                 rob_array[idx].complete     <=  `SD 1'b1;
                 rob_array[idx].br_result    <=  `SD cdb_i[cp_idx[idx]].br_result;
                 rob_array[idx].br_target    <=  `SD cdb_i[cp_idx[idx]].br_target;
             end else begin
-                rob_array[idx]              <= `SD rob_array[idx]; // Maintain value.
+                rob_array[idx]  <= `SD rob_array[idx]; // Maintain value.
             end
         end
     end

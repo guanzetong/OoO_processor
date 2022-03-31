@@ -70,26 +70,50 @@ module IB_pop_out_router #(
 // --------------------------------------------------------------------
 // Route the data from queue to output
 // --------------------------------------------------------------------
-    always_comb begin
-        ib_fu_o         =   'b0;
-        pop_out_route   =   route(s_valid_i, ready);
-        for (int out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
-            ib_fu_o[out_idx].is_inst    =   s_data_i[pop_out_route[out_idx][C_IN_IDX_WIDTH-1:0]];
-            ib_fu_o[out_idx].valid      =   pop_out_route[out_idx][C_IN_IDX_WIDTH];
+    generate
+        if (C_IN_NUM >= 2) begin
+            always_comb begin
+                ib_fu_o         =   'b0;
+                pop_out_route   =   route(s_valid_i, ready);
+                for (int unsigned out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
+                    ib_fu_o[out_idx].is_inst    =   s_data_i[pop_out_route[out_idx][C_IN_IDX_WIDTH-1:0]];
+                    ib_fu_o[out_idx].valid      =   pop_out_route[out_idx][C_IN_IDX_WIDTH];
+                end
+            end
+        end else begin
+            always_comb begin
+                ib_fu_o =   'b0;
+                for (int unsigned out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
+                    ib_fu_o[out_idx].is_inst    =   s_data_i;
+                end
+            end
         end
-    end
+    endgenerate
 
 // --------------------------------------------------------------------
 // Output ready signal to clear the poped-out entry
 // --------------------------------------------------------------------
-    always_comb begin
-        s_ready_o   =   'b0;
-        for (int out_idx = 0; out_idx < C_IN_NUM; out_idx++) begin
-            if (ib_fu_o[out_idx].valid && fu_ib_i[out_idx].ready) begin
-                s_ready_o[pop_out_route[out_idx][C_IN_IDX_WIDTH-1:0]]   =   1'b1;
+    generate
+        if (C_IN_NUM >= 2) begin
+            always_comb begin
+                s_ready_o   =   'b0;
+                for (int out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
+                    if (ib_fu_o[out_idx].valid && fu_ib_i[out_idx].ready) begin
+                        s_ready_o[pop_out_route[out_idx][C_IN_IDX_WIDTH-1:0]]   =   1'b1;
+                    end
+                end
+            end
+        end else begin
+            always_comb begin
+                s_ready_o   =   'b0;
+                for (int out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
+                    if (ib_fu_o[out_idx].valid && fu_ib_i[out_idx].ready) begin
+                        s_ready_o   =   1'b1;
+                    end
+                end
             end
         end
-    end
+    endgenerate
 
 // ====================================================================
 // RTL Logic End

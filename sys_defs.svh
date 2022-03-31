@@ -625,7 +625,6 @@ typedef struct packed {
 } PRF_RS; // Per-Channel
 
 typedef struct packed {
-    logic                                           start       ;
     logic                                           valid       ;
     IS_INST                                         is_inst     ;
     // logic   [`XLEN-1:0]                             pc          ;
@@ -694,10 +693,6 @@ typedef enum logic [1:0] {
 	RS2_USED  = 2'h0,
 	RS2_NONE  = 2'h1
 } RS2_SEL;
-
-typedef struct packed {
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-} VFL_ENTRY;
 
 typedef struct packed {
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
