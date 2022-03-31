@@ -57,13 +57,14 @@ HEADERS     = $(wildcard *.svh)
 # TESTBENCH	= testbench/pe_mult_tb.sv
 # TESTBENCH	= testbench/IB_tb.sv
 # TESTBENCH	= testbench/MT_tb.sv
-TESTBENCH	= testbench/AMT_tb.sv
+# TESTBENCH	= testbench/AMT_tb.sv
+TESTBENCH	= testbench/freelist_tb.sv
 # PIPEFILES   = $(wildcard verilog/*.sv)
 # PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
 # PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
 
 # PIPEFILES	= verilog/MT.sv
-PIPEFILES	= verilog/AMT.sv
+PIPEFILES	= verilog/freelist.sv
 SIMFILES    = $(PIPEFILES)
 
 # SYNTHESIS CONFIG
@@ -77,7 +78,7 @@ export PIPEFILES
 # export PIPELINE_NAME = binary_encoder
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
-export PIPELINE_NAME = AMT
+export PIPELINE_NAME = freelist
 
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 

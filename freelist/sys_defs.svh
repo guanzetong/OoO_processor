@@ -46,8 +46,8 @@
 `define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
 `define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
 
-`define FL_ENTRY_NUM (`ROB_ENTRY_NUM)
-`define FL_IDX ($clog(NUM_FL_ENTRIES))
+`define FL_ENTRY_NUM        32
+`define FL_IDX              $clog2(`FL_ENTRY_NUM)
 
 `define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
 `define ZERO_PREG ({`TAG_IDX_WIDTH{1'b0}})
@@ -56,7 +56,6 @@
 typedef struct packed {
     logic   [`RT_NUM_WIDTH-1:0]                     rt_num      ;
     logic   [`RT_NUM-1:0][`TAG_IDX_WIDTH-1:0]       phy_reg     ;
-    logic   [`TAG_IDX_WIDTH-1:0] tag;
 } ROB_FL; // Combined
 
 
@@ -69,19 +68,16 @@ typedef struct packed {
     logic   [`DP_NUM_WIDTH-1:0]                     dp_num      ;
 } DP_FL; // Combined
 
-typedef enum logic [1:0] {
-	RD_USED  = 2'h0,
-	RD_NONE  = 2'h1
-} RD_SEL;
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+} VFL_ENTRY;
 
-typedef enum logic [1:0] {
-	RS1_USED  = 2'h0,
-	RS1_NONE  = 2'h1
-} RS1_SEL;
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+} FL_ENTRY;
 
-typedef enum logic [1:0] {
-	RS2_USED  = 2'h0,
-	RS2_NONE  = 2'h1
-} RS2_SEL;
-
-// Interface End
+typedef struct packed {
+    logic                                           wr_en       ;
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;
+} ROB_VFL;  // Per-Channel

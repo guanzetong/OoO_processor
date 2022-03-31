@@ -39,9 +39,9 @@
 syn_simv
 sys_defs.svh
 ISA.svh
-synth/AMT.vg
-synth/AMT_svsim.sv
-testbench/AMT_tb.sv
+synth/freelist.vg
+synth/freelist_svsim.sv
+testbench/freelist_tb.sv
 /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 68
 which_declare=declare -f
@@ -56,10 +56,10 @@ _ModuleTable003_=ZC9tb2R1bGVmaWxlcy9Db3JlOi91c3IvY2Flbi9taXNjL21vZHVsZXM6L2Fmcy9
 _ModuleTable002_=aC5lZHUvY2xhc3MvY29lL21vZHVsZXMiLCIvdXNyL3NoYXJlL21vZHVsZWZpbGVzL0xpbnV4IiwiL3Vzci9zaGFyZS9tb2R1bGVmaWxlcy9Db3JlIiwiL3Vzci9zaGFyZS9sbW9kL2xtb2QvbW9kdWxlZmlsZXMvQ29yZSIsfSxbInN5c3RlbUJhc2VNUEFUSCJdPSIvZXRjL3NjbC9tb2R1bGVmaWxlczovZXRjL3NjbC9tb2R1bGVmaWxlczovZXRjL3NjbC9tb2R1bGVmaWxlczovZXRjL21vZHVsZWZpbGVzOi91c3Ivc2hhcmUvbW9kdWxlZmlsZXM6L3Vzci9jYWVuL21pc2MvbW9kdWxlczovYWZzL3VtaWNoLmVkdS9jbGFzcy9jb2UvbW9kdWxlczovdXNyL3NoYXJlL21vZHVsZWZpbGVzL0xpbnV4Oi91c3Ivc2hhcmUvbW9kdWxlZmlsZXMvQ29yZTovdXNyL3NoYXJlL2xtb2QvbG1v
 _ModuleTable001_=X01vZHVsZVRhYmxlXz17WyJNVHZlcnNpb24iXT0zLFsiY19yZWJ1aWxkVGltZSJdPWZhbHNlLFsiY19zaG9ydFRpbWUiXT1mYWxzZSxkZXB0aFQ9e30sZmFtaWx5PXt9LG1UPXt2Y3M9e1siZm4iXT0iL3Vzci9jYWVuL21pc2MvbW9kdWxlcy92Y3MvMjAyMC4xMi1TUDItMSIsWyJmdWxsTmFtZSJdPSJ2Y3MvMjAyMC4xMi1TUDItMSIsWyJsb2FkT3JkZXIiXT0xLHByb3BUPXt9LFsic3RhY2tEZXB0aCJdPTAsWyJzdGF0dXMiXT0iYWN0aXZlIixbInVzZXJOYW1lIl09InZjcyIsfSx9LG1wYXRoQT17Ii91c3IvY2Flbi9taXNjL21vZHVsZXMiLCIvZXRjL3NjbC9tb2R1bGVmaWxlcyIsIi9ldGMvbW9kdWxlZmlsZXMiLCIvdXNyL3NoYXJlL21vZHVsZWZpbGVzIiwiL2Fmcy91bWlj
 _LMFILES_=/usr/caen/misc/modules/vcs/2020.12-SP2-1
-XDG_SESSION_ID=526
+XDG_SESSION_ID=655
 XDG_RUNTIME_DIR=/run/user/114273863
 XDG_DATA_DIRS=/home/stzzzy/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
-VSCODE_IPC_HOOK_CLI=/run/user/114273863/vscode-ipc-98cfef05-f0ca-49cb-923e-efd16c901133.sock
+VSCODE_IPC_HOOK_CLI=/run/user/114273863/vscode-ipc-bad75eaa-2b46-451d-8ccb-1510de844495.sock
 VMR_MODE_FLAG=64
 VCS_PATHMAP_PRELOAD_DONE=1
 VCS_MX_HOME_INTERNAL=1
@@ -73,21 +73,21 @@ UNAME=/bin/uname
 TOOL_HOME=/usr/caen/vcs-2020.12-SP2-1/linux64
 TERM_PROGRAM_VERSION=1.65.2
 TERM_PROGRAM=vscode
-SSH_CONNECTION=107.5.94.247 60882 141.211.160.35 22
-SSH_CLIENT=107.5.94.247 60882 22
+SSH_CONNECTION=107.5.94.247 50721 141.211.160.38 22
+SSH_CLIENT=107.5.94.247 50721 22
 SCRNAME=vcs
 SCRIPT_NAME=vcs
 RESET_NET_NAME=rst_i
-PIPELINE_NAME=AMT
-PIPEFILES=verilog/AMT.sv
+PIPELINE_NAME=freelist
+PIPEFILES=verilog/freelist.sv
 OVA_UUM=0
 MSI2LMP_LIBRARY=/usr/share/lammps/frc_files
 MODULESHOME=/usr/share/lmod/lmod
 MODULEPATH_ROOT=/usr/share/modulefiles
 MODULEPATH=/usr/caen/misc/modules:/etc/scl/modulefiles:/etc/modulefiles:/usr/share/modulefiles:/afs/umich.edu/class/coe/modules:/usr/share/modulefiles/Linux:/usr/share/modulefiles/Core:/usr/share/lmod/lmod/modulefiles/Core
 MFLAGS=
-MAKE_TERMOUT=/dev/pts/12
-MAKE_TERMERR=/dev/pts/12
+MAKE_TERMOUT=/dev/pts/9
+MAKE_TERMERR=/dev/pts/9
 MAKELEVEL=1
 MAKEFLAGS=
 LOADEDMODULES=vcs/2020.12-SP2-1
@@ -116,16 +116,16 @@ BASH_ENV=/usr/share/lmod/lmod/init/bash
 0
 7
 1062689876 /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
-1648683147 testbench/AMT_tb.sv
-1648683078 synth/AMT_svsim.sv
-1648683079 synth/AMT.vg
+1648769938 testbench/freelist_tb.sv
+1648770001 synth/freelist_svsim.sv
+1648770005 synth/freelist.vg
 1646599488 ISA.svh
-1648675445 sys_defs.svh
+1648769920 sys_defs.svh
 1626663962 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/vcsdp.tab
 4
 1626665287 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvirsim.so
 1626664738 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/liberrorinf.so
 1626664460 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libsnpsmalloc.so
 1626664734 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvfs.so
-1648683156 syn_simv.daidir
+1648770016 syn_simv.daidir
 -1 partitionlib

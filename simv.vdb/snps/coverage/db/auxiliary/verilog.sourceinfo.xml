@@ -2,8 +2,8 @@
 <!DOCTYPE cov SYSTEM "ucdb_srcinfo.dtd">
   <srcinfo name="/afs/umich.edu/user/s/t/stzzzy/eecs470/group6w22"  >
     <ucapi_version  major_ver="13"  minor_ver="1"  patch_str="R-2020.12-SP2-1"  />
-      <fileinfo name="sys_defs.svh"  id="0"  timestamp="1648675445"  />
+      <fileinfo name="sys_defs.svh"  id="0"  timestamp="1648769920"  />
       <fileinfo name="ISA.svh"  id="1"  timestamp="1646599488"  />
-      <fileinfo name="verilog/AMT.sv"  id="2"  timestamp="1648681437"  />
-      <fileinfo name="testbench/AMT_tb.sv"  id="3"  timestamp="1648682961"  />
+      <fileinfo name="verilog/freelist.sv"  id="2"  timestamp="1648769721"  />
+      <fileinfo name="testbench/freelist_tb.sv"  id="3"  timestamp="1648769938"  />
     </srcinfo>

@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<!DOCTYPE cov SYSTEM "ucdb_srcinfo.dtd">
+  <srcinfo name="/afs/umich.edu/user/s/t/stzzzy/eecs470/group6w22/freelist"  >
+    <ucapi_version  major_ver="13"  minor_ver="1"  patch_str="N-2017.12-SP2-1"  />
+      <fileinfo name="sys_defs.svh"  id="0"  />
+      <fileinfo name="Freelist.sv"  id="1"  />
+      <fileinfo name="Freelist_tb.sv"  id="2"  />
+    </srcinfo>

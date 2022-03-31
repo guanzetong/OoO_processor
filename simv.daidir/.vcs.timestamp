@@ -1,0 +1,129 @@
+0 
+42
++cli+1
++itf+/usr/caen/vcs-2020.12-SP2-1/linux64/lib/vcsdp.tab
++memcbk
++vc
++vcs+vcdpluson
++vcsd
++vpi
+-Mamsrun=
+-Masflags=
+-Mcc=gcc
+-Mcfl= -pipe -fPIC -O -I/usr/caen/vcs-2020.12-SP2-1/include
+-Mcplusplus=g++
+-Mcrt0=
+-Mcrtn=
+-Mcsrc=
+-Mexternalobj=
+-Mldflags= -rdynamic
+-Mobjects= /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvirsim.so /usr/caen/vcs-2020.12-SP2-1/linux64/lib/liberrorinf.so /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libsnpsmalloc.so /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvfs.so
+-Mout=simv
+-Msaverestoreobj=/usr/caen/vcs-2020.12-SP2-1/linux64/lib/vcs_save_restore_new.o
+-Msyslibs=-ldl
+-Mupdate
+-Mvcsaceobjs=
+-Mxcflags= -pipe -fPIC -I/usr/caen/vcs-2020.12-SP2-1/include
+-Mxllcflags=
+-V
+-Xcbug=0x1
+-cm
+-debug=4
+-full64
+-gen_obj
+-line
+-o simv
+-picarchive
+-sverilog
+/usr/caen/vcs-2020.12-SP2-1/linux64/bin/vcs1
+simv
+line+tgl
+sys_defs.svh
+ISA.svh
+verilog/freelist.sv
+testbench/freelist_tb.sv
+68
+which_declare=declare -f
+__LMOD_REF_COUNT__LMFILES_=/usr/caen/misc/modules/vcs/2020.12-SP2-1:1
+__LMOD_REF_COUNT_PATH=/usr/caen/vcs-2020.12-SP2-1/bin:1;/afs/umich.edu/user/s/t/stzzzy/.vscode-server/bin/c722ca6c7eed3d7987c0d5c3df5c45f6b15e77d1/bin/remote-cli:1;/home/stzzzy/.cargo/bin:1;/usr/local/bin:1;/usr/bin:1;/usr/local/sbin:1;/usr/sbin:1;/usr/um/bin:1;/usr/caen/bin:1
+__LMOD_REF_COUNT_MODULEPATH=/usr/caen/misc/modules:4;/etc/scl/modulefiles:3;/etc/modulefiles:1;/usr/share/modulefiles:1;/afs/umich.edu/class/coe/modules:3;/usr/share/modulefiles/Linux:1;/usr/share/modulefiles/Core:1;/usr/share/lmod/lmod/modulefiles/Core:1
+__LMOD_REF_COUNT_LOADEDMODULES=vcs/2020.12-SP2-1:1
+__LMOD_REF_COUNT_LM_LICENSE_FILE=license.dat:1;/usr/caen/FLEXlm/data/license.dat.synopsys:1
+__GL_SHADER_DISK_CACHE=0
+_ModuleTable_Sz_=3
+_ModuleTable003_=ZC9tb2R1bGVmaWxlcy9Db3JlOi91c3IvY2Flbi9taXNjL21vZHVsZXM6L2Fmcy91bWljaC5lZHUvY2xhc3MvY29lL21vZHVsZXM6L3Vzci9jYWVuL21pc2MvbW9kdWxlczovYWZzL3VtaWNoLmVkdS9jbGFzcy9jb2UvbW9kdWxlcyIsfQ==
+_ModuleTable002_=aC5lZHUvY2xhc3MvY29lL21vZHVsZXMiLCIvdXNyL3NoYXJlL21vZHVsZWZpbGVzL0xpbnV4IiwiL3Vzci9zaGFyZS9tb2R1bGVmaWxlcy9Db3JlIiwiL3Vzci9zaGFyZS9sbW9kL2xtb2QvbW9kdWxlZmlsZXMvQ29yZSIsfSxbInN5c3RlbUJhc2VNUEFUSCJdPSIvZXRjL3NjbC9tb2R1bGVmaWxlczovZXRjL3NjbC9tb2R1bGVmaWxlczovZXRjL3NjbC9tb2R1bGVmaWxlczovZXRjL21vZHVsZWZpbGVzOi91c3Ivc2hhcmUvbW9kdWxlZmlsZXM6L3Vzci9jYWVuL21pc2MvbW9kdWxlczovYWZzL3VtaWNoLmVkdS9jbGFzcy9jb2UvbW9kdWxlczovdXNyL3NoYXJlL21vZHVsZWZpbGVzL0xpbnV4Oi91c3Ivc2hhcmUvbW9kdWxlZmlsZXMvQ29yZTovdXNyL3NoYXJlL2xtb2QvbG1v
+_ModuleTable001_=X01vZHVsZVRhYmxlXz17WyJNVHZlcnNpb24iXT0zLFsiY19yZWJ1aWxkVGltZSJdPWZhbHNlLFsiY19zaG9ydFRpbWUiXT1mYWxzZSxkZXB0aFQ9e30sZmFtaWx5PXt9LG1UPXt2Y3M9e1siZm4iXT0iL3Vzci9jYWVuL21pc2MvbW9kdWxlcy92Y3MvMjAyMC4xMi1TUDItMSIsWyJmdWxsTmFtZSJdPSJ2Y3MvMjAyMC4xMi1TUDItMSIsWyJsb2FkT3JkZXIiXT0xLHByb3BUPXt9LFsic3RhY2tEZXB0aCJdPTAsWyJzdGF0dXMiXT0iYWN0aXZlIixbInVzZXJOYW1lIl09InZjcyIsfSx9LG1wYXRoQT17Ii91c3IvY2Flbi9taXNjL21vZHVsZXMiLCIvZXRjL3NjbC9tb2R1bGVmaWxlcyIsIi9ldGMvbW9kdWxlZmlsZXMiLCIvdXNyL3NoYXJlL21vZHVsZWZpbGVzIiwiL2Fmcy91bWlj
+_LMFILES_=/usr/caen/misc/modules/vcs/2020.12-SP2-1
+XDG_SESSION_ID=655
+XDG_RUNTIME_DIR=/run/user/114273863
+XDG_DATA_DIRS=/home/stzzzy/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
+VSCODE_IPC_HOOK_CLI=/run/user/114273863/vscode-ipc-bad75eaa-2b46-451d-8ccb-1510de844495.sock
+VMR_MODE_FLAG=64
+VCS_PATHMAP_PRELOAD_DONE=1
+VCS_MX_HOME_INTERNAL=1
+VCS_MODE_FLAG=64
+VCS_HOME=/usr/caen/vcs-2020.12-SP2-1
+VCS_EXEC_DONE=1
+VCS_DEPTH=0
+VCS_ARG_ADDED_FOR_TMP=1
+VCS_ARCH=linux64
+UNAME=/bin/uname
+TOOL_HOME=/usr/caen/vcs-2020.12-SP2-1/linux64
+TERM_PROGRAM_VERSION=1.65.2
+TERM_PROGRAM=vscode
+SSH_CONNECTION=107.5.94.247 50721 141.211.160.38 22
+SSH_CLIENT=107.5.94.247 50721 22
+SCRNAME=vcs
+SCRIPT_NAME=vcs
+RESET_NET_NAME=rst_i
+PIPELINE_NAME=freelist
+PIPEFILES=verilog/freelist.sv
+OVA_UUM=0
+MSI2LMP_LIBRARY=/usr/share/lammps/frc_files
+MODULESHOME=/usr/share/lmod/lmod
+MODULEPATH_ROOT=/usr/share/modulefiles
+MODULEPATH=/usr/caen/misc/modules:/etc/scl/modulefiles:/etc/modulefiles:/usr/share/modulefiles:/afs/umich.edu/class/coe/modules:/usr/share/modulefiles/Linux:/usr/share/modulefiles/Core:/usr/share/lmod/lmod/modulefiles/Core
+MFLAGS=
+MAKE_TERMOUT=/dev/pts/9
+MAKE_TERMERR=/dev/pts/9
+MAKELEVEL=1
+MAKEFLAGS=
+LOADEDMODULES=vcs/2020.12-SP2-1
+LMOD_sys=Linux
+LMOD_VERSION=8.2.7
+LMOD_SETTARG_FULL_SUPPORT=no
+LMOD_ROOT=/usr/share/lmod
+LMOD_PKG=/usr/share/lmod/lmod
+LMOD_DIR=/usr/share/lmod/lmod/libexec
+LMOD_CMD=/usr/share/lmod/lmod/libexec/lmod
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+LC_ALL=C
+LAMMPS_POTENTIALS=/usr/share/lammps/potentials
+KRB5CCNAME=KEYRING:persistent:114273863
+HISTCONTROL=ignoredups
+HEADERS=sys_defs.svh ISA.svh
+COLORTERM=truecolor
+CLOCK_PERIOD=20	
+CLOCK_NET_NAME=clk_i
+BASH_FUNC_which%%=() {  ( alias;_ eval ${which_declare} ) | /usr/bin/which --tty-only --read-alias --read-functions --show-tilde --show-dot "$@"_}
+BASH_FUNC_scl%%=() {  if [ "$1" = "load" -o "$1" = "unload" ]; then_ eval "module $@";_ else_ /usr/bin/scl "$@";_ fi_}
+BASH_FUNC_module%%=() {  eval $($LMOD_CMD bash "$@") && eval $(${LMOD_SETTARG_CMD:-:} -s sh)_}
+BASH_FUNC_ml%%=() {  eval $($LMOD_DIR/ml_cmd "$@")_}
+BASH_ENV=/usr/share/lmod/lmod/init/bash
+0
+0
+6
+1648769938 testbench/freelist_tb.sv
+1648769721 verilog/freelist.sv
+1646599488 ISA.svh
+1648769920 sys_defs.svh
+1626663922 /usr/caen/vcs-2020.12-SP2-1/include/cm_vcsd.tab
+1626663962 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/vcsdp.tab
+4
+1626665287 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvirsim.so
+1626664738 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/liberrorinf.so
+1626664460 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libsnpsmalloc.so
+1626664734 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvfs.so
+1648769944 simv.daidir
+-1 partitionlib
