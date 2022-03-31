@@ -13,22 +13,23 @@ VCS = SW_VCS=2017.12-SP2-1 vcs +v2k -sverilog +vc -Mupdate -line -full64
 LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 
 all:    simv
-    ./simv | tee program.out
+	./simv | tee program.out
 ##### 
 # Modify starting here
 #####
 
-TESTBENCH = FU_tb.sv
-SIMFILES = FU.sv
+HEADERS     = $(wildcard *.svh)
+TESTBENCH = ./testbench/FU_tb.sv
+SIMFILES = ./verilog/FU.sv
 
 #####
 # Should be no need to modify after here
 #####
 sim:	simv $(ASSEMBLED)
-    ./simv | tee sim_program.out
+	./simv | tee sim_program.out
 
 simv:	$(HEADERS) $(SIMFILES) $(TESTBENCH)
-    $(VCS) $^ -o simv
+	$(VCS) $^ -o simv
 
 .PHONY: sim
 
@@ -36,20 +37,20 @@ simv:	$(HEADERS) $(SIMFILES) $(TESTBENCH)
 # updated interactive debugger "DVE", using the latest version of VCS
 # awdeorio fall 2011
 dve:	$(SIMFILES) $(TESTBENCH)
-    $(VCS) +memcbk $(TESTBENCH) $(SIMFILES) -o dve -R -gui
+	$(VCS) +memcbk $(TESTBENCH) $(SIMFILES) -o dve -R -gui
 
 syn_simv:	$(SYNFILES) $(TESTBENCH)
-    $(VCS) $(TESTBENCH) $(SYNFILES) $(LIB) -o syn_simv
+	$(VCS) $(TESTBENCH) $(SYNFILES) $(LIB) -o syn_simv
 
 syn:	syn_simv
-    ./syn_simv | tee syn_program.out
+	./syn_simv | tee syn_program.out
 
 clean:
-    rm -rvf simv *.daidir csrc vcs.key program.out \
-      syn_simv syn_simv.daidir syn_program.out \
-          dve *.vpd *.vcd *.dump ucli.key
+	rm -rvf simv *.daidir csrc vcs.key program.out \
+	  syn_simv syn_simv.daidir syn_program.out \
+		  dve *.vpd *.vcd *.dump ucli.key
 
 nuke:	clean
-    rm -rvf *.vg *.rep *.db *.chk *.log *.out *.ddc *.svf DVEfiles/
-    
+	rm -rvf *.vg *.rep *.db *.chk *.log *.out *.ddc *.svf DVEfiles/
+	
 .PHONY: dve clean nuke	
