@@ -151,6 +151,7 @@ typedef enum logic [4:0] {
 //
 `define ZERO_REG 5'd0
 
+
 //
 // Memory bus commands control signals
 //
@@ -328,6 +329,7 @@ typedef struct packed {
 `define PHY_REG_NUM     64  // The number of Physical registers.
 `define FL_ENTRY_NUM    `PHY_REG_NUM - `ARCH_REG_NUM
 `define THREAD_NUM      2
+`define MT_ENTRY_NUM    32
 
 `define ALU_NUM         3
 `define MULT_NUM        2
@@ -361,6 +363,8 @@ typedef struct packed {
 `define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
 `define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
 `define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
+`define FL_IDX              $clog2(`FL_ENTRY_NUM)
+`define ZERO_PREG           ({`TAG_IDX_WIDTH{1'b0}})
 
 `define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
 `define RT_NUM_WIDTH        $clog2(`RT_NUM+1)

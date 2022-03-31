@@ -8,9 +8,9 @@ all:    simv
 # Modify starting here
 #####
 
-TESTBENCH = AMT_tb.sv
+TESTBENCH = Freelist_tb.sv
 
-SIMFILES  = AMT.sv
+SIMFILES  = Freelist.sv
 
 HEADERS   = sys_defs.svh
 

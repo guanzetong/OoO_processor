@@ -1,7 +1,6 @@
-
 module AMT #(
     parameter C_RT_NUM           = `RT_NUM          ,
-    parameter C_MT_ENTRY_NUM     = `ARCH_REG_NUM    ,
+    parameter C_MT_ENTRY_NUM     = `MT_ENTRY_NUM    ,
     parameter C_TAG_IDX_WIDTH    = `TAG_IDX_WIDTH
 )(
     input   logic        clk_i       ,
@@ -14,7 +13,7 @@ module AMT #(
 
 );
 
-    AMT_ENTRY  [C_RT_NUM- 1:0] amt_entry;
+    AMT_ENTRY  [C_MT_ENTRY_NUM- 1:0] amt_entry;
 
     always_comb begin
         if (rollback_i) begin
@@ -37,12 +36,12 @@ module AMT #(
 
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            for(int i=0; i<C_MT_ENTRY_NUM; i++) begin
+            for(integer i=0; i<C_MT_ENTRY_NUM; i++) begin
                 amt_entry[i].amt_tag <= i;
             end
         end else begin
-            for (int i=0; i<C_MT_ENTRY_NUM; i++) begin
-                for (int j=0; j<C_RT_NUM; j++) begin
+            for (integer i=0; i<C_MT_ENTRY_NUM; i++) begin
+                for (integer j=0; j<C_RT_NUM; j++) begin
                     if (rob_amt_i[j].wr_en && rob_amt_i[j].arch_reg == i) begin
                         amt_entry[rob_amt_i[j].arch_reg].amt_tag <= rob_amt_i[j].phy_reg;
                     end else begin
