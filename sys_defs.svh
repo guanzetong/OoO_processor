@@ -336,6 +336,11 @@ typedef struct packed {
 `define STORE_NUM       1
 `define FU_NUM          `ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM
 
+`define ALU_CYCLE       3
+`define MULT_CYCLE      3
+`define BR_CYCLE        3
+
+
 `define ALU_Q_SIZE      8
 `define MULT_Q_SIZE     8
 `define BR_Q_SIZE       8

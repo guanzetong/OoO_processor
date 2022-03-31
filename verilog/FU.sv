@@ -102,7 +102,7 @@ module alu #(
             fu_ib_o.ready <= 1'b1;
             fu_bc_o.valid <= 1'b0;
         end
-        else if(fu_ib_o.ready & !started) begin
+        else if(ib_fu_i.start & !started) begin
             started <= 1'b1;
             counter <= 0;
             ib_fu <= ib_fu_i;
@@ -228,7 +228,7 @@ module mult #(
             fu_ib_o.ready <= 1'b1;
             fu_bc_o.valid <= 1'b0;
         end
-        else if(fu_ib_o.ready & !started) begin
+        else if(ib_fu_i.start & !started) begin
             started <= 1'b1;
             counter <= 0;
             ib_fu <= ib_fu_i;
@@ -268,7 +268,6 @@ module branch_condition(// Inputs
     input [`XLEN-1:0] rs2,
     input  [2:0] func,  // Specifies which condition to check
 
-    output logic [`XLEN-1:0] result,
     output logic cond    // 0/1 condition result (False/True)
 );
 
@@ -366,7 +365,7 @@ module branch #(
             fu_ib_o.ready <= 1'b1;
             fu_bc_o.valid <= 1'b0;
         end
-        else if(fu_ib_o.ready & !started) begin
+        else if(ib_fu_i.start & !started) begin
             started <= 1'b1;
             counter <= 0;
             ib_fu <= ib_fu_i;
