@@ -102,7 +102,7 @@ module alu #(
             fu_ib_o.ready <= 1'b1;
             fu_bc_o.valid <= 1'b0;
         end
-        else if(ib_fu_i.start & !started) begin
+        else if(ib_fu_i.valid & fu_ib_o.ready & !started) begin
             started <= 1'b1;
             counter <= 0;
             ib_fu <= ib_fu_i;
@@ -228,7 +228,7 @@ module mult #(
             fu_ib_o.ready <= 1'b1;
             fu_bc_o.valid <= 1'b0;
         end
-        else if(ib_fu_i.start & !started) begin
+        else if(ib_fu_i.valid & fu_ib_o.ready & !started) begin
             started <= 1'b1;
             counter <= 0;
             ib_fu <= ib_fu_i;
@@ -365,7 +365,7 @@ module branch #(
             fu_ib_o.ready <= 1'b1;
             fu_bc_o.valid <= 1'b0;
         end
-        else if(ib_fu_i.start & !started) begin
+        else if(ib_fu_i.valid & fu_ib_o.ready & !started) begin
             started <= 1'b1;
             counter <= 0;
             ib_fu <= ib_fu_i;

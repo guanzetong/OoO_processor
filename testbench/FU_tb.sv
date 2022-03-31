@@ -878,7 +878,7 @@ module testbench;
         while(~quit) begin
             @(negedge clk_i);
             rst_i = 1;
-            ib_fu_i[i].start = 0;
+            // ib_fu_i[i].start = 0;
             bc_fu_i[i].broadcasted = 0;
 
             @(negedge clk_i);
@@ -888,7 +888,7 @@ module testbench;
             assert(fu_bc_o[i].valid == 0);
             if(!(fu_ib_o[i].ready == 1) | !(fu_bc_o[i].valid == 0)) correct = 0;
 
-            ib_fu_i[i].start = 1;
+            // ib_fu_i[i].start = 1;
             ib_fu_i[i].valid = 1;
             ib_fu_i[i].is_inst.opa_select = OPA_IS_PC;
             ib_fu_i[i].is_inst.opb_select = OPB_IS_RS2;
@@ -899,7 +899,7 @@ module testbench;
             ib_fu_i[i].is_inst.rs2_value = {$random,$random};
 
             @(negedge clk_i);
-            ib_fu_i[i].start = 0;
+            // ib_fu_i[i].start = 0;
 
             wait_until_valid();
             // $display("wait_until_valid finish");
@@ -933,7 +933,7 @@ module testbench;
         while(~quit) begin
             @(negedge clk_i);
             rst_i = 1;
-            ib_fu_i[i].start = 0;
+            // ib_fu_i[i].start = 0;
             bc_fu_i[i].broadcasted = 0;
 
             @(negedge clk_i);
@@ -943,7 +943,7 @@ module testbench;
             assert(fu_bc_o[i].valid == 0);
             if(!(fu_ib_o[i].ready == 1) | !(fu_bc_o[i].valid == 0)) correct = 0;
 
-            ib_fu_i[i].start = 1;
+            // ib_fu_i[i].start = 1;
             ib_fu_i[i].valid = 1;
             ib_fu_i[i].is_inst.opa_select = OPA_IS_PC;
             ib_fu_i[i].is_inst.opb_select = OPB_IS_I_IMM;
@@ -956,7 +956,7 @@ module testbench;
             ib_fu_i[i].is_inst.rs2_value = {$random,$random};
 
             @(negedge clk_i);
-            ib_fu_i[i].start = 0;
+            // ib_fu_i[i].start = 0;
 
             wait_until_valid();
             // $display("wait_until_valid finish");

@@ -5,7 +5,7 @@
 #
 #
 
-SOURCE = test_progs/mult_no_lsq.s
+SOURCE = test_progs/rv32_mult_no_lsq.s
 
 CRT = crt.s
 LINKERS = linker.lds
@@ -70,9 +70,9 @@ all:    simv
 # Modify starting here
 #####
 
-HEADERS     = $(wildcard *.svh)
-TESTBENCH = ./testbench/FU_tb.sv
-SIMFILES = ./verilog/FU.sv
+# HEADERS     = $(wildcard *.svh)
+# TESTBENCH = ./testbench/FU_tb.sv
+# SIMFILES = ./verilog/FU.sv
 
 sim:	simv
 	./simv -cm line+tgl | tee sim_program.out
