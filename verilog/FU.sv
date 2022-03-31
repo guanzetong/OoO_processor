@@ -268,7 +268,6 @@ module branch_condition(// Inputs
     input [`XLEN-1:0] rs2,
     input  [2:0] func,  // Specifies which condition to check
 
-    output logic [`XLEN-1:0] result,
     output logic cond    // 0/1 condition result (False/True)
 );
 
