@@ -345,13 +345,15 @@ module ROB # (
         rob_fl_o.rt_num =   rt_num;
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             if (head + idx >= C_ROB_ENTRY_NUM) begin
-                rob_fl_o.phy_reg[idx]   =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag_old;
+                rob_fl_o.tag_old[idx]   =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag_old;
+                rob_fl_o.tag[idx]       =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag;
                 rob_amt_o[idx].phy_reg  =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag;
                 rob_amt_o[idx].arch_reg =   rob_array[head+idx-C_ROB_ENTRY_NUM].rd;
                 rob_vfl_o[idx].tag      =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag;
                 rob_vfl_o[idx].tag_old  =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag_old;
             end else begin
-                rob_fl_o.phy_reg[idx]   =   rob_array[head+idx].tag_old;
+                rob_fl_o.tag_old[idx]   =   rob_array[head+idx].tag_old;
+                rob_fl_o.tag[idx]       =   rob_array[head+idx].tag;
                 rob_amt_o[idx].phy_reg  =   rob_array[head+idx].tag;
                 rob_amt_o[idx].arch_reg =   rob_array[head+idx].rd;
                 rob_vfl_o[idx].tag      =   rob_array[head+idx].tag;
