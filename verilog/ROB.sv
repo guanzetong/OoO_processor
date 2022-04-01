@@ -81,6 +81,7 @@ module ROB # (
 
     // Branch mispredict
     logic       [C_ROB_ENTRY_NUM-1:0]   br_mispredict                       ;
+    logic       [C_ROB_IDX_WIDTH-1:0]   br_mis_idx                          ;
 
     // Retire
     logic       [C_ROB_ENTRY_NUM-1:0]   rt_window                           ;
@@ -274,6 +275,7 @@ module ROB # (
     always_comb begin
         br_mis_valid_o  =   1'b0;
         br_target_o     =   'b0;
+        br_mis_idx      =   'd0;
         for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             br_mispredict[idx]  =   (rob_array[idx].br_predict 
                                     != rob_array[idx].br_result);
@@ -281,6 +283,7 @@ module ROB # (
             if (rt_sel[idx] && br_mispredict[idx]) begin
                 br_mis_valid_o  =   1'b1;
                 br_target_o     =   rob_array[idx].br_target;
+                br_mis_idx      =   idx;
             end
         end
     end
@@ -342,6 +345,9 @@ module ROB # (
 // ROB update to free list and architecture map table
 // --------------------------------------------------------------------
     always_comb begin
+        if (conditions) begin
+            
+        end
         rob_fl_o.rt_num =   rt_num;
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             if (head + idx >= C_ROB_ENTRY_NUM) begin

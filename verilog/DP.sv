@@ -190,7 +190,6 @@ module DP # (
                 dp_mt_o[idx].wr_en    =   1'b0;
             end
             dp_mt_o[idx].thread_idx   =   fiq_dp_i.thread_idx[idx]   ;
-            dp_mt_o[idx].thread_idx    =   fiq_dp_i.thread_idx[idx]   ;
 
             // DP_ROB
             dp_rob_o.tag_old[idx]           =   mt_dp_i[idx].tag_old        ;

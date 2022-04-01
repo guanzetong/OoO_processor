@@ -52,10 +52,10 @@ module freelist #(
     assign second_rd_nz = (rob_fl_i.tag_old[1] != `ZERO_PREG);
 
     assign next_head = (rob_fl_i.rt_num[0] || rob_fl_i.rt_num[1]) ? rt_head : head;
-
+rob_fl_i.rt_num != 0
 	assign next_tail =  rollback_i ? fl_rollback_idx :
                         (dp_fl_i.dp_num[0] || dp_fl_i.dp_num[1]) ? dp_tail : tail;
-
+dp_fl_i.dp_num != 0
 
     assign tail_plus_one = tail + 1;
 	assign tail_plus_two = tail + 2;
@@ -68,14 +68,14 @@ module freelist #(
 	
 	// dispatch logic 
     always_comb begin
-		if (first_rd_nz && second_rd_nz && (dp_fl_i.dp_num == 2'b10)) begin
+		if ((dp_fl_i.dp_num == 2'b10)) begin
 			dp_tail = tail_plus_two;
-			fl_dp_o.tag = {next_fl_entry[tail_plus_one], next_fl_entry[tail]};
-			fl_idx = {tail_plus_two, tail_plus_one};
-		end else if (first_rd_nz && (dp_fl_i.dp_num == 2'b01)) begin
+			// fl_dp_o.tag = {next_fl_entry[tail], next_fl_entry[tail_minus_one]};
+			fl_idx = {tail_plus_one, tail};
+		end else if ((dp_fl_i.dp_num == 2'b01)) begin
 			dp_tail = tail_plus_one;
-			fl_dp_o.tag = {`ZERO_PREG, next_fl_entry[tail]};
-			fl_idx = {tail_plus_one, tail_plus_one};
+			// fl_dp_o.tag = {`ZERO_PREG, next_fl_entry[tail_minus_one]};
+			fl_idx = {tail, tail_minus_one};
 		end 
 		// else if (second_rd_nz && (dp_fl_i.dp_num == 2'b10)) begin
 		// 	dp_tail = tail_plus_one;
@@ -84,9 +84,11 @@ module freelist #(
 		// end 
 		else begin
 			dp_tail = tail;
-			fl_dp_o.tag = {`ZERO_PREG, `ZERO_PREG};
+			// fl_dp_o.tag = {`ZERO_PREG, `ZERO_PREG};
 			fl_idx = {tail, tail};
 		end
+
+		fl_dp_o.tag = {next_fl_entry[tail], next_fl_entry[tail_minus_one]};
 	end
 
 
@@ -119,11 +121,11 @@ module freelist #(
 		if (rst_i) begin
 			head <=  {$clog2(C_FL_ENTRY_NUM){1'b0}};
 			tail <=  1'b1;
-			for (int i=1; i<C_FL_ENTRY_NUM; i++) begin
-				if (i == 0) begin
-					fl_entry[0].tag <= `ZERO_PREG;
-				end
-				else fl_entry[i].tag <=  i + C_ARCH_REG_NUM; 	// [32:63] physical register file
+			for (int i=0; i<C_FL_ENTRY_NUM; i++) begin
+				// if (i == 0) begin
+				// 	fl_entry[0].tag <= `ZERO_PREG;
+				// end
+				fl_entry[i].tag <=  i + C_ARCH_REG_NUM; 	// [32:63] physical register file
 			end
 
 		end else begin

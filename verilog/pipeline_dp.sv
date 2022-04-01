@@ -61,7 +61,7 @@ module pipeline_dp (
     DP_ROB                                  dp_rob          ;
     // DP_MT_READ  [`DP_NUM-1:0]               dp_mt_read      ;
     // DP_MT_WRITE [`DP_NUM-1:0]               dp_mt_write     ;
-    DP_MT                                   dp_mt           ;
+    DP_MT       [`DP_NUM-1:0]               dp_mt           ;
     FL_DP                                   fl_dp           ;
     DP_FL                                   dp_fl           ;
     // FIQ_DP                               fiq_dp          ;
