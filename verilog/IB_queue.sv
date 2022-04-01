@@ -26,7 +26,8 @@ module IB_queue #(
     input   BR_MIS                  br_mis_i        ,   // Branch Misprediction
     input   logic                   exception_i     ,   // External Exception
     // For Testing
-    output  IS_INST [C_SIZE-1:0]    queue_mon_o     
+    output  IS_INST [C_SIZE-1:0]    queue_mon_o     ,
+    output  logic   [C_SIZE-1:0]    valid_mon_o
 );
 
 // ====================================================================
@@ -252,6 +253,7 @@ module IB_queue #(
 // Queue Entry
 // --------------------------------------------------------------------
     assign  queue_mon_o =   queue   ;
+    assign  valid_mon_o =   valid   ;
 
 // ====================================================================
 // RTL Logic End

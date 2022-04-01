@@ -1,8 +1,8 @@
 function void print_rob(ROB_ENTRY [`ROB_ENTRY_NUM-1:0] rob_mon);
     $display("T=%0t ROB Contents", $time);
-    $display("Index\t|valid\t|PC\t|rd\t|tag_old\t|tag\t|br_predict\t|br_result\t|br_target\t|complete");
+    $display("Index\t|valid\t|PC\t|rd\t|told\t|tag\t|br_predict\t|br_result\t|br_target\t|complete");
     for (int entry_idx = 0; entry_idx < `ROB_ENTRY_NUM; entry_idx++) begin
-        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t\t|%0d\t|%0d\t\t|%0d\t\t|%0d\t\t|%0d",
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t\t|%0d\t\t|%0d\t\t|%0d",
         entry_idx                       ,
         rob_mon[entry_idx].valid        ,
         rob_mon[entry_idx].pc           ,
@@ -18,11 +18,34 @@ function void print_rob(ROB_ENTRY [`ROB_ENTRY_NUM-1:0] rob_mon);
 endfunction
 
 function void print_rs(RS_ENTRY [`RS_ENTRY_NUM-1:0] rs_mon);
+    string  op_string   ;
     $display("T=%0t RS Contents", $time);
-    $display("Index\t|valid\t|PC\t|tag\t|tag1\t|ready\t|tag2\t|ready\t|rob_idx");
+    $display("Index\t|op\t|valid\t|PC\t|tag\t|tag1\t|ready\t|tag2\t|ready\t|rob_idx");
     for (int entry_idx = 0; entry_idx < `RS_ENTRY_NUM; entry_idx++) begin
-        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d",
+        if (rs_mon[entry_idx].dec_inst.rd_mem   ) begin
+            op_string   =   "LD";
+        end else if (rs_mon[entry_idx].dec_inst.wr_mem   ) begin
+            op_string   =   "ST";
+        end else if (rs_mon[entry_idx].dec_inst.cond_br  ) begin
+            op_string   =   "CBR";
+        end else if (rs_mon[entry_idx].dec_inst.uncond_br) begin
+            op_string   =   "UBR";
+        end else if (rs_mon[entry_idx].dec_inst.halt     ) begin
+            op_string   =   "WFI";
+        end else if (rs_mon[entry_idx].dec_inst.illegal  ) begin
+            op_string   =   "ILL";
+        end else if (rs_mon[entry_idx].dec_inst.csr_op   ) begin
+            op_string   =   "CSR";
+        end else if (rs_mon[entry_idx].dec_inst.alu      ) begin
+            op_string   =   "ALU";
+        end else if (rs_mon[entry_idx].dec_inst.mult     ) begin
+            op_string   =   "MUL";
+        end else begin
+            op_string   =   "-";
+        end
+        $display("%0d\t|%s\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d",
         entry_idx                               ,
+        op_string                               ,
         rs_mon[entry_idx].valid                 ,
         rs_mon[entry_idx].dec_inst.pc           ,
         rs_mon[entry_idx].dec_inst.tag          ,
@@ -31,6 +54,48 @@ function void print_rs(RS_ENTRY [`RS_ENTRY_NUM-1:0] rs_mon);
         rs_mon[entry_idx].dec_inst.tag2         ,
         rs_mon[entry_idx].dec_inst.tag2_ready   ,
         rs_mon[entry_idx].dec_inst.rob_idx      
+        );
+    end
+endfunction
+
+function void print_mt(MT_ENTRY [`ARCH_REG_NUM-1:0] mt_mon);
+    $display("T=%0t MT Contents", $time);
+    $display("arch\t|tag\t|ready\t|arch\t|tag\t|ready\t");
+    for (int arch_idx = 0; arch_idx < `ARCH_REG_NUM/2; arch_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+        arch_idx, mt_mon[arch_idx].tag, mt_mon[arch_idx].tag_ready,
+        arch_idx+`ARCH_REG_NUM/2, mt_mon[arch_idx+`ARCH_REG_NUM/2].tag, mt_mon[arch_idx+`ARCH_REG_NUM/2].tag_ready);
+    end
+endfunction
+
+function void print_ALU_ib(IS_INST  [`ALU_Q_SIZE-1:0] ALU_queue_mon, logic  [`ALU_Q_SIZE-1:0] ALU_valid_mon);
+    $display("T=%0t ALU IB Queue Contents", $time);
+    $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
+    for (int entry_idx = 0; entry_idx < `ALU_Q_SIZE; entry_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+        entry_idx,
+        ALU_valid_mon[entry_idx],
+        ALU_queue_mon[entry_idx].pc,
+        ALU_queue_mon[entry_idx].rs1_value,
+        ALU_queue_mon[entry_idx].rs2_value,
+        ALU_queue_mon[entry_idx].tag,
+        ALU_queue_mon[entry_idx].rob_idx
+        );
+    end
+endfunction
+
+function void print_BR_ib(IS_INST  [`BR_Q_SIZE-1:0] BR_queue_mon, logic  [`BR_Q_SIZE-1:0] BR_valid_mon);
+    $display("T=%0t BR IB Queue Contents", $time);
+    $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
+    for (int entry_idx = 0; entry_idx < `BR_Q_SIZE; entry_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+        entry_idx,
+        BR_valid_mon[entry_idx],
+        BR_queue_mon[entry_idx].pc,
+        BR_queue_mon[entry_idx].rs1_value,
+        BR_queue_mon[entry_idx].rs2_value,
+        BR_queue_mon[entry_idx].tag,
+        BR_queue_mon[entry_idx].rob_idx
         );
     end
 endfunction
@@ -155,6 +220,10 @@ class monitor;
             end
 
             print_rob(vif.rob_mon_o);
+            print_rs(vif.rs_mon_o);
+            print_mt(vif.mt_mon_o);
+            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o);
+            print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o);
 
 
             for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
@@ -178,7 +247,7 @@ endclass
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   1000;
+    int     num     =   500;
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -298,6 +367,11 @@ interface pipeline_dp_if (input bit clk_i);
     IS_INST     [`BR_Q_SIZE   -1:0]             BR_queue_mon_o      ;   // IB queue monitor
     IS_INST     [`LOAD_Q_SIZE -1:0]             LOAD_queue_mon_o    ;   // IB queue monitor
     IS_INST     [`STORE_Q_SIZE-1:0]             STORE_queue_mon_o   ;   // IB queue monitor
+    logic       [`ALU_Q_SIZE  -1:0]             ALU_valid_mon_o     ;
+    logic       [`MULT_Q_SIZE -1:0]             MULT_valid_mon_o    ;
+    logic       [`BR_Q_SIZE   -1:0]             BR_valid_mon_o      ;
+    logic       [`LOAD_Q_SIZE -1:0]             LOAD_valid_mon_o    ;
+    logic       [`STORE_Q_SIZE-1:0]             STORE_valid_mon_o   ;
     logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]  prf_mon_o           ;   // Physical Register File monitor
 endinterface // pipeline_dp_if
 // ====================================================================
@@ -362,6 +436,11 @@ module pipeline_dp_tb;
         .BR_queue_mon_o     (_if.BR_queue_mon_o     ),
         .LOAD_queue_mon_o   (_if.LOAD_queue_mon_o   ),
         .STORE_queue_mon_o  (_if.STORE_queue_mon_o  ),
+        .ALU_valid_mon_o    (_if.ALU_valid_mon_o    ),
+        .MULT_valid_mon_o   (_if.MULT_valid_mon_o   ),
+        .BR_valid_mon_o     (_if.BR_valid_mon_o     ),
+        .LOAD_valid_mon_o   (_if.LOAD_valid_mon_o   ),
+        .STORE_valid_mon_o  (_if.STORE_valid_mon_o  ),
         .prf_mon_o          (_if.prf_mon_o          )
     );
 // --------------------------------------------------------------------

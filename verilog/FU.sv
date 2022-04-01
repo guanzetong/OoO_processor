@@ -349,8 +349,6 @@ module branch #(
     input   BC_FU           bc_fu_i 
 );
 
-
-
     logic   [`XLEN-1:0]     rd_value        ;
     IB_FU                   ib_fu           ;
     logic   [C_CYCLE-1:0]   valid_sh        ;
@@ -427,6 +425,9 @@ module branch #(
     //	unconditional, or conditional and the condition is true
     assign br_result    =   ib_fu.is_inst.uncond_br
                         | (ib_fu.is_inst.cond_br & brcond_result);
+
+    assign  ex_start    =   ib_fu_i.valid && fu_ib_o.ready;
+    assign  ex_end      =   fu_bc_o.valid && bc_fu_i.broadcasted;
 
     // Output valid shift register
     always_ff @(posedge clk_i) begin

@@ -38,6 +38,11 @@ module pipeline_dp (
     output  IS_INST     [`BR_Q_SIZE   -1:0]             BR_queue_mon_o      ,   // IB queue monitor
     output  IS_INST     [`LOAD_Q_SIZE -1:0]             LOAD_queue_mon_o    ,   // IB queue monitor
     output  IS_INST     [`STORE_Q_SIZE-1:0]             STORE_queue_mon_o   ,   // IB queue monitor
+    output  logic       [`ALU_Q_SIZE  -1:0]             ALU_valid_mon_o     ,   // IB queue monitor
+    output  logic       [`MULT_Q_SIZE -1:0]             MULT_valid_mon_o    ,   // IB queue monitor
+    output  logic       [`BR_Q_SIZE   -1:0]             BR_valid_mon_o      ,   // IB queue monitor
+    output  logic       [`LOAD_Q_SIZE -1:0]             LOAD_valid_mon_o    ,   // IB queue monitor
+    output  logic       [`STORE_Q_SIZE-1:0]             STORE_valid_mon_o   ,   // IB queue monitor
     output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]  prf_mon_o               // Physical Register File monitor
 );
 
@@ -54,8 +59,9 @@ module pipeline_dp (
 // ====================================================================
     ROB_DP                                  rob_dp          ;
     DP_ROB                                  dp_rob          ;
-    DP_MT_READ  [`DP_NUM-1:0]               dp_mt_read      ;
-    DP_MT_WRITE [`DP_NUM-1:0]               dp_mt_write     ;
+    // DP_MT_READ  [`DP_NUM-1:0]               dp_mt_read      ;
+    // DP_MT_WRITE [`DP_NUM-1:0]               dp_mt_write     ;
+    DP_MT                                   dp_mt           ;
     FL_DP                                   fl_dp           ;
     DP_FL                                   dp_fl           ;
     // FIQ_DP                               fiq_dp          ;
@@ -95,8 +101,9 @@ module pipeline_dp (
         .rob_dp_i       (rob_dp         ),
         .dp_rob_o       (dp_rob         ),
         .mt_dp_i        (mt_dp          ),
-        .dp_mt_read_o   (dp_mt_read     ),
-        .dp_mt_write_o  (dp_mt_write    ),
+        .dp_mt_o        (dp_mt          ),
+        // .dp_mt_read_o   (dp_mt_read     ),
+        // .dp_mt_write_o  (dp_mt_write    ),
         .fl_dp_i        (fl_dp          ),
         .dp_fl_o        (dp_fl          ),
         .fiq_dp_i       (fiq_dp         ),
@@ -168,7 +175,12 @@ module pipeline_dp (
         .MULT_queue_mon_o   (MULT_queue_mon_o   ),
         .BR_queue_mon_o     (BR_queue_mon_o     ),
         .LOAD_queue_mon_o   (LOAD_queue_mon_o   ),
-        .STORE_queue_mon_o  (STORE_queue_mon_o  )
+        .STORE_queue_mon_o  (STORE_queue_mon_o  ),
+        .ALU_valid_mon_o    (ALU_valid_mon_o    ),
+        .MULT_valid_mon_o   (MULT_valid_mon_o   ),
+        .BR_valid_mon_o     (BR_valid_mon_o     ),
+        .LOAD_valid_mon_o   (LOAD_valid_mon_o   ),
+        .STORE_valid_mon_o  (STORE_valid_mon_o  )
     );
 // --------------------------------------------------------------------
 
@@ -191,13 +203,25 @@ module pipeline_dp (
 // Module name  :   MT
 // Description  :   Map Table
 // --------------------------------------------------------------------
-    MT_sim MT_inst (
+    // MT_sim MT_inst (
+    //     .clk_i          (clk_i          ),
+    //     .rst_i          (rst_i          ),
+    //     .rollback_i     (exception_i || br_mis.valid[0]     ),    
+    //     .cdb_i          (cdb            ),
+    //     .dp_mt_read_i   (dp_mt_read     ),
+    //     .dp_mt_write_i  (dp_mt_write    ),
+    //     .amt_i          (amt            ),
+    //     .mt_dp_o        (mt_dp          ),
+    //      // MT Testing
+    //     .mt_mon_o       (mt_mon_o       )
+    // );
+
+    MT_SS MT_inst (
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
         .rollback_i     (exception_i || br_mis.valid[0]     ),    
         .cdb_i          (cdb            ),
-        .dp_mt_read_i   (dp_mt_read     ),
-        .dp_mt_write_i  (dp_mt_write    ),
+        .dp_mt_i        (dp_mt          ),
         .amt_i          (amt            ),
         .mt_dp_o        (mt_dp          ),
          // MT Testing
@@ -250,14 +274,22 @@ module pipeline_dp (
 // Module name  :   FL
 // Description  :   Freelist
 // --------------------------------------------------------------------
-    FL_sim FL_inst (
-        .clk_i          (clk_i                          ),
-        .rst_i          (rst_i                          ),
-        .fl_dp_o        (fl_dp                          ),
-        .dp_fl_i        (dp_fl                          ),
-        .rob_fl_i       (rob_fl                         ),
-        .vfl_i          (vfl                            ),
-        .rollback_i     (exception_i || br_mis.valid[0] )
+    // FL_sim FL_inst (
+    //     .clk_i          (clk_i                          ),
+    //     .rst_i          (rst_i                          ),
+    //     .fl_dp_o        (fl_dp                          ),
+    //     .dp_fl_i        (dp_fl                          ),
+    //     .rob_fl_i       (rob_fl                         ),
+    //     .vfl_i          (vfl                            ),
+    //     .rollback_i     (exception_i || br_mis.valid[0] )
+    // );
+    freelist FL_inst (
+        .clk_i      (clk_i                          ),
+        .rst_i      (rst_i                          ),
+        .rollback_i (exception_i || br_mis.valid[0] ),
+        .dp_fl_i    (dp_fl                          ),
+        .rob_fl_i   (rob_fl                         ),
+        .fl_dp_o    (fl_dp                          )
     );
 // --------------------------------------------------------------------
 
@@ -265,13 +297,13 @@ module pipeline_dp (
 // Module name  :   VFL
 // Description  :   Victim Freelist
 // --------------------------------------------------------------------
-    VFL_sim VFL_inst (
-        .clk_i          (clk_i                          ),
-        .rst_i          (rst_i                          ),
-        .rob_vfl_i      (rob_vfl                        ),
-        .vfl_o          (vfl                            ),
-        .roll_back_i    (exception_i || br_mis.valid[0] )
-    );
+    // VFL_sim VFL_inst (
+    //     .clk_i          (clk_i                          ),
+    //     .rst_i          (rst_i                          ),
+    //     .rob_vfl_i      (rob_vfl                        ),
+    //     .vfl_o          (vfl                            ),
+    //     .roll_back_i    (exception_i || br_mis.valid[0] )
+    // );
 // --------------------------------------------------------------------
 
 // ====================================================================

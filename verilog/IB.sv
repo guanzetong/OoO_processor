@@ -35,7 +35,13 @@ module IB #(
     output  IS_INST [C_MULT_Q_SIZE -1:0]    MULT_queue_mon_o    ,
     output  IS_INST [C_BR_Q_SIZE   -1:0]    BR_queue_mon_o      ,
     output  IS_INST [C_LOAD_Q_SIZE -1:0]    LOAD_queue_mon_o    ,
-    output  IS_INST [C_STORE_Q_SIZE-1:0]    STORE_queue_mon_o   
+    output  IS_INST [C_STORE_Q_SIZE-1:0]    STORE_queue_mon_o   ,
+
+    output  logic   [C_ALU_Q_SIZE  -1:0]    ALU_valid_mon_o     ,
+    output  logic   [C_MULT_Q_SIZE -1:0]    MULT_valid_mon_o    ,
+    output  logic   [C_BR_Q_SIZE   -1:0]    BR_valid_mon_o      ,
+    output  logic   [C_LOAD_Q_SIZE -1:0]    LOAD_valid_mon_o    ,
+    output  logic   [C_STORE_Q_SIZE-1:0]    STORE_valid_mon_o   
 );
 
 // ====================================================================
@@ -79,7 +85,8 @@ module IB #(
         .ib_fu_o        (ib_fu_o[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE] ),
         .br_mis_i       (br_mis_i                                   ),
         .exception_i    (exception_i                                ),
-        .queue_mon_o    (ALU_queue_mon_o                            )
+        .queue_mon_o    (ALU_queue_mon_o                            ),
+        .valid_mon_o    (ALU_valid_mon_o                            )
     );
 // --------------------------------------------------------------------
 
@@ -101,7 +108,8 @@ module IB #(
         .ib_fu_o        (ib_fu_o[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
         .br_mis_i       (br_mis_i                                       ),
         .exception_i    (exception_i                                    ),
-        .queue_mon_o    (MULT_queue_mon_o                               )
+        .queue_mon_o    (MULT_queue_mon_o                               ),
+        .valid_mon_o    (MULT_valid_mon_o                               )
     );
 // --------------------------------------------------------------------
 
@@ -123,7 +131,8 @@ module IB #(
         .ib_fu_o        (ib_fu_o[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]    ),
         .br_mis_i       (br_mis_i                                   ),
         .exception_i    (exception_i                                ),
-        .queue_mon_o    (BR_queue_mon_o                             )
+        .queue_mon_o    (BR_queue_mon_o                             ),
+        .valid_mon_o    (BR_valid_mon_o                             )
     );
 // --------------------------------------------------------------------
 
@@ -145,7 +154,8 @@ module IB #(
         .ib_fu_o        (ib_fu_o[C_LOAD_BASE+C_LOAD_NUM-1:C_LOAD_BASE]  ),
         .br_mis_i       (br_mis_i                                       ),
         .exception_i    (exception_i                                    ),
-        .queue_mon_o    (LOAD_queue_mon_o                               )
+        .queue_mon_o    (LOAD_queue_mon_o                               ),
+        .valid_mon_o    (LOAD_valid_mon_o                               )
     );
 // --------------------------------------------------------------------
 
@@ -167,7 +177,8 @@ module IB #(
         .ib_fu_o        (ib_fu_o[C_STORE_BASE+C_STORE_NUM-1:C_STORE_BASE]   ),
         .br_mis_i       (br_mis_i                                           ),
         .exception_i    (exception_i                                        ),
-        .queue_mon_o    (STORE_queue_mon_o                                  )
+        .queue_mon_o    (STORE_queue_mon_o                                  ),
+        .valid_mon_o    (STORE_valid_mon_o                                  )
     );
 // --------------------------------------------------------------------
 

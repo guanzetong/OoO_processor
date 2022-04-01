@@ -91,8 +91,8 @@ module FL_sim #(
             end else begin
                 // Retire
                 for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++)begin
-                    if ((rt_idx < rob_fl_i.rt_num) && (rob_fl_i.phy_reg[rt_idx] != `ZERO_REG))begin
-                        fl_entry.tag[rt_idx] = rob_fl_i.phy_reg[rt_idx];
+                    if ((rt_idx < rob_fl_i.rt_num) && (rob_fl_i.tag_old[rt_idx] != `ZERO_REG))begin
+                        fl_entry.tag[rt_idx] = rob_fl_i.tag_old[rt_idx];
                         freelist.push_back(fl_entry);
                     end
                 end

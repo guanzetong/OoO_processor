@@ -85,6 +85,7 @@ module IB_pop_out_router #(
                 ib_fu_o =   'b0;
                 for (int unsigned out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
                     ib_fu_o[out_idx].is_inst    =   s_data_i;
+                    ib_fu_o[out_idx].valid      =   s_valid_i;
                 end
             end
         end

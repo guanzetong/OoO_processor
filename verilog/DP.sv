@@ -18,8 +18,9 @@ module DP # (
     input           ROB_DP                      rob_dp_i        ,
     output          DP_ROB                      dp_rob_o        ,
     input           MT_DP       [C_DP_NUM-1:0]  mt_dp_i         ,   
-    output          DP_MT_READ  [C_DP_NUM-1:0]  dp_mt_read_o    ,
-    output          DP_MT_WRITE [C_DP_NUM-1:0]  dp_mt_write_o   ,
+    // output          DP_MT_READ  [C_DP_NUM-1:0]  dp_mt_o    ,
+    // output          DP_MT_WRITE [C_DP_NUM-1:0]  dp_mt_o   ,
+    output          DP_MT       [C_DP_NUM-1:0]  dp_mt_o         ,
     input           FL_DP                       fl_dp_i         ,   
     output          DP_FL                       dp_fl_o         ,
     input           FIQ_DP                      fiq_dp_i        ,   
@@ -90,9 +91,9 @@ module DP # (
                 .mult       (dp_rs_o.dec_inst[dec_idx].mult         ),
                 .alu        (dp_rs_o.dec_inst[dec_idx].alu          ),
 
-                .rd         (dp_mt_write_o[dec_idx].rd              ),
-                .rs1        (dp_mt_read_o[dec_idx].rs1              ),
-                .rs2        (dp_mt_read_o[dec_idx].rs2              )
+                .rd         (dp_mt_o[dec_idx].rd              ),
+                .rs1        (dp_mt_o[dec_idx].rs1              ),
+                .rs2        (dp_mt_o[dec_idx].rs2              )
                 // outputs
             );
         end
@@ -113,7 +114,7 @@ module DP # (
             fl_idx  =   0;
             route   =   0;
             for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
-                if ((dp_idx < dp_num) && (dp_mt_write_o[dp_idx].rd != `ZERO_REG)) begin
+                if ((dp_idx < dp_num) && (dp_mt_o[dp_idx].rd != `ZERO_REG)) begin
                     route[dp_idx]   =   fl_idx;
                     fl_idx++;
                 end
@@ -158,7 +159,7 @@ module DP # (
         dp_fl_o.dp_num   =   dp_num    ;
 
         for (int idx = 0; idx < C_DP_NUM; idx++) begin
-            if(idx < dp_num && (dp_mt_write_o[idx].rd == `ZERO_REG))begin
+            if(idx < dp_num && (dp_mt_o[idx].rd == `ZERO_REG))begin
                 dp_fl_o.dp_num-- ;
             end//if    
         end//for
@@ -184,28 +185,28 @@ module DP # (
 
             // DP_MT
             if (idx < dp_num) begin
-                dp_mt_write_o[idx].wr_en    =   1'b1;
+                dp_mt_o[idx].wr_en    =   1'b1;
             end else begin
-                dp_mt_write_o[idx].wr_en    =   1'b0;
+                dp_mt_o[idx].wr_en    =   1'b0;
             end
-            dp_mt_write_o[idx].thread_idx   =   fiq_dp_i.thread_idx[idx]   ;
-            dp_mt_read_o[idx].thread_idx    =   fiq_dp_i.thread_idx[idx]   ;
+            dp_mt_o[idx].thread_idx   =   fiq_dp_i.thread_idx[idx]   ;
+            dp_mt_o[idx].thread_idx    =   fiq_dp_i.thread_idx[idx]   ;
 
             // DP_ROB
             dp_rob_o.tag_old[idx]           =   mt_dp_i[idx].tag_old        ;
             dp_rob_o.br_predict[idx]        =   fiq_dp_i.br_predict[idx]    ;   
             dp_rob_o.pc[idx]                =   fiq_dp_i.pc[idx]            ;
-            dp_rob_o.rd[idx]                =   dp_mt_write_o[idx].rd    ;
+            dp_rob_o.rd[idx]                =   dp_mt_o[idx].rd    ;
 
             // Free List routing
-            if(dp_mt_write_o[idx].rd == `ZERO_REG)begin
+            if(dp_mt_o[idx].rd == `ZERO_REG)begin
                 dp_rs_o.dec_inst[idx].tag   =   `ZERO_REG   ;
                 dp_rob_o.tag[idx]           =   `ZERO_REG   ;
-                dp_mt_write_o[idx].tag      =   `ZERO_REG   ;
+                dp_mt_o[idx].tag      =   `ZERO_REG   ;
             end else begin
                 dp_rs_o.dec_inst[idx].tag   =   fl_dp_i.tag[fl_route[idx]]  ;
                 dp_rob_o.tag[idx]           =   fl_dp_i.tag[fl_route[idx]]  ;
-                dp_mt_write_o[idx].tag      =   fl_dp_i.tag[fl_route[idx]]  ;
+                dp_mt_o[idx].tag      =   fl_dp_i.tag[fl_route[idx]]  ;
             end//if-else
         end//for
     end//comb

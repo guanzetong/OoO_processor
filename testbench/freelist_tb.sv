@@ -12,7 +12,6 @@ module freelist_tb();
     
     DP_FL dp_fl;
     ROB_FL rob_fl;
-    ROB_VFL rob_vfl;
 
     FL_DP fl_dp;
     FL_DP correct;
@@ -31,7 +30,6 @@ module freelist_tb();
         .rollback_i(rollback),
         .dp_fl_i(dp_fl),
         .rob_fl_i(rob_fl),
-        .vfl_i(rob_vfl),
         .fl_dp_o(fl_dp),
         .fl_entry(fl_entry),
         .next_fl_entry(next_fl_entry),
@@ -50,7 +48,7 @@ module freelist_tb();
     integer i;
   
     for (i=0; i<dp_num; i++) begin 
-        $display("available entry num: %b, tag: %d", fl_dp.avail_num, fl_dp.tag[i] );
+        $display("available entry num: %d, tag[%d]: %d", fl_dp.avail_num, i, fl_dp.tag[i] );
     end
   endtask;
 
@@ -96,7 +94,6 @@ module freelist_tb();
         rollback = 0;
         dp_fl = 'b0;
         rob_fl = 'b0;
-        rob_vfl = 'b0;
 
         @(negedge clock);
         @(negedge clock);
@@ -112,7 +109,7 @@ module freelist_tb();
         $display("@@@ check initial values in freelist");
         // monitor_fl_dp_output(fl_dp);
         // fl_entry_monitor(next_fl_entry, next_fl_entry);
-        // head_tail_monitor(head, next_head, tail, next_tail);
+        head_tail_monitor(head, next_head, tail, next_tail);
         $display("@@@ End check");
 
         // ###########################
@@ -127,7 +124,6 @@ module freelist_tb();
         rob_fl.phy_reg[1] = 'd9;
         rob_fl.rt_num = 2'b00;
         @(negedge clock);
-        monitor_fl_dp_output(fl_dp);
         dp_fl.dp_num = 2'b00;
         @(negedge clock);
         monitor_fl_dp_output(fl_dp);
@@ -153,6 +149,7 @@ module freelist_tb();
         rob_fl.phy_reg[1] = 'd9;
         rob_fl.rt_num = 2'b00;
         @(negedge clock);
+        #50
         monitor_fl_dp_output(fl_dp);
         dp_fl.dp_num = 2'b00;
         @(negedge clock);
@@ -165,9 +162,10 @@ module freelist_tb();
         rob_fl.phy_reg[1] = 'd9;
         rob_fl.rt_num = 2'b00;
         @(negedge clock);
+        #50
         monitor_fl_dp_output(fl_dp);
-        dp_fl.dp_num = 2'b00;
         @(negedge clock);
+        dp_fl.dp_num = 2'b00;
         monitor_fl_dp_output(fl_dp);
         //fl_entry_monitor(next_fl_entry, next_fl_entry);
         head_tail_monitor(head, next_head, tail, next_tail);
@@ -183,7 +181,7 @@ module freelist_tb();
 
         rob_fl.phy_reg[0] = 'd8;
         rob_fl.phy_reg[1] = 'd9;
-        rob_fl.rt_num = 2'b11;
+        rob_fl.rt_num = 2'b10;
         @(negedge clock)
         rob_fl.rt_num = 2'b00;
         @(negedge clock)
@@ -197,15 +195,17 @@ module freelist_tb();
         // testcase for dispatch after retire,
         // check the entry tag and head/tail pointer
         // ###########################
-        $display("Check for dispatch after retire");
-        dp_fl.dp_num = 2'b11;
-        rob_fl.phy_reg[0] = 'd8;
+        $display("@@@ Check for dispatch after retire");
+        dp_fl.dp_num = 2'b01;
+        rob_fl.phy_reg[0] = 'd10;
         rob_fl.phy_reg[1] = 'd9;
-        rob_fl.rt_num = 2'b00;
+        rob_fl.rt_num = 2'b01;
         @(negedge clock);
+        rob_fl.rt_num = 2'b00;
         monitor_fl_dp_output(fl_dp);
         dp_fl.dp_num = 2'b00;
         @(negedge clock);
+        fl_entry_monitor(next_fl_entry, next_fl_entry);
         head_tail_monitor(head, next_head, tail, next_tail);
         $display("@@@ End check");
 
@@ -219,8 +219,8 @@ module freelist_tb();
         @(negedge clock);
         rollback = 1;
         @(negedge clock);
-
-        rob_vfl.tag = 'd36;
+        rob_fl.rt_num = 2'b01;
+        rob_fl.tag[0] = 'd38;
         @(negedge clock);
         rollback = 1;
         @(negedge clock);
@@ -231,7 +231,7 @@ module freelist_tb();
         rob_fl.rt_num = 2'b00;
         @(negedge clock);
         monitor_fl_dp_output(fl_dp);
-        // fl_entry_monitor(next_fl_entry, next_fl_entry);
+        fl_entry_monitor(next_fl_entry, next_fl_entry);
         head_tail_monitor(head, next_head, tail, next_tail);
         rollback_idx_monitor(fl_rollback_idx);
         $display("@@@ End check");
@@ -241,30 +241,32 @@ module freelist_tb();
         // testcase for available dispatch number,
         // check the avail_num when head and tail pointer overflow or meet.
         // ###########################
-        $display("@@@ check for available dispatch number");
-        @(negedge clock);
-        rollback = 0;
-        @(negedge clock);
-        dp_fl.dp_num = 2'b11;
-        rob_fl.phy_reg[0] = 'd8;
-        rob_fl.phy_reg[1] = 'd9;
-        rob_fl.rt_num = 2'b00;
-        #120
-        @(negedge clock)
-        dp_fl.dp_num = 2'b01;
-        rob_fl.phy_reg[0] = 'd8;
-        rob_fl.phy_reg[1] = 'd9;
-        rob_fl.rt_num = 2'b00;
-        #25
-        dp_fl.dp_num = 2'b01;
-        rob_fl.phy_reg[0] = 'd8;
-        rob_fl.phy_reg[1] = 'd9;
-        rob_fl.rt_num = 2'b00;
-        #25
-        monitor_fl_dp_output(fl_dp);
-        //fl_entry_monitor(next_fl_entry, next_fl_entry);
-        head_tail_monitor(head, next_head, tail, next_tail);
-        $display("@@@ End Check");
+        // $display("@@@ check for available dispatch number");
+        // @(negedge clock);
+        // rollback = 0;
+        // @(negedge clock);
+        // dp_fl.dp_num = 2'b10;
+        // rob_fl.phy_reg[0] = 'd8;
+        // rob_fl.phy_reg[1] = 'd9;
+        // rob_fl.rt_num = 2'b00;
+        // #120
+        // @(negedge clock)
+        // dp_fl.dp_num = 2'b01;
+        // rob_fl.phy_reg[0] = 'd8;
+        // rob_fl.phy_reg[1] = 'd9;
+        // rob_fl.rt_num = 2'b00;
+        // #35
+        // // dp_fl.dp_num = 2'b01;
+        // // rob_fl.phy_reg[0] = 'd8;
+        // // rob_fl.phy_reg[1] = 'd9;
+        // // rob_fl.rt_num = 2'b00;
+        // // #25
+        // monitor_fl_dp_output(fl_dp);
+        // //fl_entry_monitor(next_fl_entry, next_fl_entry);
+        // head_tail_monitor(head, next_head, tail, next_tail);
+        // @(negedge clock)
+        // head_tail_monitor(head, next_head, tail, next_tail);
+        // $display("@@@ End Check");
 
 
 
