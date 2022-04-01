@@ -4,7 +4,7 @@ Information: Updating design information... (UID-85)
 Report : design
 Design : freelist
 Version: S-2021.06-SP1
-Date   : Thu Mar 31 19:40:02 2022
+Date   : Thu Mar 31 22:44:06 2022
 ****************************************
 
 Design allows ideal nets on clock nets.
@@ -86,30 +86,30 @@ Design Parameters:
 Report : area
 Design : freelist
 Version: S-2021.06-SP1
-Date   : Thu Mar 31 19:40:02 2022
+Date   : Thu Mar 31 22:44:06 2022
 ****************************************
 
 Library(s) Used:
 
     lec25dscc25_TT (File: /afs/umich.edu/class/eecs470/lib/synopsys/lec25dscc25_TT.db)
 
-Number of ports:                          465
-Number of nets:                          2891
-Number of cells:                         2338
-Number of combinational cells:           1816
+Number of ports:                          464
+Number of nets:                          2929
+Number of cells:                         2370
+Number of combinational cells:           1848
 Number of sequential cells:               522
 Number of macros/black boxes:               0
-Number of buf/inv:                        110
-Number of references:                      41
+Number of buf/inv:                        114
+Number of references:                      36
 
-Combinational area:             119746.013653
-Buf/Inv area:                     3649.536095
-Noncombinational area:           85316.280014
+Combinational area:             120857.464245
+Buf/Inv area:                     3790.540897
+Noncombinational area:           85299.692001
 Macro/Black Box area:                0.000000
-Net Interconnect area:            1876.627175
+Net Interconnect area:            1889.572580
 
-Total cell area:                205062.293667
-Total area:                     206938.920842
+Total cell area:                206157.156246
+Total area:                     208046.728826
 1
  
 ****************************************
@@ -122,7 +122,7 @@ Report : timing
         -transition_time
 Design : freelist
 Version: S-2021.06-SP1
-Date   : Thu Mar 31 19:40:02 2022
+Date   : Thu Mar 31 22:44:06 2022
 ****************************************
 
  * Some/all delay information is back-annotated.
@@ -132,7 +132,7 @@ Wire Load Model Mode: top
 
   Startpoint: head_reg[0]
               (rising edge-triggered flip-flop clocked by clk_i)
-  Endpoint: freelist_cam/fl_cam_reg[18][4]
+  Endpoint: freelist_cam/fl_cam_reg[59][4]
             (rising edge-triggered flip-flop clocked by clk_i)
   Path Group: clk_i
   Path Type: max
@@ -150,88 +150,88 @@ Wire Load Model Mode: top
   head_plus_one[0] (net)                        9                   0.00       0.18 r
   head_reg[0]/Q (dffcs2)                                  0.36      0.19       0.37 f
   head_plus_two[0] (net)                       12                   0.00       0.37 f
-  U2144/BIN (hadd1s1)                                     0.36      0.00       0.37 f
-  U2144/OUTC (hadd1s1)                                    0.08      0.22       0.59 f
+  U2160/BIN (hadd1s1)                                     0.36      0.00       0.37 f
+  U2160/OUTC (hadd1s1)                                    0.08      0.22       0.59 f
   add_62/carry[2] (net)                         1                   0.00       0.59 f
-  U2145/BIN (hadd1s1)                                     0.08      0.00       0.59 f
-  U2145/OUTC (hadd1s1)                                    0.08      0.17       0.76 f
+  U2161/BIN (hadd1s1)                                     0.08      0.00       0.59 f
+  U2161/OUTC (hadd1s1)                                    0.08      0.17       0.76 f
   add_62/carry[3] (net)                         1                   0.00       0.76 f
-  U2146/BIN (hadd1s1)                                     0.08      0.00       0.76 f
-  U2146/OUTC (hadd1s1)                                    0.09      0.18       0.95 f
+  U2162/BIN (hadd1s1)                                     0.08      0.00       0.76 f
+  U2162/OUTC (hadd1s1)                                    0.09      0.18       0.95 f
   add_62/carry[4] (net)                         1                   0.00       0.95 f
-  U2759/DIN1 (xor2s1)                                     0.09      0.00       0.95 f
-  U2759/Q (xor2s1)                                        0.20      0.23       1.18 f
+  U2793/DIN1 (xor2s1)                                     0.09      0.00       0.95 f
+  U2793/Q (xor2s1)                                        0.20      0.23       1.18 f
   head_plus_one[4] (net)                        4                   0.00       1.18 f
-  U3501/DIN (hi1s1)                                       0.20      0.00       1.18 f
-  U3501/Q (hi1s1)                                         0.40      0.19       1.37 r
-  n2603 (net)                                   2                   0.00       1.37 r
-  U3500/DIN1 (nor2s1)                                     0.40      0.00       1.37 r
-  U3500/Q (nor2s1)                                        0.54      0.30       1.67 f
-  n2606 (net)                                   8                   0.00       1.67 f
-  U3493/DIN1 (nnd2s1)                                     0.54      0.00       1.67 f
-  U3493/Q (nnd2s1)                                        0.51      0.26       1.94 r
-  n2242 (net)                                   8                   0.00       1.94 r
-  U3490/DIN2 (oai21s1)                                    0.51      0.00       1.94 r
-  U3490/Q (oai21s1)                                       0.36      0.12       2.05 f
-  n2615 (net)                                   1                   0.00       2.05 f
-  U3489/DIN2 (and2s1)                                     0.36      0.00       2.05 f
-  U3489/Q (and2s1)                                        0.32      0.32       2.38 f
-  n2244 (net)                                   6                   0.00       2.38 f
-  U1888/DIN8 (oai2222s2)                                  0.32      0.00       2.38 f
-  U1888/Q (oai2222s2)                                     0.61      0.65       3.03 r
-  next_fl_entry[17][tag][4] (net)               4                   0.00       3.03 r
-  U2448/DIN3 (aoi22s1)                                    0.61      0.00       3.03 r
-  U2448/Q (aoi22s1)                                       0.42      0.21       3.24 f
-  n1801 (net)                                   1                   0.00       3.24 f
-  U2449/DIN4 (nnd4s1)                                     0.42      0.00       3.25 f
-  U2449/Q (nnd4s1)                                        0.38      0.21       3.46 r
-  n1810 (net)                                   1                   0.00       3.46 r
-  U2455/DIN1 (oai21s1)                                    0.38      0.00       3.46 r
-  U2455/Q (oai21s1)                                       0.30      0.16       3.62 f
-  n1811 (net)                                   1                   0.00       3.62 f
-  U2456/DIN2 (nnd2s1)                                     0.30      0.00       3.63 f
-  U2456/Q (nnd2s1)                                        0.26      0.14       3.76 r
-  N207 (net)                                    2                   0.00       3.76 r
-  U3333/DIN4 (aoi22s1)                                    0.26      0.00       3.76 r
-  U3333/Q (aoi22s1)                                       0.76      0.24       4.01 f
-  n2500 (net)                                   5                   0.00       4.01 f
-  U1875/DIN (ib1s1)                                       0.76      0.00       4.01 f
-  U1875/Q (ib1s1)                                         0.75      0.38       4.39 r
-  fl_dp_o[tag][1][4] (net)                      5                   0.00       4.39 r
-  U3222/DIN3 (and3s1)                                     0.75      0.00       4.39 r
-  U3222/Q (and3s1)                                        0.53      0.31       4.70 r
-  n2509 (net)                                   8                   0.00       4.70 r
-  U3213/DIN1 (nnd2s1)                                     0.53      0.00       4.70 r
-  U3213/Q (nnd2s1)                                        0.44      0.22       4.92 f
-  n2335 (net)                                   7                   0.00       4.92 f
-  U3212/DIN3 (oai211s1)                                   0.44      0.00       4.92 f
-  U3212/Q (oai211s1)                                      1.41      0.48       5.40 r
-  n2336 (net)                                   6                   0.00       5.40 r
-  U3211/DIN1 (nnd2s1)                                     1.41      0.00       5.40 r
-  U3211/Q (nnd2s1)                                        0.62      0.24       5.64 f
-  n2334 (net)                                   5                   0.00       5.64 f
-  U2780/DIN2 (oai222s1)                                   0.62      0.00       5.64 f
-  U2780/Q (oai222s1)                                      0.82      0.38       6.02 r
-  n3179 (net)                                   1                   0.00       6.02 r
-  freelist_cam/fl_cam_reg[18][4]/DIN (dffs1)              0.82      0.01       6.03 r
-  data arrival time                                                            6.03
+  U3619/DIN (hi1s1)                                       0.20      0.00       1.18 f
+  U3619/Q (hi1s1)                                         0.40      0.19       1.37 r
+  n2646 (net)                                   2                   0.00       1.37 r
+  U3618/DIN1 (nor2s1)                                     0.40      0.00       1.37 r
+  U3618/Q (nor2s1)                                        0.54      0.30       1.67 f
+  n2649 (net)                                   8                   0.00       1.67 f
+  U3610/DIN1 (nnd2s1)                                     0.54      0.00       1.67 f
+  U3610/Q (nnd2s1)                                        0.58      0.30       1.97 r
+  n2262 (net)                                   8                   0.00       1.97 r
+  U3607/DIN2 (oai21s1)                                    0.58      0.00       1.97 r
+  U3607/Q (oai21s1)                                       0.42      0.12       2.09 f
+  n2658 (net)                                   1                   0.00       2.09 f
+  U3606/DIN2 (and2s1)                                     0.42      0.00       2.09 f
+  U3606/Q (and2s1)                                        0.37      0.36       2.45 f
+  n2264 (net)                                   6                   0.00       2.45 f
+  U1918/DIN8 (oai2222s3)                                  0.37      0.00       2.45 f
+  U1918/Q (oai2222s3)                                     0.47      0.54       2.99 r
+  next_fl_entry[17][tag][4] (net)               4                   0.00       2.99 r
+  U2290/DIN3 (aoi22s1)                                    0.47      0.00       2.99 r
+  U2290/Q (aoi22s1)                                       0.38      0.20       3.19 f
+  n1644 (net)                                   1                   0.00       3.19 f
+  U2291/DIN4 (nnd4s1)                                     0.38      0.00       3.19 f
+  U2291/Q (nnd4s1)                                        0.37      0.20       3.39 r
+  n1653 (net)                                   1                   0.00       3.39 r
+  U2297/DIN1 (oai21s1)                                    0.37      0.00       3.39 r
+  U2297/Q (oai21s1)                                       0.29      0.16       3.56 f
+  n1654 (net)                                   1                   0.00       3.56 f
+  U2298/DIN2 (nnd2s1)                                     0.29      0.00       3.56 f
+  U2298/Q (nnd2s1)                                        0.20      0.11       3.67 r
+  N157 (net)                                    1                   0.00       3.67 r
+  U3379/DIN1 (nnd2s1)                                     0.20      0.00       3.67 r
+  U3379/Q (nnd2s1)                                        0.34      0.14       3.81 f
+  n2520 (net)                                   5                   0.00       3.81 f
+  U1883/DIN (ib1s1)                                       0.34      0.00       3.81 f
+  U1883/Q (ib1s1)                                         0.68      0.30       4.11 r
+  fl_dp_o[tag][1][4] (net)                      5                   0.00       4.11 r
+  U3085/DIN1 (and3s1)                                     0.68      0.00       4.11 r
+  U3085/Q (and3s1)                                        0.53      0.32       4.44 r
+  n2498 (net)                                   8                   0.00       4.44 r
+  U3072/DIN1 (nnd2s1)                                     0.53      0.00       4.44 r
+  U3072/Q (nnd2s1)                                        0.44      0.22       4.66 f
+  n2478 (net)                                   7                   0.00       4.66 f
+  U3071/DIN3 (oai211s1)                                   0.44      0.00       4.66 f
+  U3071/Q (oai211s1)                                      1.08      0.48       5.14 r
+  n2479 (net)                                   6                   0.00       5.14 r
+  U3070/DIN1 (nnd2s1)                                     1.08      0.00       5.14 r
+  U3070/Q (nnd2s1)                                        0.53      0.22       5.36 f
+  n2477 (net)                                   5                   0.00       5.36 f
+  U2855/DIN2 (oai222s1)                                   0.53      0.00       5.36 f
+  U2855/Q (oai222s1)                                      0.79      0.37       5.73 r
+  n3245 (net)                                   1                   0.00       5.73 r
+  freelist_cam/fl_cam_reg[59][4]/DIN (dffs1)              0.79      0.01       5.73 r
+  data arrival time                                                            5.73
 
   clock clk_i (rise edge)                                          20.00      20.00
   clock network delay (ideal)                                       0.00      20.00
   clock uncertainty                                                -0.10      19.90
-  freelist_cam/fl_cam_reg[18][4]/CLK (dffs1)                        0.00      19.90 r
+  freelist_cam/fl_cam_reg[59][4]/CLK (dffs1)                        0.00      19.90 r
   library setup time                                               -0.16      19.74
   data required time                                                          19.74
   ------------------------------------------------------------------------------------
   data required time                                                          19.74
-  data arrival time                                                           -6.03
+  data arrival time                                                           -5.73
   ------------------------------------------------------------------------------------
-  slack (MET)                                                                 13.71
+  slack (MET)                                                                 14.00
 
 
   Startpoint: head_reg[0]
               (rising edge-triggered flip-flop clocked by clk_i)
-  Endpoint: freelist_cam/fl_cam_reg[17][4]
+  Endpoint: freelist_cam/fl_cam_reg[48][4]
             (rising edge-triggered flip-flop clocked by clk_i)
   Path Group: clk_i
   Path Type: max
@@ -249,88 +249,88 @@ Wire Load Model Mode: top
   head_plus_one[0] (net)                        9                   0.00       0.18 r
   head_reg[0]/Q (dffcs2)                                  0.36      0.19       0.37 f
   head_plus_two[0] (net)                       12                   0.00       0.37 f
-  U2144/BIN (hadd1s1)                                     0.36      0.00       0.37 f
-  U2144/OUTC (hadd1s1)                                    0.08      0.22       0.59 f
+  U2160/BIN (hadd1s1)                                     0.36      0.00       0.37 f
+  U2160/OUTC (hadd1s1)                                    0.08      0.22       0.59 f
   add_62/carry[2] (net)                         1                   0.00       0.59 f
-  U2145/BIN (hadd1s1)                                     0.08      0.00       0.59 f
-  U2145/OUTC (hadd1s1)                                    0.08      0.17       0.76 f
+  U2161/BIN (hadd1s1)                                     0.08      0.00       0.59 f
+  U2161/OUTC (hadd1s1)                                    0.08      0.17       0.76 f
   add_62/carry[3] (net)                         1                   0.00       0.76 f
-  U2146/BIN (hadd1s1)                                     0.08      0.00       0.76 f
-  U2146/OUTC (hadd1s1)                                    0.09      0.18       0.95 f
+  U2162/BIN (hadd1s1)                                     0.08      0.00       0.76 f
+  U2162/OUTC (hadd1s1)                                    0.09      0.18       0.95 f
   add_62/carry[4] (net)                         1                   0.00       0.95 f
-  U2759/DIN1 (xor2s1)                                     0.09      0.00       0.95 f
-  U2759/Q (xor2s1)                                        0.20      0.23       1.18 f
+  U2793/DIN1 (xor2s1)                                     0.09      0.00       0.95 f
+  U2793/Q (xor2s1)                                        0.20      0.23       1.18 f
   head_plus_one[4] (net)                        4                   0.00       1.18 f
-  U3501/DIN (hi1s1)                                       0.20      0.00       1.18 f
-  U3501/Q (hi1s1)                                         0.40      0.19       1.37 r
-  n2603 (net)                                   2                   0.00       1.37 r
-  U3500/DIN1 (nor2s1)                                     0.40      0.00       1.37 r
-  U3500/Q (nor2s1)                                        0.54      0.30       1.67 f
-  n2606 (net)                                   8                   0.00       1.67 f
-  U3493/DIN1 (nnd2s1)                                     0.54      0.00       1.67 f
-  U3493/Q (nnd2s1)                                        0.51      0.26       1.94 r
-  n2242 (net)                                   8                   0.00       1.94 r
-  U3490/DIN2 (oai21s1)                                    0.51      0.00       1.94 r
-  U3490/Q (oai21s1)                                       0.36      0.12       2.05 f
-  n2615 (net)                                   1                   0.00       2.05 f
-  U3489/DIN2 (and2s1)                                     0.36      0.00       2.05 f
-  U3489/Q (and2s1)                                        0.32      0.32       2.38 f
-  n2244 (net)                                   6                   0.00       2.38 f
-  U1888/DIN8 (oai2222s2)                                  0.32      0.00       2.38 f
-  U1888/Q (oai2222s2)                                     0.61      0.65       3.03 r
-  next_fl_entry[17][tag][4] (net)               4                   0.00       3.03 r
-  U2448/DIN3 (aoi22s1)                                    0.61      0.00       3.03 r
-  U2448/Q (aoi22s1)                                       0.42      0.21       3.24 f
-  n1801 (net)                                   1                   0.00       3.24 f
-  U2449/DIN4 (nnd4s1)                                     0.42      0.00       3.25 f
-  U2449/Q (nnd4s1)                                        0.38      0.21       3.46 r
-  n1810 (net)                                   1                   0.00       3.46 r
-  U2455/DIN1 (oai21s1)                                    0.38      0.00       3.46 r
-  U2455/Q (oai21s1)                                       0.30      0.16       3.62 f
-  n1811 (net)                                   1                   0.00       3.62 f
-  U2456/DIN2 (nnd2s1)                                     0.30      0.00       3.63 f
-  U2456/Q (nnd2s1)                                        0.26      0.14       3.76 r
-  N207 (net)                                    2                   0.00       3.76 r
-  U3333/DIN4 (aoi22s1)                                    0.26      0.00       3.76 r
-  U3333/Q (aoi22s1)                                       0.76      0.24       4.01 f
-  n2500 (net)                                   5                   0.00       4.01 f
-  U1875/DIN (ib1s1)                                       0.76      0.00       4.01 f
-  U1875/Q (ib1s1)                                         0.75      0.38       4.39 r
-  fl_dp_o[tag][1][4] (net)                      5                   0.00       4.39 r
-  U3222/DIN3 (and3s1)                                     0.75      0.00       4.39 r
-  U3222/Q (and3s1)                                        0.53      0.31       4.70 r
-  n2509 (net)                                   8                   0.00       4.70 r
-  U3217/DIN1 (nnd2s1)                                     0.53      0.00       4.70 r
-  U3217/Q (nnd2s1)                                        0.44      0.22       4.92 f
-  n2332 (net)                                   7                   0.00       4.92 f
-  U3216/DIN3 (oai211s1)                                   0.44      0.00       4.92 f
-  U3216/Q (oai211s1)                                      1.41      0.48       5.40 r
-  n2333 (net)                                   6                   0.00       5.40 r
-  U3215/DIN1 (nnd2s1)                                     1.41      0.00       5.40 r
-  U3215/Q (nnd2s1)                                        0.62      0.24       5.64 f
-  n2331 (net)                                   5                   0.00       5.64 f
-  U2779/DIN2 (oai222s1)                                   0.62      0.00       5.64 f
-  U2779/Q (oai222s1)                                      0.82      0.38       6.02 r
-  n3178 (net)                                   1                   0.00       6.02 r
-  freelist_cam/fl_cam_reg[17][4]/DIN (dffs1)              0.82      0.01       6.03 r
-  data arrival time                                                            6.03
+  U3619/DIN (hi1s1)                                       0.20      0.00       1.18 f
+  U3619/Q (hi1s1)                                         0.40      0.19       1.37 r
+  n2646 (net)                                   2                   0.00       1.37 r
+  U3618/DIN1 (nor2s1)                                     0.40      0.00       1.37 r
+  U3618/Q (nor2s1)                                        0.54      0.30       1.67 f
+  n2649 (net)                                   8                   0.00       1.67 f
+  U3610/DIN1 (nnd2s1)                                     0.54      0.00       1.67 f
+  U3610/Q (nnd2s1)                                        0.58      0.30       1.97 r
+  n2262 (net)                                   8                   0.00       1.97 r
+  U3607/DIN2 (oai21s1)                                    0.58      0.00       1.97 r
+  U3607/Q (oai21s1)                                       0.42      0.12       2.09 f
+  n2658 (net)                                   1                   0.00       2.09 f
+  U3606/DIN2 (and2s1)                                     0.42      0.00       2.09 f
+  U3606/Q (and2s1)                                        0.37      0.36       2.45 f
+  n2264 (net)                                   6                   0.00       2.45 f
+  U1918/DIN8 (oai2222s3)                                  0.37      0.00       2.45 f
+  U1918/Q (oai2222s3)                                     0.47      0.54       2.99 r
+  next_fl_entry[17][tag][4] (net)               4                   0.00       2.99 r
+  U2290/DIN3 (aoi22s1)                                    0.47      0.00       2.99 r
+  U2290/Q (aoi22s1)                                       0.38      0.20       3.19 f
+  n1644 (net)                                   1                   0.00       3.19 f
+  U2291/DIN4 (nnd4s1)                                     0.38      0.00       3.19 f
+  U2291/Q (nnd4s1)                                        0.37      0.20       3.39 r
+  n1653 (net)                                   1                   0.00       3.39 r
+  U2297/DIN1 (oai21s1)                                    0.37      0.00       3.39 r
+  U2297/Q (oai21s1)                                       0.29      0.16       3.56 f
+  n1654 (net)                                   1                   0.00       3.56 f
+  U2298/DIN2 (nnd2s1)                                     0.29      0.00       3.56 f
+  U2298/Q (nnd2s1)                                        0.20      0.11       3.67 r
+  N157 (net)                                    1                   0.00       3.67 r
+  U3379/DIN1 (nnd2s1)                                     0.20      0.00       3.67 r
+  U3379/Q (nnd2s1)                                        0.34      0.14       3.81 f
+  n2520 (net)                                   5                   0.00       3.81 f
+  U1883/DIN (ib1s1)                                       0.34      0.00       3.81 f
+  U1883/Q (ib1s1)                                         0.68      0.30       4.11 r
+  fl_dp_o[tag][1][4] (net)                      5                   0.00       4.11 r
+  U3119/DIN1 (and3s1)                                     0.68      0.00       4.11 r
+  U3119/Q (and3s1)                                        0.53      0.32       4.44 r
+  n2515 (net)                                   8                   0.00       4.44 r
+  U3118/DIN1 (nnd2s1)                                     0.53      0.00       4.44 r
+  U3118/Q (nnd2s1)                                        0.44      0.22       4.66 f
+  n2445 (net)                                   7                   0.00       4.66 f
+  U3117/DIN3 (oai211s1)                                   0.44      0.00       4.66 f
+  U3117/Q (oai211s1)                                      1.08      0.48       5.14 r
+  n2446 (net)                                   6                   0.00       5.14 r
+  U3116/DIN1 (nnd2s1)                                     1.08      0.00       5.14 r
+  U3116/Q (nnd2s1)                                        0.53      0.22       5.36 f
+  n2444 (net)                                   5                   0.00       5.36 f
+  U2844/DIN2 (oai222s1)                                   0.53      0.00       5.36 f
+  U2844/Q (oai222s1)                                      0.79      0.37       5.73 r
+  n3234 (net)                                   1                   0.00       5.73 r
+  freelist_cam/fl_cam_reg[48][4]/DIN (dffs1)              0.79      0.01       5.73 r
+  data arrival time                                                            5.73
 
   clock clk_i (rise edge)                                          20.00      20.00
   clock network delay (ideal)                                       0.00      20.00
   clock uncertainty                                                -0.10      19.90
-  freelist_cam/fl_cam_reg[17][4]/CLK (dffs1)                        0.00      19.90 r
+  freelist_cam/fl_cam_reg[48][4]/CLK (dffs1)                        0.00      19.90 r
   library setup time                                               -0.16      19.74
   data required time                                                          19.74
   ------------------------------------------------------------------------------------
   data required time                                                          19.74
-  data arrival time                                                           -6.03
+  data arrival time                                                           -5.73
   ------------------------------------------------------------------------------------
-  slack (MET)                                                                 13.71
+  slack (MET)                                                                 14.00
 
 
-  Startpoint: rob_fl_i[phy_reg][0][4]
+  Startpoint: rob_fl_i[phy_reg][0][3]
               (input port clocked by clk_i)
-  Endpoint: freelist_cam/fl_cam_reg[18][4]
+  Endpoint: freelist_cam/fl_cam_reg[59][4]
             (rising edge-triggered flip-flop clocked by clk_i)
   Path Group: input_grp
   Path Type: max
@@ -344,84 +344,87 @@ Wire Load Model Mode: top
   clock clk_i (rise edge)                                           0.00       0.00
   clock network delay (ideal)                                       0.00       0.00
   input external delay                                              0.10       0.10 f
-  rob_fl_i[phy_reg][0][4] (in)                            0.24      0.05       0.15 f
-  rob_fl_i[phy_reg][0][4] (net)                 3                   0.00       0.15 f
-  U3662/DIN1 (or3s1)                                      0.24      0.00       0.15 f
-  U3662/Q (or3s1)                                         0.14      0.22       0.37 f
-  n2654 (net)                                   1                   0.00       0.37 f
-  U3661/DIN4 (or4s1)                                      0.14      0.00       0.37 f
-  U3661/Q (or4s1)                                         0.27      0.23       0.60 f
-  n2644 (net)                                   4                   0.00       0.60 f
-  U1848/DIN1 (nnd3s2)                                     0.27      0.00       0.61 f
-  U1848/Q (nnd3s2)                                        0.26      0.11       0.72 r
-  n1527 (net)                                   2                   0.00       0.72 r
-  U2119/DIN (ib1s1)                                       0.26      0.00       0.72 r
-  U2119/Q (ib1s1)                                         0.69      0.33       1.05 f
-  n2114 (net)                                  16                   0.00       1.05 f
-  U3633/DIN2 (nor2s1)                                     0.69      0.00       1.05 f
-  U3633/Q (nor2s1)                                        0.69      0.32       1.37 r
-  n2568 (net)                                   6                   0.00       1.37 r
-  U3632/DIN (hi1s1)                                       0.69      0.00       1.37 r
-  U3632/Q (hi1s1)                                         2.10      0.95       2.33 f
-  n2275 (net)                                  32                   0.00       2.33 f
-  U3489/DIN1 (and2s1)                                     2.10      0.00       2.33 f
-  U3489/Q (and2s1)                                        0.32      0.57       2.90 f
-  n2244 (net)                                   6                   0.00       2.90 f
-  U1888/DIN8 (oai2222s2)                                  0.32      0.00       2.90 f
-  U1888/Q (oai2222s2)                                     0.61      0.65       3.55 r
-  next_fl_entry[17][tag][4] (net)               4                   0.00       3.55 r
-  U2448/DIN3 (aoi22s1)                                    0.61      0.00       3.55 r
-  U2448/Q (aoi22s1)                                       0.42      0.21       3.77 f
-  n1801 (net)                                   1                   0.00       3.77 f
-  U2449/DIN4 (nnd4s1)                                     0.42      0.00       3.77 f
-  U2449/Q (nnd4s1)                                        0.38      0.21       3.98 r
-  n1810 (net)                                   1                   0.00       3.98 r
-  U2455/DIN1 (oai21s1)                                    0.38      0.00       3.98 r
-  U2455/Q (oai21s1)                                       0.30      0.16       4.15 f
-  n1811 (net)                                   1                   0.00       4.15 f
-  U2456/DIN2 (nnd2s1)                                     0.30      0.00       4.15 f
-  U2456/Q (nnd2s1)                                        0.26      0.14       4.28 r
-  N207 (net)                                    2                   0.00       4.28 r
-  U3333/DIN4 (aoi22s1)                                    0.26      0.00       4.28 r
-  U3333/Q (aoi22s1)                                       0.76      0.24       4.53 f
-  n2500 (net)                                   5                   0.00       4.53 f
-  U1875/DIN (ib1s1)                                       0.76      0.00       4.53 f
-  U1875/Q (ib1s1)                                         0.75      0.38       4.91 r
-  fl_dp_o[tag][1][4] (net)                      5                   0.00       4.91 r
-  U3222/DIN3 (and3s1)                                     0.75      0.00       4.91 r
-  U3222/Q (and3s1)                                        0.53      0.31       5.22 r
-  n2509 (net)                                   8                   0.00       5.22 r
-  U3213/DIN1 (nnd2s1)                                     0.53      0.00       5.22 r
-  U3213/Q (nnd2s1)                                        0.44      0.22       5.44 f
-  n2335 (net)                                   7                   0.00       5.44 f
-  U3212/DIN3 (oai211s1)                                   0.44      0.00       5.44 f
-  U3212/Q (oai211s1)                                      1.41      0.48       5.92 r
-  n2336 (net)                                   6                   0.00       5.92 r
-  U3211/DIN1 (nnd2s1)                                     1.41      0.00       5.92 r
-  U3211/Q (nnd2s1)                                        0.62      0.24       6.16 f
-  n2334 (net)                                   5                   0.00       6.16 f
-  U2780/DIN2 (oai222s1)                                   0.62      0.00       6.16 f
-  U2780/Q (oai222s1)                                      0.82      0.38       6.54 r
-  n3179 (net)                                   1                   0.00       6.54 r
-  freelist_cam/fl_cam_reg[18][4]/DIN (dffs1)              0.82      0.01       6.55 r
-  data arrival time                                                            6.55
+  rob_fl_i[phy_reg][0][3] (in)                            0.37      0.13       0.23 f
+  rob_fl_i[phy_reg][0][3] (net)                 7                   0.00       0.23 f
+  U3697/DIN3 (or3s1)                                      0.37      0.00       0.23 f
+  U3697/Q (or3s1)                                         0.14      0.19       0.42 f
+  n2676 (net)                                   1                   0.00       0.42 f
+  U3696/DIN4 (or4s1)                                      0.14      0.00       0.42 f
+  U3696/Q (or4s1)                                         0.22      0.21       0.63 f
+  n2623 (net)                                   4                   0.00       0.63 f
+  U3691/DIN1 (and3s1)                                     0.22      0.00       0.63 f
+  U3691/Q (and3s1)                                        0.28      0.28       0.91 f
+  n2297 (net)                                   8                   0.00       0.91 f
+  U2097/DIN (ib1s1)                                       0.28      0.00       0.91 f
+  U2097/Q (ib1s1)                                         0.20      0.10       1.01 r
+  n2133 (net)                                   2                   0.00       1.01 r
+  U2142/DIN (ib1s1)                                       0.20      0.00       1.01 r
+  U2142/Q (ib1s1)                                         0.71      0.34       1.35 f
+  n2131 (net)                                  17                   0.00       1.35 f
+  U3690/DIN2 (nor2s1)                                     0.71      0.00       1.35 f
+  U3690/Q (nor2s1)                                        0.70      0.32       1.67 r
+  n2589 (net)                                   6                   0.00       1.67 r
+  U3689/DIN (hi1s1)                                       0.70      0.00       1.67 r
+  U3689/Q (hi1s1)                                         2.10      0.95       2.62 f
+  n2295 (net)                                  32                   0.00       2.62 f
+  U3606/DIN1 (and2s1)                                     2.10      0.00       2.63 f
+  U3606/Q (and2s1)                                        0.37      0.60       3.23 f
+  n2264 (net)                                   6                   0.00       3.23 f
+  U1918/DIN8 (oai2222s3)                                  0.37      0.00       3.23 f
+  U1918/Q (oai2222s3)                                     0.47      0.54       3.77 r
+  next_fl_entry[17][tag][4] (net)               4                   0.00       3.77 r
+  U2290/DIN3 (aoi22s1)                                    0.47      0.00       3.77 r
+  U2290/Q (aoi22s1)                                       0.38      0.20       3.96 f
+  n1644 (net)                                   1                   0.00       3.96 f
+  U2291/DIN4 (nnd4s1)                                     0.38      0.00       3.96 f
+  U2291/Q (nnd4s1)                                        0.37      0.20       4.17 r
+  n1653 (net)                                   1                   0.00       4.17 r
+  U2297/DIN1 (oai21s1)                                    0.37      0.00       4.17 r
+  U2297/Q (oai21s1)                                       0.29      0.16       4.33 f
+  n1654 (net)                                   1                   0.00       4.33 f
+  U2298/DIN2 (nnd2s1)                                     0.29      0.00       4.34 f
+  U2298/Q (nnd2s1)                                        0.20      0.11       4.44 r
+  N157 (net)                                    1                   0.00       4.44 r
+  U3379/DIN1 (nnd2s1)                                     0.20      0.00       4.44 r
+  U3379/Q (nnd2s1)                                        0.34      0.14       4.59 f
+  n2520 (net)                                   5                   0.00       4.59 f
+  U1883/DIN (ib1s1)                                       0.34      0.00       4.59 f
+  U1883/Q (ib1s1)                                         0.68      0.30       4.89 r
+  fl_dp_o[tag][1][4] (net)                      5                   0.00       4.89 r
+  U3085/DIN1 (and3s1)                                     0.68      0.00       4.89 r
+  U3085/Q (and3s1)                                        0.53      0.32       5.21 r
+  n2498 (net)                                   8                   0.00       5.21 r
+  U3072/DIN1 (nnd2s1)                                     0.53      0.00       5.21 r
+  U3072/Q (nnd2s1)                                        0.44      0.22       5.43 f
+  n2478 (net)                                   7                   0.00       5.43 f
+  U3071/DIN3 (oai211s1)                                   0.44      0.00       5.43 f
+  U3071/Q (oai211s1)                                      1.08      0.48       5.91 r
+  n2479 (net)                                   6                   0.00       5.91 r
+  U3070/DIN1 (nnd2s1)                                     1.08      0.00       5.91 r
+  U3070/Q (nnd2s1)                                        0.53      0.22       6.14 f
+  n2477 (net)                                   5                   0.00       6.14 f
+  U2855/DIN2 (oai222s1)                                   0.53      0.00       6.14 f
+  U2855/Q (oai222s1)                                      0.79      0.37       6.50 r
+  n3245 (net)                                   1                   0.00       6.50 r
+  freelist_cam/fl_cam_reg[59][4]/DIN (dffs1)              0.79      0.01       6.51 r
+  data arrival time                                                            6.51
 
   clock clk_i (rise edge)                                          20.00      20.00
   clock network delay (ideal)                                       0.00      20.00
   clock uncertainty                                                -0.10      19.90
-  freelist_cam/fl_cam_reg[18][4]/CLK (dffs1)                        0.00      19.90 r
+  freelist_cam/fl_cam_reg[59][4]/CLK (dffs1)                        0.00      19.90 r
   library setup time                                               -0.16      19.74
   data required time                                                          19.74
   ------------------------------------------------------------------------------------
   data required time                                                          19.74
-  data arrival time                                                           -6.55
+  data arrival time                                                           -6.51
   ------------------------------------------------------------------------------------
-  slack (MET)                                                                 13.19
+  slack (MET)                                                                 13.23
 
 
-  Startpoint: rob_fl_i[phy_reg][0][4]
+  Startpoint: rob_fl_i[phy_reg][0][3]
               (input port clocked by clk_i)
-  Endpoint: freelist_cam/fl_cam_reg[17][4]
+  Endpoint: freelist_cam/fl_cam_reg[48][4]
             (rising edge-triggered flip-flop clocked by clk_i)
   Path Group: input_grp
   Path Type: max
@@ -435,84 +438,87 @@ Wire Load Model Mode: top
   clock clk_i (rise edge)                                           0.00       0.00
   clock network delay (ideal)                                       0.00       0.00
   input external delay                                              0.10       0.10 f
-  rob_fl_i[phy_reg][0][4] (in)                            0.24      0.05       0.15 f
-  rob_fl_i[phy_reg][0][4] (net)                 3                   0.00       0.15 f
-  U3662/DIN1 (or3s1)                                      0.24      0.00       0.15 f
-  U3662/Q (or3s1)                                         0.14      0.22       0.37 f
-  n2654 (net)                                   1                   0.00       0.37 f
-  U3661/DIN4 (or4s1)                                      0.14      0.00       0.37 f
-  U3661/Q (or4s1)                                         0.27      0.23       0.60 f
-  n2644 (net)                                   4                   0.00       0.60 f
-  U1848/DIN1 (nnd3s2)                                     0.27      0.00       0.61 f
-  U1848/Q (nnd3s2)                                        0.26      0.11       0.72 r
-  n1527 (net)                                   2                   0.00       0.72 r
-  U2119/DIN (ib1s1)                                       0.26      0.00       0.72 r
-  U2119/Q (ib1s1)                                         0.69      0.33       1.05 f
-  n2114 (net)                                  16                   0.00       1.05 f
-  U3633/DIN2 (nor2s1)                                     0.69      0.00       1.05 f
-  U3633/Q (nor2s1)                                        0.69      0.32       1.37 r
-  n2568 (net)                                   6                   0.00       1.37 r
-  U3632/DIN (hi1s1)                                       0.69      0.00       1.37 r
-  U3632/Q (hi1s1)                                         2.10      0.95       2.33 f
-  n2275 (net)                                  32                   0.00       2.33 f
-  U3489/DIN1 (and2s1)                                     2.10      0.00       2.33 f
-  U3489/Q (and2s1)                                        0.32      0.57       2.90 f
-  n2244 (net)                                   6                   0.00       2.90 f
-  U1888/DIN8 (oai2222s2)                                  0.32      0.00       2.90 f
-  U1888/Q (oai2222s2)                                     0.61      0.65       3.55 r
-  next_fl_entry[17][tag][4] (net)               4                   0.00       3.55 r
-  U2448/DIN3 (aoi22s1)                                    0.61      0.00       3.55 r
-  U2448/Q (aoi22s1)                                       0.42      0.21       3.77 f
-  n1801 (net)                                   1                   0.00       3.77 f
-  U2449/DIN4 (nnd4s1)                                     0.42      0.00       3.77 f
-  U2449/Q (nnd4s1)                                        0.38      0.21       3.98 r
-  n1810 (net)                                   1                   0.00       3.98 r
-  U2455/DIN1 (oai21s1)                                    0.38      0.00       3.98 r
-  U2455/Q (oai21s1)                                       0.30      0.16       4.15 f
-  n1811 (net)                                   1                   0.00       4.15 f
-  U2456/DIN2 (nnd2s1)                                     0.30      0.00       4.15 f
-  U2456/Q (nnd2s1)                                        0.26      0.14       4.28 r
-  N207 (net)                                    2                   0.00       4.28 r
-  U3333/DIN4 (aoi22s1)                                    0.26      0.00       4.28 r
-  U3333/Q (aoi22s1)                                       0.76      0.24       4.53 f
-  n2500 (net)                                   5                   0.00       4.53 f
-  U1875/DIN (ib1s1)                                       0.76      0.00       4.53 f
-  U1875/Q (ib1s1)                                         0.75      0.38       4.91 r
-  fl_dp_o[tag][1][4] (net)                      5                   0.00       4.91 r
-  U3222/DIN3 (and3s1)                                     0.75      0.00       4.91 r
-  U3222/Q (and3s1)                                        0.53      0.31       5.22 r
-  n2509 (net)                                   8                   0.00       5.22 r
-  U3217/DIN1 (nnd2s1)                                     0.53      0.00       5.22 r
-  U3217/Q (nnd2s1)                                        0.44      0.22       5.44 f
-  n2332 (net)                                   7                   0.00       5.44 f
-  U3216/DIN3 (oai211s1)                                   0.44      0.00       5.44 f
-  U3216/Q (oai211s1)                                      1.41      0.48       5.92 r
-  n2333 (net)                                   6                   0.00       5.92 r
-  U3215/DIN1 (nnd2s1)                                     1.41      0.00       5.92 r
-  U3215/Q (nnd2s1)                                        0.62      0.24       6.16 f
-  n2331 (net)                                   5                   0.00       6.16 f
-  U2779/DIN2 (oai222s1)                                   0.62      0.00       6.16 f
-  U2779/Q (oai222s1)                                      0.82      0.38       6.54 r
-  n3178 (net)                                   1                   0.00       6.54 r
-  freelist_cam/fl_cam_reg[17][4]/DIN (dffs1)              0.82      0.01       6.55 r
-  data arrival time                                                            6.55
+  rob_fl_i[phy_reg][0][3] (in)                            0.37      0.13       0.23 f
+  rob_fl_i[phy_reg][0][3] (net)                 7                   0.00       0.23 f
+  U3697/DIN3 (or3s1)                                      0.37      0.00       0.23 f
+  U3697/Q (or3s1)                                         0.14      0.19       0.42 f
+  n2676 (net)                                   1                   0.00       0.42 f
+  U3696/DIN4 (or4s1)                                      0.14      0.00       0.42 f
+  U3696/Q (or4s1)                                         0.22      0.21       0.63 f
+  n2623 (net)                                   4                   0.00       0.63 f
+  U3691/DIN1 (and3s1)                                     0.22      0.00       0.63 f
+  U3691/Q (and3s1)                                        0.28      0.28       0.91 f
+  n2297 (net)                                   8                   0.00       0.91 f
+  U2097/DIN (ib1s1)                                       0.28      0.00       0.91 f
+  U2097/Q (ib1s1)                                         0.20      0.10       1.01 r
+  n2133 (net)                                   2                   0.00       1.01 r
+  U2142/DIN (ib1s1)                                       0.20      0.00       1.01 r
+  U2142/Q (ib1s1)                                         0.71      0.34       1.35 f
+  n2131 (net)                                  17                   0.00       1.35 f
+  U3690/DIN2 (nor2s1)                                     0.71      0.00       1.35 f
+  U3690/Q (nor2s1)                                        0.70      0.32       1.67 r
+  n2589 (net)                                   6                   0.00       1.67 r
+  U3689/DIN (hi1s1)                                       0.70      0.00       1.67 r
+  U3689/Q (hi1s1)                                         2.10      0.95       2.62 f
+  n2295 (net)                                  32                   0.00       2.62 f
+  U3606/DIN1 (and2s1)                                     2.10      0.00       2.63 f
+  U3606/Q (and2s1)                                        0.37      0.60       3.23 f
+  n2264 (net)                                   6                   0.00       3.23 f
+  U1918/DIN8 (oai2222s3)                                  0.37      0.00       3.23 f
+  U1918/Q (oai2222s3)                                     0.47      0.54       3.77 r
+  next_fl_entry[17][tag][4] (net)               4                   0.00       3.77 r
+  U2290/DIN3 (aoi22s1)                                    0.47      0.00       3.77 r
+  U2290/Q (aoi22s1)                                       0.38      0.20       3.96 f
+  n1644 (net)                                   1                   0.00       3.96 f
+  U2291/DIN4 (nnd4s1)                                     0.38      0.00       3.96 f
+  U2291/Q (nnd4s1)                                        0.37      0.20       4.17 r
+  n1653 (net)                                   1                   0.00       4.17 r
+  U2297/DIN1 (oai21s1)                                    0.37      0.00       4.17 r
+  U2297/Q (oai21s1)                                       0.29      0.16       4.33 f
+  n1654 (net)                                   1                   0.00       4.33 f
+  U2298/DIN2 (nnd2s1)                                     0.29      0.00       4.34 f
+  U2298/Q (nnd2s1)                                        0.20      0.11       4.44 r
+  N157 (net)                                    1                   0.00       4.44 r
+  U3379/DIN1 (nnd2s1)                                     0.20      0.00       4.44 r
+  U3379/Q (nnd2s1)                                        0.34      0.14       4.59 f
+  n2520 (net)                                   5                   0.00       4.59 f
+  U1883/DIN (ib1s1)                                       0.34      0.00       4.59 f
+  U1883/Q (ib1s1)                                         0.68      0.30       4.89 r
+  fl_dp_o[tag][1][4] (net)                      5                   0.00       4.89 r
+  U3119/DIN1 (and3s1)                                     0.68      0.00       4.89 r
+  U3119/Q (and3s1)                                        0.53      0.32       5.21 r
+  n2515 (net)                                   8                   0.00       5.21 r
+  U3118/DIN1 (nnd2s1)                                     0.53      0.00       5.21 r
+  U3118/Q (nnd2s1)                                        0.44      0.22       5.43 f
+  n2445 (net)                                   7                   0.00       5.43 f
+  U3117/DIN3 (oai211s1)                                   0.44      0.00       5.43 f
+  U3117/Q (oai211s1)                                      1.08      0.48       5.91 r
+  n2446 (net)                                   6                   0.00       5.91 r
+  U3116/DIN1 (nnd2s1)                                     1.08      0.00       5.91 r
+  U3116/Q (nnd2s1)                                        0.53      0.22       6.14 f
+  n2444 (net)                                   5                   0.00       6.14 f
+  U2844/DIN2 (oai222s1)                                   0.53      0.00       6.14 f
+  U2844/Q (oai222s1)                                      0.79      0.37       6.50 r
+  n3234 (net)                                   1                   0.00       6.50 r
+  freelist_cam/fl_cam_reg[48][4]/DIN (dffs1)              0.79      0.01       6.51 r
+  data arrival time                                                            6.51
 
   clock clk_i (rise edge)                                          20.00      20.00
   clock network delay (ideal)                                       0.00      20.00
   clock uncertainty                                                -0.10      19.90
-  freelist_cam/fl_cam_reg[17][4]/CLK (dffs1)                        0.00      19.90 r
+  freelist_cam/fl_cam_reg[48][4]/CLK (dffs1)                        0.00      19.90 r
   library setup time                                               -0.16      19.74
   data required time                                                          19.74
   ------------------------------------------------------------------------------------
   data required time                                                          19.74
-  data arrival time                                                           -6.55
+  data arrival time                                                           -6.51
   ------------------------------------------------------------------------------------
-  slack (MET)                                                                 13.19
+  slack (MET)                                                                 13.23
 
 
   Startpoint: head_reg[0]
               (rising edge-triggered flip-flop clocked by clk_i)
-  Endpoint: fl_dp_o[tag][1][4]
+  Endpoint: fl_dp_o[tag][0][0]
             (output port clocked by clk_i)
   Path Group: output_grp
   Path Type: max
@@ -528,56 +534,56 @@ Wire Load Model Mode: top
   head_plus_one[0] (net)         9                   0.00       0.18 r
   head_reg[0]/Q (dffcs2)                   0.36      0.19       0.37 f
   head_plus_two[0] (net)        12                   0.00       0.37 f
-  U2144/BIN (hadd1s1)                      0.36      0.00       0.37 f
-  U2144/OUTC (hadd1s1)                     0.08      0.22       0.59 f
+  U2160/BIN (hadd1s1)                      0.36      0.00       0.37 f
+  U2160/OUTC (hadd1s1)                     0.08      0.22       0.59 f
   add_62/carry[2] (net)          1                   0.00       0.59 f
-  U2145/BIN (hadd1s1)                      0.08      0.00       0.59 f
-  U2145/OUTC (hadd1s1)                     0.08      0.17       0.76 f
+  U2161/BIN (hadd1s1)                      0.08      0.00       0.59 f
+  U2161/OUTC (hadd1s1)                     0.08      0.17       0.76 f
   add_62/carry[3] (net)          1                   0.00       0.76 f
-  U2146/BIN (hadd1s1)                      0.08      0.00       0.76 f
-  U2146/OUTC (hadd1s1)                     0.09      0.18       0.95 f
+  U2162/BIN (hadd1s1)                      0.08      0.00       0.76 f
+  U2162/OUTC (hadd1s1)                     0.09      0.18       0.95 f
   add_62/carry[4] (net)          1                   0.00       0.95 f
-  U2759/DIN1 (xor2s1)                      0.09      0.00       0.95 f
-  U2759/Q (xor2s1)                         0.20      0.23       1.18 f
+  U2793/DIN1 (xor2s1)                      0.09      0.00       0.95 f
+  U2793/Q (xor2s1)                         0.20      0.23       1.18 f
   head_plus_one[4] (net)         4                   0.00       1.18 f
-  U3501/DIN (hi1s1)                        0.20      0.00       1.18 f
-  U3501/Q (hi1s1)                          0.40      0.19       1.37 r
-  n2603 (net)                    2                   0.00       1.37 r
-  U3500/DIN1 (nor2s1)                      0.40      0.00       1.37 r
-  U3500/Q (nor2s1)                         0.54      0.30       1.67 f
-  n2606 (net)                    8                   0.00       1.67 f
-  U3493/DIN1 (nnd2s1)                      0.54      0.00       1.67 f
-  U3493/Q (nnd2s1)                         0.51      0.26       1.94 r
-  n2242 (net)                    8                   0.00       1.94 r
-  U3490/DIN2 (oai21s1)                     0.51      0.00       1.94 r
-  U3490/Q (oai21s1)                        0.36      0.12       2.05 f
-  n2615 (net)                    1                   0.00       2.05 f
-  U3489/DIN2 (and2s1)                      0.36      0.00       2.05 f
-  U3489/Q (and2s1)                         0.32      0.32       2.38 f
-  n2244 (net)                    6                   0.00       2.38 f
-  U1888/DIN8 (oai2222s2)                   0.32      0.00       2.38 f
-  U1888/Q (oai2222s2)                      0.61      0.65       3.03 r
-  next_fl_entry[17][tag][4] (net)     4              0.00       3.03 r
-  U2448/DIN3 (aoi22s1)                     0.61      0.00       3.03 r
-  U2448/Q (aoi22s1)                        0.42      0.21       3.24 f
-  n1801 (net)                    1                   0.00       3.24 f
-  U2449/DIN4 (nnd4s1)                      0.42      0.00       3.25 f
-  U2449/Q (nnd4s1)                         0.38      0.21       3.46 r
-  n1810 (net)                    1                   0.00       3.46 r
-  U2455/DIN1 (oai21s1)                     0.38      0.00       3.46 r
-  U2455/Q (oai21s1)                        0.30      0.16       3.62 f
-  n1811 (net)                    1                   0.00       3.62 f
-  U2456/DIN2 (nnd2s1)                      0.30      0.00       3.63 f
-  U2456/Q (nnd2s1)                         0.26      0.14       3.76 r
-  N207 (net)                     2                   0.00       3.76 r
-  U3333/DIN4 (aoi22s1)                     0.26      0.00       3.76 r
-  U3333/Q (aoi22s1)                        0.76      0.24       4.01 f
-  n2500 (net)                    5                   0.00       4.01 f
-  U1875/DIN (ib1s1)                        0.76      0.00       4.01 f
-  U1875/Q (ib1s1)                          0.75      0.38       4.39 r
-  fl_dp_o[tag][1][4] (net)       5                   0.00       4.39 r
-  fl_dp_o[tag][1][4] (out)                 0.75      0.02       4.41 r
-  data arrival time                                             4.41
+  U3619/DIN (hi1s1)                        0.20      0.00       1.18 f
+  U3619/Q (hi1s1)                          0.40      0.19       1.37 r
+  n2646 (net)                    2                   0.00       1.37 r
+  U3618/DIN1 (nor2s1)                      0.40      0.00       1.37 r
+  U3618/Q (nor2s1)                         0.54      0.30       1.67 f
+  n2649 (net)                    8                   0.00       1.67 f
+  U3610/DIN1 (nnd2s1)                      0.54      0.00       1.67 f
+  U3610/Q (nnd2s1)                         0.58      0.30       1.97 r
+  n2262 (net)                    8                   0.00       1.97 r
+  U3607/DIN2 (oai21s1)                     0.58      0.00       1.97 r
+  U3607/Q (oai21s1)                        0.42      0.12       2.09 f
+  n2658 (net)                    1                   0.00       2.09 f
+  U3606/DIN2 (and2s1)                      0.42      0.00       2.09 f
+  U3606/Q (and2s1)                         0.37      0.36       2.45 f
+  n2264 (net)                    6                   0.00       2.45 f
+  U1900/DIN8 (oai2222s3)                   0.37      0.00       2.45 f
+  U1900/Q (oai2222s3)                      0.47      0.54       2.99 r
+  next_fl_entry[17][tag][0] (net)     4              0.00       2.99 r
+  U2359/DIN3 (aoi22s1)                     0.47      0.00       2.99 r
+  U2359/Q (aoi22s1)                        0.38      0.20       3.19 f
+  n1715 (net)                    1                   0.00       3.19 f
+  U2360/DIN4 (nnd4s1)                      0.38      0.00       3.19 f
+  U2360/Q (nnd4s1)                         0.37      0.20       3.39 r
+  n1724 (net)                    1                   0.00       3.39 r
+  U2366/DIN1 (oai21s1)                     0.37      0.00       3.39 r
+  U2366/Q (oai21s1)                        0.31      0.16       3.56 f
+  n1725 (net)                    1                   0.00       3.56 f
+  U2367/DIN2 (nnd2s1)                      0.31      0.00       3.56 f
+  U2367/Q (nnd2s1)                         0.20      0.11       3.67 r
+  N167 (net)                     1                   0.00       3.67 r
+  U3389/DIN1 (nnd2s1)                      0.20      0.00       3.67 r
+  U3389/Q (nnd2s1)                         0.39      0.17       3.84 f
+  n2535 (net)                    5                   0.00       3.84 f
+  U1885/DIN (ib1s1)                        0.39      0.00       3.84 f
+  U1885/Q (ib1s1)                          0.74      0.33       4.17 r
+  fl_dp_o[tag][0][0] (net)       5                   0.00       4.17 r
+  fl_dp_o[tag][0][0] (out)                 0.74      0.02       4.19 r
+  data arrival time                                             4.19
 
   max_delay                                         20.00      20.00
   clock uncertainty                                 -0.10      19.90
@@ -585,14 +591,14 @@ Wire Load Model Mode: top
   data required time                                           19.80
   ---------------------------------------------------------------------
   data required time                                           19.80
-  data arrival time                                            -4.41
+  data arrival time                                            -4.19
   ---------------------------------------------------------------------
-  slack (MET)                                                  15.39
+  slack (MET)                                                  15.61
 
 
   Startpoint: head_reg[0]
               (rising edge-triggered flip-flop clocked by clk_i)
-  Endpoint: fl_dp_o[tag][1][2]
+  Endpoint: fl_dp_o[tag][0][4]
             (output port clocked by clk_i)
   Path Group: output_grp
   Path Type: max
@@ -608,56 +614,56 @@ Wire Load Model Mode: top
   head_plus_one[0] (net)         9                   0.00       0.18 r
   head_reg[0]/Q (dffcs2)                   0.36      0.19       0.37 f
   head_plus_two[0] (net)        12                   0.00       0.37 f
-  U2144/BIN (hadd1s1)                      0.36      0.00       0.37 f
-  U2144/OUTC (hadd1s1)                     0.08      0.22       0.59 f
+  U2160/BIN (hadd1s1)                      0.36      0.00       0.37 f
+  U2160/OUTC (hadd1s1)                     0.08      0.22       0.59 f
   add_62/carry[2] (net)          1                   0.00       0.59 f
-  U2145/BIN (hadd1s1)                      0.08      0.00       0.59 f
-  U2145/OUTC (hadd1s1)                     0.08      0.17       0.76 f
+  U2161/BIN (hadd1s1)                      0.08      0.00       0.59 f
+  U2161/OUTC (hadd1s1)                     0.08      0.17       0.76 f
   add_62/carry[3] (net)          1                   0.00       0.76 f
-  U2146/BIN (hadd1s1)                      0.08      0.00       0.76 f
-  U2146/OUTC (hadd1s1)                     0.09      0.18       0.95 f
+  U2162/BIN (hadd1s1)                      0.08      0.00       0.76 f
+  U2162/OUTC (hadd1s1)                     0.09      0.18       0.95 f
   add_62/carry[4] (net)          1                   0.00       0.95 f
-  U2759/DIN1 (xor2s1)                      0.09      0.00       0.95 f
-  U2759/Q (xor2s1)                         0.20      0.23       1.18 f
+  U2793/DIN1 (xor2s1)                      0.09      0.00       0.95 f
+  U2793/Q (xor2s1)                         0.20      0.23       1.18 f
   head_plus_one[4] (net)         4                   0.00       1.18 f
-  U3501/DIN (hi1s1)                        0.20      0.00       1.18 f
-  U3501/Q (hi1s1)                          0.40      0.19       1.37 r
-  n2603 (net)                    2                   0.00       1.37 r
-  U3500/DIN1 (nor2s1)                      0.40      0.00       1.37 r
-  U3500/Q (nor2s1)                         0.54      0.30       1.67 f
-  n2606 (net)                    8                   0.00       1.67 f
-  U3493/DIN1 (nnd2s1)                      0.54      0.00       1.67 f
-  U3493/Q (nnd2s1)                         0.51      0.26       1.94 r
-  n2242 (net)                    8                   0.00       1.94 r
-  U3490/DIN2 (oai21s1)                     0.51      0.00       1.94 r
-  U3490/Q (oai21s1)                        0.36      0.12       2.05 f
-  n2615 (net)                    1                   0.00       2.05 f
-  U3489/DIN2 (and2s1)                      0.36      0.00       2.05 f
-  U3489/Q (and2s1)                         0.32      0.32       2.38 f
-  n2244 (net)                    6                   0.00       2.38 f
-  U1895/DIN8 (oai2222s2)                   0.32      0.00       2.38 f
-  U1895/Q (oai2222s2)                      0.61      0.65       3.03 r
-  next_fl_entry[17][tag][2] (net)     4              0.00       3.03 r
-  U2402/DIN3 (aoi22s1)                     0.61      0.00       3.03 r
-  U2402/Q (aoi22s1)                        0.42      0.21       3.24 f
-  n1757 (net)                    1                   0.00       3.24 f
-  U2403/DIN4 (nnd4s1)                      0.42      0.00       3.24 f
-  U2403/Q (nnd4s1)                         0.38      0.21       3.45 r
-  n1766 (net)                    1                   0.00       3.45 r
-  U2409/DIN1 (oai21s1)                     0.38      0.00       3.46 r
-  U2409/Q (oai21s1)                        0.30      0.16       3.62 f
-  n1767 (net)                    1                   0.00       3.62 f
-  U2410/DIN2 (nnd2s1)                      0.30      0.00       3.62 f
-  U2410/Q (nnd2s1)                         0.26      0.14       3.76 r
-  N209 (net)                     2                   0.00       3.76 r
-  U3335/DIN4 (aoi22s1)                     0.26      0.00       3.76 r
-  U3335/Q (aoi22s1)                        0.76      0.24       4.00 f
-  n2518 (net)                    5                   0.00       4.00 f
-  U1872/DIN (ib1s1)                        0.76      0.00       4.00 f
-  U1872/Q (ib1s1)                          0.75      0.38       4.38 r
-  fl_dp_o[tag][1][2] (net)       5                   0.00       4.38 r
-  fl_dp_o[tag][1][2] (out)                 0.75      0.02       4.41 r
-  data arrival time                                             4.41
+  U3619/DIN (hi1s1)                        0.20      0.00       1.18 f
+  U3619/Q (hi1s1)                          0.40      0.19       1.37 r
+  n2646 (net)                    2                   0.00       1.37 r
+  U3618/DIN1 (nor2s1)                      0.40      0.00       1.37 r
+  U3618/Q (nor2s1)                         0.54      0.30       1.67 f
+  n2649 (net)                    8                   0.00       1.67 f
+  U3610/DIN1 (nnd2s1)                      0.54      0.00       1.67 f
+  U3610/Q (nnd2s1)                         0.58      0.30       1.97 r
+  n2262 (net)                    8                   0.00       1.97 r
+  U3607/DIN2 (oai21s1)                     0.58      0.00       1.97 r
+  U3607/Q (oai21s1)                        0.42      0.12       2.09 f
+  n2658 (net)                    1                   0.00       2.09 f
+  U3606/DIN2 (and2s1)                      0.42      0.00       2.09 f
+  U3606/Q (and2s1)                         0.37      0.36       2.45 f
+  n2264 (net)                    6                   0.00       2.45 f
+  U1918/DIN8 (oai2222s3)                   0.37      0.00       2.45 f
+  U1918/Q (oai2222s3)                      0.47      0.54       2.99 r
+  next_fl_entry[17][tag][4] (net)     4              0.00       2.99 r
+  U2451/DIN3 (aoi22s1)                     0.47      0.00       2.99 r
+  U2451/Q (aoi22s1)                        0.38      0.20       3.19 f
+  n1803 (net)                    1                   0.00       3.19 f
+  U2452/DIN4 (nnd4s1)                      0.38      0.00       3.19 f
+  U2452/Q (nnd4s1)                         0.37      0.20       3.39 r
+  n1812 (net)                    1                   0.00       3.39 r
+  U2458/DIN1 (oai21s1)                     0.37      0.00       3.39 r
+  U2458/Q (oai21s1)                        0.31      0.16       3.56 f
+  n1813 (net)                    1                   0.00       3.56 f
+  U2459/DIN2 (nnd2s1)                      0.31      0.00       3.56 f
+  U2459/Q (nnd2s1)                         0.20      0.11       3.67 r
+  N163 (net)                     1                   0.00       3.67 r
+  U3385/DIN1 (nnd2s1)                      0.20      0.00       3.67 r
+  U3385/Q (nnd2s1)                         0.39      0.17       3.84 f
+  n2521 (net)                    5                   0.00       3.84 f
+  U1888/DIN (ib1s1)                        0.39      0.00       3.84 f
+  U1888/Q (ib1s1)                          0.73      0.33       4.17 r
+  fl_dp_o[tag][0][4] (net)       5                   0.00       4.17 r
+  fl_dp_o[tag][0][4] (out)                 0.73      0.02       4.19 r
+  data arrival time                                             4.19
 
   max_delay                                         20.00      20.00
   clock uncertainty                                 -0.10      19.90
@@ -665,9 +671,9 @@ Wire Load Model Mode: top
   data required time                                           19.80
   ---------------------------------------------------------------------
   data required time                                           19.80
-  data arrival time                                            -4.41
+  data arrival time                                            -4.19
   ---------------------------------------------------------------------
-  slack (MET)                                                  15.39
+  slack (MET)                                                  15.61
 
 
 1
@@ -678,13 +684,13 @@ Report : constraint
         -max_delay
 Design : freelist
 Version: S-2021.06-SP1
-Date   : Thu Mar 31 19:40:02 2022
+Date   : Thu Mar 31 22:44:07 2022
 ****************************************
 
 
   Startpoint: head_reg[0]
               (rising edge-triggered flip-flop clocked by clk_i)
-  Endpoint: freelist_cam/fl_cam_reg[17][4]
+  Endpoint: freelist_cam/fl_cam_reg[59][4]
             (rising edge-triggered flip-flop clocked by clk_i)
   Path Group: clk_i
   Path Type: max
@@ -700,46 +706,46 @@ Date   : Thu Mar 31 19:40:02 2022
   head_reg[0]/CLK (dffcs2)                                0.00       0.00 r
   head_reg[0]/QN (dffcs2)                                 0.18       0.18 r
   head_reg[0]/Q (dffcs2)                                  0.19       0.37 f
-  U2144/OUTC (hadd1s1)                                    0.22       0.59 f
-  U2145/OUTC (hadd1s1)                                    0.17       0.76 f
-  U2146/OUTC (hadd1s1)                                    0.18       0.95 f
-  U2759/Q (xor2s1)                                        0.23       1.18 f
-  U3501/Q (hi1s1)                                         0.19       1.37 r
-  U3500/Q (nor2s1)                                        0.30       1.67 f
-  U3493/Q (nnd2s1)                                        0.26       1.94 r
-  U3490/Q (oai21s1)                                       0.12       2.05 f
-  U3489/Q (and2s1)                                        0.32       2.38 f
-  U1888/Q (oai2222s2)                                     0.65       3.03 r
-  U2448/Q (aoi22s1)                                       0.21       3.24 f
-  U2449/Q (nnd4s1)                                        0.21       3.46 r
-  U2455/Q (oai21s1)                                       0.17       3.62 f
-  U2456/Q (nnd2s1)                                        0.14       3.76 r
-  U3333/Q (aoi22s1)                                       0.24       4.01 f
-  U1875/Q (ib1s1)                                         0.38       4.39 r
-  U3222/Q (and3s1)                                        0.31       4.70 r
-  U3217/Q (nnd2s1)                                        0.22       4.92 f
-  U3216/Q (oai211s1)                                      0.48       5.40 r
-  U3215/Q (nnd2s1)                                        0.24       5.64 f
-  U2779/Q (oai222s1)                                      0.38       6.02 r
-  freelist_cam/fl_cam_reg[17][4]/DIN (dffs1)              0.01       6.03 r
-  data arrival time                                                  6.03
+  U2160/OUTC (hadd1s1)                                    0.22       0.59 f
+  U2161/OUTC (hadd1s1)                                    0.17       0.76 f
+  U2162/OUTC (hadd1s1)                                    0.18       0.95 f
+  U2793/Q (xor2s1)                                        0.23       1.18 f
+  U3619/Q (hi1s1)                                         0.19       1.37 r
+  U3618/Q (nor2s1)                                        0.30       1.67 f
+  U3610/Q (nnd2s1)                                        0.30       1.97 r
+  U3607/Q (oai21s1)                                       0.12       2.09 f
+  U3606/Q (and2s1)                                        0.36       2.45 f
+  U1918/Q (oai2222s3)                                     0.54       2.99 r
+  U2290/Q (aoi22s1)                                       0.20       3.19 f
+  U2291/Q (nnd4s1)                                        0.21       3.39 r
+  U2297/Q (oai21s1)                                       0.17       3.56 f
+  U2298/Q (nnd2s1)                                        0.11       3.67 r
+  U3379/Q (nnd2s1)                                        0.14       3.81 f
+  U1883/Q (ib1s1)                                         0.30       4.11 r
+  U3085/Q (and3s1)                                        0.33       4.44 r
+  U3072/Q (nnd2s1)                                        0.22       4.66 f
+  U3071/Q (oai211s1)                                      0.48       5.14 r
+  U3070/Q (nnd2s1)                                        0.23       5.36 f
+  U2855/Q (oai222s1)                                      0.37       5.73 r
+  freelist_cam/fl_cam_reg[59][4]/DIN (dffs1)              0.01       5.73 r
+  data arrival time                                                  5.73
 
   clock clk_i (rise edge)                                20.00      20.00
   clock network delay (ideal)                             0.00      20.00
   clock uncertainty                                      -0.10      19.90
-  freelist_cam/fl_cam_reg[17][4]/CLK (dffs1)              0.00      19.90 r
+  freelist_cam/fl_cam_reg[59][4]/CLK (dffs1)              0.00      19.90 r
   library setup time                                     -0.16      19.74
   data required time                                                19.74
   --------------------------------------------------------------------------
   data required time                                                19.74
-  data arrival time                                                 -6.03
+  data arrival time                                                 -5.73
   --------------------------------------------------------------------------
-  slack (MET)                                                       13.71
+  slack (MET)                                                       14.00
 
 
-  Startpoint: rob_fl_i[phy_reg][0][4]
+  Startpoint: rob_fl_i[phy_reg][0][3]
               (input port clocked by clk_i)
-  Endpoint: freelist_cam/fl_cam_reg[17][4]
+  Endpoint: freelist_cam/fl_cam_reg[59][4]
             (rising edge-triggered flip-flop clocked by clk_i)
   Path Group: input_grp
   Path Type: max
@@ -753,45 +759,46 @@ Date   : Thu Mar 31 19:40:02 2022
   clock clk_i (rise edge)                                 0.00       0.00
   clock network delay (ideal)                             0.00       0.00
   input external delay                                    0.10       0.10 f
-  rob_fl_i[phy_reg][0][4] (in)                            0.05       0.15 f
-  U3662/Q (or3s1)                                         0.22       0.37 f
-  U3661/Q (or4s1)                                         0.24       0.60 f
-  U1848/Q (nnd3s2)                                        0.11       0.72 r
-  U2119/Q (ib1s1)                                         0.34       1.05 f
-  U3633/Q (nor2s1)                                        0.32       1.37 r
-  U3632/Q (hi1s1)                                         0.95       2.33 f
-  U3489/Q (and2s1)                                        0.57       2.90 f
-  U1888/Q (oai2222s2)                                     0.65       3.55 r
-  U2448/Q (aoi22s1)                                       0.21       3.77 f
-  U2449/Q (nnd4s1)                                        0.21       3.98 r
-  U2455/Q (oai21s1)                                       0.17       4.15 f
-  U2456/Q (nnd2s1)                                        0.14       4.28 r
-  U3333/Q (aoi22s1)                                       0.24       4.53 f
-  U1875/Q (ib1s1)                                         0.38       4.91 r
-  U3222/Q (and3s1)                                        0.31       5.22 r
-  U3217/Q (nnd2s1)                                        0.22       5.44 f
-  U3216/Q (oai211s1)                                      0.48       5.92 r
-  U3215/Q (nnd2s1)                                        0.24       6.16 f
-  U2779/Q (oai222s1)                                      0.38       6.54 r
-  freelist_cam/fl_cam_reg[17][4]/DIN (dffs1)              0.01       6.55 r
-  data arrival time                                                  6.55
+  rob_fl_i[phy_reg][0][3] (in)                            0.13       0.23 f
+  U3697/Q (or3s1)                                         0.20       0.42 f
+  U3696/Q (or4s1)                                         0.21       0.63 f
+  U3691/Q (and3s1)                                        0.28       0.91 f
+  U2097/Q (ib1s1)                                         0.10       1.01 r
+  U2142/Q (ib1s1)                                         0.34       1.35 f
+  U3690/Q (nor2s1)                                        0.32       1.67 r
+  U3689/Q (hi1s1)                                         0.96       2.62 f
+  U3606/Q (and2s1)                                        0.60       3.23 f
+  U1918/Q (oai2222s3)                                     0.54       3.77 r
+  U2290/Q (aoi22s1)                                       0.20       3.96 f
+  U2291/Q (nnd4s1)                                        0.21       4.17 r
+  U2297/Q (oai21s1)                                       0.17       4.33 f
+  U2298/Q (nnd2s1)                                        0.11       4.44 r
+  U3379/Q (nnd2s1)                                        0.14       4.59 f
+  U1883/Q (ib1s1)                                         0.30       4.89 r
+  U3085/Q (and3s1)                                        0.33       5.21 r
+  U3072/Q (nnd2s1)                                        0.22       5.43 f
+  U3071/Q (oai211s1)                                      0.48       5.91 r
+  U3070/Q (nnd2s1)                                        0.23       6.14 f
+  U2855/Q (oai222s1)                                      0.37       6.50 r
+  freelist_cam/fl_cam_reg[59][4]/DIN (dffs1)              0.01       6.51 r
+  data arrival time                                                  6.51
 
   clock clk_i (rise edge)                                20.00      20.00
   clock network delay (ideal)                             0.00      20.00
   clock uncertainty                                      -0.10      19.90
-  freelist_cam/fl_cam_reg[17][4]/CLK (dffs1)              0.00      19.90 r
+  freelist_cam/fl_cam_reg[59][4]/CLK (dffs1)              0.00      19.90 r
   library setup time                                     -0.16      19.74
   data required time                                                19.74
   --------------------------------------------------------------------------
   data required time                                                19.74
-  data arrival time                                                 -6.55
+  data arrival time                                                 -6.51
   --------------------------------------------------------------------------
-  slack (MET)                                                       13.19
+  slack (MET)                                                       13.23
 
 
   Startpoint: head_reg[0]
               (rising edge-triggered flip-flop clocked by clk_i)
-  Endpoint: fl_dp_o[tag][1][4]
+  Endpoint: fl_dp_o[tag][0][0]
             (output port clocked by clk_i)
   Path Group: output_grp
   Path Type: max
@@ -805,24 +812,24 @@ Date   : Thu Mar 31 19:40:02 2022
   head_reg[0]/CLK (dffcs2)                 0.00       0.00 r
   head_reg[0]/QN (dffcs2)                  0.18       0.18 r
   head_reg[0]/Q (dffcs2)                   0.19       0.37 f
-  U2144/OUTC (hadd1s1)                     0.22       0.59 f
-  U2145/OUTC (hadd1s1)                     0.17       0.76 f
-  U2146/OUTC (hadd1s1)                     0.18       0.95 f
-  U2759/Q (xor2s1)                         0.23       1.18 f
-  U3501/Q (hi1s1)                          0.19       1.37 r
-  U3500/Q (nor2s1)                         0.30       1.67 f
-  U3493/Q (nnd2s1)                         0.26       1.94 r
-  U3490/Q (oai21s1)                        0.12       2.05 f
-  U3489/Q (and2s1)                         0.32       2.38 f
-  U1888/Q (oai2222s2)                      0.65       3.03 r
-  U2448/Q (aoi22s1)                        0.21       3.24 f
-  U2449/Q (nnd4s1)                         0.21       3.46 r
-  U2455/Q (oai21s1)                        0.17       3.62 f
-  U2456/Q (nnd2s1)                         0.14       3.76 r
-  U3333/Q (aoi22s1)                        0.24       4.01 f
-  U1875/Q (ib1s1)                          0.38       4.39 r
-  fl_dp_o[tag][1][4] (out)                 0.02       4.41 r
-  data arrival time                                   4.41
+  U2160/OUTC (hadd1s1)                     0.22       0.59 f
+  U2161/OUTC (hadd1s1)                     0.17       0.76 f
+  U2162/OUTC (hadd1s1)                     0.18       0.95 f
+  U2793/Q (xor2s1)                         0.23       1.18 f
+  U3619/Q (hi1s1)                          0.19       1.37 r
+  U3618/Q (nor2s1)                         0.30       1.67 f
+  U3610/Q (nnd2s1)                         0.30       1.97 r
+  U3607/Q (oai21s1)                        0.12       2.09 f
+  U3606/Q (and2s1)                         0.36       2.45 f
+  U1900/Q (oai2222s3)                      0.54       2.99 r
+  U2359/Q (aoi22s1)                        0.20       3.19 f
+  U2360/Q (nnd4s1)                         0.21       3.39 r
+  U2366/Q (oai21s1)                        0.17       3.56 f
+  U2367/Q (nnd2s1)                         0.11       3.67 r
+  U3389/Q (nnd2s1)                         0.17       3.84 f
+  U1885/Q (ib1s1)                          0.33       4.17 r
+  fl_dp_o[tag][0][0] (out)                 0.02       4.19 r
+  data arrival time                                   4.19
 
   max_delay                               20.00      20.00
   clock uncertainty                       -0.10      19.90
@@ -830,9 +837,9 @@ Date   : Thu Mar 31 19:40:02 2022
   data required time                                 19.80
   -----------------------------------------------------------
   data required time                                 19.80
-  data arrival time                                  -4.41
+  data arrival time                                  -4.19
   -----------------------------------------------------------
-  slack (MET)                                        15.39
+  slack (MET)                                        15.61
 
 
 1
@@ -842,7 +849,7 @@ Information: Updating graph... (UID-83)
 Report : reference
 Design : freelist
 Version: S-2021.06-SP1
-Date   : Thu Mar 31 19:40:03 2022
+Date   : Thu Mar 31 22:44:08 2022
 ****************************************
 
 Attributes:
@@ -862,43 +869,38 @@ and2s1             lec25dscc25_TT    49.766399      59  2936.217564
 and2s2             lec25dscc25_TT    58.060799      32  1857.945557
 and2s3             lec25dscc25_TT    99.532799      10   995.327988
 and3s1             lec25dscc25_TT    66.355202      31  2057.011253
-and4s3             lec25dscc25_TT   124.416000       1   124.416000
 aoai122s1          lec25dscc25_TT    74.649597       1    74.649597
-aoi13s1            lec25dscc25_TT    58.060799       1    58.060799
-aoi22s1            lec25dscc25_TT    58.060799     358 20785.765915
+aoi22s1            lec25dscc25_TT    58.060799     363 21076.069908
 aoi222s1           lec25dscc25_TT    82.944000       5   414.720001
 dffcs1             lec25dscc25_TT   165.888000      75 12441.600037 n
 dffcs2             lec25dscc25_TT   182.477005       9  1642.293045 n
 dffles2            lec25dscc25_TT   215.654007       6  1293.924042 n
-dffs1              lec25dscc25_TT   157.593994     320 50430.078125 n
-dffs2              lec25dscc25_TT   174.182007     112 19508.384766 n
-dsmxc31s1          lec25dscc25_TT    66.355202       2   132.710403
+dffs1              lec25dscc25_TT   157.593994     321 50587.672119 n
+dffs2              lec25dscc25_TT   174.182007     111 19334.202759 n
 dsmxc31s2          lec25dscc25_TT    66.355202       5   331.776009
 hadd1s1            lec25dscc25_TT    62.181000       6   373.085999 r
-hi1s1              lec25dscc25_TT    33.177601      47  1559.347240
-i1s1               lec25dscc25_TT    33.177601       7   232.243206
+hi1s1              lec25dscc25_TT    33.177601      51  1692.057644
+i1s1               lec25dscc25_TT    33.177601       6   199.065605
+i1s3               lec25dscc25_TT    41.472000       1    41.472000
 ib1s1              lec25dscc25_TT    33.177601      56  1857.945648
-mxi21s1            lec25dscc25_TT    66.355202       1    66.355202
-nnd2s1             lec25dscc25_TT    41.472000     219  9082.368027
-nnd2s2             lec25dscc25_TT    41.472000      30  1244.160004
-nnd3s1             lec25dscc25_TT    49.766399      21  1045.094387
-nnd3s2             lec25dscc25_TT    49.766399       1    49.766399
-nnd4s1             lec25dscc25_TT    58.060799      94  5457.715073
-nor2s1             lec25dscc25_TT    41.472000      34  1410.048004
+mxi21s1            lec25dscc25_TT    66.355202       5   331.776009
+nnd2s1             lec25dscc25_TT    41.472000     222  9206.784027
+nnd2s2             lec25dscc25_TT    41.472000      55  2280.960007
+nnd3s1             lec25dscc25_TT    49.766399      20   995.327988
+nnd4s1             lec25dscc25_TT    58.060799      95  5515.775871
+nor2s1             lec25dscc25_TT    41.472000      33  1368.576004
+nor5s1             lec25dscc25_TT    99.532799       1    99.532799
 oai21s1            lec25dscc25_TT    49.766399      77  3832.012753
-oai21s2            lec25dscc25_TT    49.766399       1    49.766399
-oai22s2            lec25dscc25_TT    58.060799       4   232.243195
+oai21s2            lec25dscc25_TT    49.766399       5   248.831997
 oai211s1           lec25dscc25_TT    58.060799      63  3657.830315
 oai222s1           lec25dscc25_TT    82.944000     320 26542.080078
-oai222s3           lec25dscc25_TT   107.827003       3   323.481010
-oai2222s2          lec25dscc25_TT   132.710007      81 10749.510544
-oai2222s3          lec25dscc25_TT   132.710007     111 14730.810745
-or2s1              lec25dscc25_TT    49.766399     112  5573.836731
+oai2222s3          lec25dscc25_TT   132.710007     192 25480.321289
+or2s1              lec25dscc25_TT    49.766399     111  5524.070332
 or3s1              lec25dscc25_TT    58.060799       2   116.121597
 or4s1              lec25dscc25_TT    82.944000       2   165.888000
-or5s2              lec25dscc25_TT   132.710007       1   132.710007
-xnr2s1             lec25dscc25_TT    82.944000       8   663.552002
-xor2s1             lec25dscc25_TT    82.944000      10   829.440002
+or5s1              lec25dscc25_TT    91.238403       1    91.238403
+xnr2s1             lec25dscc25_TT    82.944000       5   414.720001
+xor2s1             lec25dscc25_TT    82.944000      13  1078.272003
 -----------------------------------------------------------------------------
-Total 41 references                                 205062.293667
+Total 36 references                                 206157.156246
 1

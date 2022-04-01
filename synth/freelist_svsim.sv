@@ -22,8 +22,7 @@ module freelist_svsim #(
 
 	input DP_FL dp_fl_i,
     input ROB_FL rob_fl_i,
-	input ROB_VFL    vfl_i,
-
+	
      
 	output FL_ENTRY   [C_FL_ENTRY_NUM-1:0]   fl_entry, next_fl_entry,
 	output logic   [C_FL_IDX-1:0]                 		fl_rollback_idx,
@@ -41,7 +40,7 @@ module freelist_svsim #(
     
 
   freelist freelist( {>>{ clk_i }}, {>>{ rst_i }}, {>>{ rollback_i }}, 
-        {>>{ dp_fl_i }}, {>>{ rob_fl_i }}, {>>{ vfl_i }}, {>>{ fl_entry }}, 
+        {>>{ dp_fl_i }}, {>>{ rob_fl_i }}, {>>{ fl_entry }}, 
         {>>{ next_fl_entry }}, {>>{ fl_rollback_idx }}, {>>{ head }}, 
         {>>{ next_head }}, {>>{ tail }}, {>>{ next_tail }}, {>>{ fl_idx }}, 
         {>>{ fl_dp_o }} );

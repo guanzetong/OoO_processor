@@ -14,7 +14,7 @@ module freelist #(
 
 	input DP_FL dp_fl_i,
     input ROB_FL rob_fl_i,
-	input ROB_VFL    vfl_i,
+	// input ROB_VFL    vfl_i,
 
     `ifdef DEBUG
 	output FL_ENTRY   [C_FL_ENTRY_NUM-1:0]   fl_entry, next_fl_entry,
@@ -45,7 +45,7 @@ module freelist #(
 
 	logic first_rd_nz;
 	logic second_rd_nz;
-	logic second_told_nz;
+	logic [C_PHY_IDX-1:0]  retire_tag_sel;
 
 
     assign first_rd_nz = (rob_fl_i.phy_reg[0] != `ZERO_PREG);
@@ -64,11 +64,11 @@ module freelist #(
 
     assign fl_dp_o.avail_num = 	(next_head == tail)? 2'b00:		//no preg available
 						        (next_head == tail_plus_one) ? 2'b01:	// one available
-						                        2'b11;					// both available
+						                        2'b10;					// both available
 	
 	// dispatch logic 
     always_comb begin
-		if (first_rd_nz && second_rd_nz && (dp_fl_i.dp_num == 2'b11)) begin
+		if (first_rd_nz && second_rd_nz && (dp_fl_i.dp_num == 2'b10)) begin
 			dp_tail = tail_plus_two;
 			fl_dp_o.tag = {next_fl_entry[tail_plus_one], next_fl_entry[tail]};
 			fl_idx = {tail_plus_two, tail_plus_one};
@@ -76,11 +76,13 @@ module freelist #(
 			dp_tail = tail_plus_one;
 			fl_dp_o.tag = {`ZERO_PREG, next_fl_entry[tail]};
 			fl_idx = {tail_plus_one, tail_plus_one};
-		end else if (second_rd_nz && (dp_fl_i.dp_num == 2'b10)) begin
-			dp_tail = tail_plus_one;
-			fl_dp_o.tag = {next_fl_entry[tail], `ZERO_PREG};
-			fl_idx = {tail_plus_one, tail};
-		end else begin
+		end 
+		// else if (second_rd_nz && (dp_fl_i.dp_num == 2'b10)) begin
+		// 	dp_tail = tail_plus_one;
+		// 	fl_dp_o.tag = {next_fl_entry[tail], `ZERO_PREG};
+		// 	fl_idx = {tail_plus_one, tail};
+		// end 
+		else begin
 			dp_tail = tail;
 			fl_dp_o.tag = {`ZERO_PREG, `ZERO_PREG};
 			fl_idx = {tail, tail};
@@ -91,19 +93,24 @@ module freelist #(
 	// retire logic
     always_comb begin
 		next_fl_entry = fl_entry;
-		unique if (first_rd_nz && second_rd_nz && (rob_fl_i.rt_num == 2'b11)) begin
+		unique if (first_rd_nz && second_rd_nz && (rob_fl_i.rt_num == 2'b10)) begin
 			next_fl_entry[head].tag = rob_fl_i.phy_reg[0];
 			next_fl_entry[head_plus_one].tag = rob_fl_i.phy_reg[1];
+			retire_tag_sel = rob_fl_i.tag[1];
 			rt_head = head_plus_two;
 		end else if (first_rd_nz  && (rob_fl_i.rt_num == 2'b01)) begin
 			next_fl_entry[head].tag = rob_fl_i.phy_reg[0];
+			retire_tag_sel = rob_fl_i.tag[0];
 			rt_head = head_plus_one;
-		end else if (second_told_nz && (rob_fl_i.rt_num == 2'b10)) begin
-			next_fl_entry[head].tag = rob_fl_i.phy_reg[1];
-			rt_head = head_plus_one;
-		end else begin
+		end 
+		// else if (second_told_nz && (rob_fl_i.rt_num == 2'b10)) begin
+		// 	next_fl_entry[head].tag = rob_fl_i.phy_reg[1];
+		// 	rt_head = head_plus_one;
+		// end 
+		else begin
 			rt_head = head;
 			next_fl_entry = fl_entry;
+			retire_tag_sel = 0;
 		end
 	end
 
@@ -129,7 +136,7 @@ module freelist #(
 	fl_cam freelist_cam(
 		.clock(clk_i),
 		.reset(rst_i),
-		.vfl_i(vfl_i),
+		.retire_tag(retire_tag_sel),
 		.fl_idx(fl_idx),
 		.fl_dp_i(fl_dp_o),
 		.fl_rollback_idx(fl_rollback_idx)
@@ -146,8 +153,8 @@ module fl_cam #(
     parameter C_PHY_REG_NUM = `PHY_REG_NUM,
 	parameter C_PHY_IDX = `TAG_IDX_WIDTH
 ) (
-    input   clock, reset,
-    input   ROB_VFL    vfl_i,  
+    input   logic clock, reset,
+    input   logic   [C_PHY_IDX-1:0]  retire_tag,  
 	input FL_DP fl_dp_i,				//destination register
 	input   [C_DP_NUM-1:0] [C_FL_IDX-1:0]    fl_idx,
 
@@ -163,7 +170,7 @@ module fl_cam #(
         next_fl_cam[fl_dp_i.tag[1]] = fl_idx[1];
     end
 
-    assign fl_rollback_idx = fl_cam[vfl_i.tag];
+    assign fl_rollback_idx = fl_cam[retire_tag];
 
 
     always_ff @(posedge clock) begin

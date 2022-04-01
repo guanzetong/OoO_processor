@@ -507,6 +507,7 @@ typedef struct packed {
 typedef struct packed {
     logic   [`RT_NUM_WIDTH-1:0]                     rt_num      ;
     logic   [`RT_NUM-1:0][`TAG_IDX_WIDTH-1:0]       phy_reg     ;
+    logic   [`RT_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag     ;
 } ROB_FL; // Combined
 
 // typedef struct packed {
