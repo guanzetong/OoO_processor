@@ -345,9 +345,6 @@ module ROB # (
 // ROB update to free list and architecture map table
 // --------------------------------------------------------------------
     always_comb begin
-        if (conditions) begin
-            
-        end
         rob_fl_o.rt_num =   rt_num;
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             if (head + idx >= C_ROB_ENTRY_NUM) begin
