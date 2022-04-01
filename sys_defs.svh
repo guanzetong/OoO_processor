@@ -518,14 +518,14 @@ typedef struct packed {
     logic   [`RT_NUM-1:0][`TAG_IDX_WIDTH-1:0]       phy_reg     ;
 } ROB_FL; // Combined
 
-// typedef struct packed {
-//     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs1         ;
-//     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs2         ;
-//     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rd          ;
-//     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-//     logic                                           wr_en       ;
-//     logic                                           thread_idx  ;
-// } DP_MT; // Per-Channel
+typedef struct packed {
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs1         ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs2         ;
+    logic   [`ARCH_REG_IDX_WIDTH-1:0]               rd          ;
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    logic                                           wr_en       ;
+    logic                                           thread_idx  ;
+} DP_MT; // Per-Channel
 
 typedef struct packed {
     logic   [`ARCH_REG_IDX_WIDTH-1:0]               rs1          ;   // used to index mt entry for source register 1

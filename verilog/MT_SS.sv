@@ -39,22 +39,22 @@ module MT_SS #(
         // Loop over the Dispatch channels
         for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
             // Use the latched tag and tag_ready by default
-            mt_dp[dp_idx].tag1          =   mt_entry[dp_mt[dp_idx].rs1].tag;
-            mt_dp[dp_idx].tag1_ready    =   mt_entry[dp_mt[dp_idx].rs1].tag_ready;
-            mt_dp[dp_idx].tag2          =   mt_entry[dp_mt[dp_idx].rs2].tag;
-            mt_dp[dp_idx].tag2_ready    =   mt_entry[dp_mt[dp_idx].rs2].tag_ready;
-            mt_dp[dp_idx].tag_old       =   mt_entry[dp_mt[dp_idx].rd].tag;
+            mt_dp_o[dp_idx].tag1          =   mt_entry[dp_mt_i[dp_idx].rs1].tag;
+            mt_dp_o[dp_idx].tag1_ready    =   mt_entry[dp_mt_i[dp_idx].rs1].tag_ready;
+            mt_dp_o[dp_idx].tag2          =   mt_entry[dp_mt_i[dp_idx].rs2].tag;
+            mt_dp_o[dp_idx].tag2_ready    =   mt_entry[dp_mt_i[dp_idx].rs2].tag_ready;
+            mt_dp_o[dp_idx].tag_old       =   mt_entry[dp_mt_i[dp_idx].rd].tag;
 
             // Check CDB.tag to forward tag_ready
             for (int unsigned cp_idx = 0; cp_idx < C_CDB_NUM; cp_idx++) begin
                 if (cdb_i[cp_idx].valid && (cdb_i[cp_idx].tag != `ZERO_REG)) begin
                     // Compare "tag1" of this channel to "tag" of a CDB channel
-                    if (cdb_i[cp_idx].tag == mt_dp[dp_idx].tag1) begin
-                        mt_dp[dp_idx].tag1_ready    =   1'b1;
+                    if (cdb_i[cp_idx].tag == mt_dp_o[dp_idx].tag1) begin
+                        mt_dp_o[dp_idx].tag1_ready  =   1'b1;
                     end
                     // Compare "tag2" of this channel to "tag" of a CDB channel
-                    if (cdb_i[cp_idx].tag == mt_dp[dp_idx].tag2) begin
-                        mt_dp[dp_idx].tag2_ready    =   1'b1;
+                    if (cdb_i[cp_idx].tag == mt_dp_o[dp_idx].tag2) begin
+                        mt_dp_o[dp_idx].tag2_ready  =   1'b1;
                     end
                 end
             end
@@ -64,21 +64,21 @@ module MT_SS #(
                 // Check the older Dispatch channels
                 if (rd_idx < dp_idx) begin
                     // Compare "rs1" of this channel to "rd" of the older channel
-                    if ((dp_mt[dp_idx].rs1 != `ZERO_REG) && (dp_mt[dp_idx].rs1 == dp_mt[rd_idx].rd)
-                    && (dp_mt[rd_idx].wr_en == 1'b1)) begin
-                        mt_dp[dp_idx].tag1          =   dp_mt[rd_idx].tag;
-                        mt_dp[dp_idx].tag1_ready    =   1'b0;
+                    if ((dp_mt_i[dp_idx].rs1 != `ZERO_REG) && (dp_mt_i[dp_idx].rs1 == dp_mt_i[rd_idx].rd)
+                    && (dp_mt_i[rd_idx].wr_en == 1'b1)) begin
+                        mt_dp_o[dp_idx].tag1        =   dp_mt_i[rd_idx].tag;
+                        mt_dp_o[dp_idx].tag1_ready  =   1'b0;
                     end
                     // Compare "rs2" of this channel to "rd" of the older channel
-                    if ((dp_mt[dp_idx].rs2 != `ZERO_REG) && (dp_mt[dp_idx].rs2 == dp_mt[rd_idx].rd)
-                    && (dp_mt[rd_idx].wr_en == 1'b1)) begin
-                        mt_dp[dp_idx].tag2          =   dp_mt[rd_idx].tag;
-                        mt_dp[dp_idx].tag2_ready    =   1'b0;
+                    if ((dp_mt_i[dp_idx].rs2 != `ZERO_REG) && (dp_mt_i[dp_idx].rs2 == dp_mt_i[rd_idx].rd)
+                    && (dp_mt_i[rd_idx].wr_en == 1'b1)) begin
+                        mt_dp_o[dp_idx].tag2        =   dp_mt_i[rd_idx].tag;
+                        mt_dp_o[dp_idx].tag2_ready  =   1'b0;
                     end
                     // Compare "rd" of this channel to "rd" of the older channel
-                    if ((dp_mt[dp_idx].rd != `ZERO_REG) && (dp_mt[dp_idx].rd == dp_mt[rd_idx].rd)
-                    && (dp_mt[rd_idx].wr_en == 1'b1)) begin
-                        mt_dp[dp_idx].tag_old       =   dp_mt[rd_idx].tag;
+                    if ((dp_mt_i[dp_idx].rd != `ZERO_REG) && (dp_mt_i[dp_idx].rd == dp_mt_i[rd_idx].rd)
+                    && (dp_mt_i[rd_idx].wr_en == 1'b1)) begin
+                        mt_dp_o[dp_idx].tag_old     =   dp_mt_i[rd_idx].tag;
                     end
                 end
             end
@@ -107,8 +107,8 @@ module MT_SS #(
             for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
                 // Compare "tag" of this entry to "tag" of Dispatch channels
                 // Pick the "tag" of the newest match
-                if ((dp_mt[dp_idx].wr_en == 1'b1) && (dp_mt[dp_idx].rd == entry_idx)) begin
-                    next_mt_entry[entry_idx].tag        =   dp_mt[dp_idx].tag;
+                if ((dp_mt_i[dp_idx].wr_en == 1'b1) && (dp_mt_i[dp_idx].rd == entry_idx)) begin
+                    next_mt_entry[entry_idx].tag        =   dp_mt_i[dp_idx].tag;
                     next_mt_entry[entry_idx].tag_ready  =   1'b0;
                 end
             end
@@ -127,7 +127,7 @@ module MT_SS #(
                 mt_entry[entry_idx].tag_ready   <=  `SD 1'b1;
             // Rollback
             end else if (rollback_i) begin
-                mt_entry[entry_idx].tag         <=  `SD amt_i[entry_idx].tag;
+                mt_entry[entry_idx].tag         <=  `SD amt_i[entry_idx].amt_tag;
                 mt_entry[entry_idx].tag_ready   <=  `SD 1'b1;
             // Update entries
             end else begin

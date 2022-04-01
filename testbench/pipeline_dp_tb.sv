@@ -1,3 +1,40 @@
+function void print_rob(ROB_ENTRY [`ROB_ENTRY_NUM-1:0] rob_mon);
+    $display("T=%0t ROB Contents", $time);
+    $display("Index\t|valid\t|PC\t|rd\t|tag_old\t|tag\t|br_predict\t|br_result\t|br_target\t|complete");
+    for (int entry_idx = 0; entry_idx < `ROB_ENTRY_NUM; entry_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t\t|%0d\t|%0d\t\t|%0d\t\t|%0d\t\t|%0d",
+        entry_idx                       ,
+        rob_mon[entry_idx].valid        ,
+        rob_mon[entry_idx].pc           ,
+        rob_mon[entry_idx].rd           ,
+        rob_mon[entry_idx].tag_old      ,
+        rob_mon[entry_idx].tag          ,
+        rob_mon[entry_idx].br_predict   ,
+        rob_mon[entry_idx].br_result    ,
+        rob_mon[entry_idx].br_target    ,
+        rob_mon[entry_idx].complete     
+        );
+    end
+endfunction
+
+function void print_rs(RS_ENTRY [`RS_ENTRY_NUM-1:0] rs_mon);
+    $display("T=%0t RS Contents", $time);
+    $display("Index\t|valid\t|PC\t|tag\t|tag1\t|ready\t|tag2\t|ready\t|rob_idx");
+    for (int entry_idx = 0; entry_idx < `RS_ENTRY_NUM; entry_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d",
+        entry_idx                               ,
+        rs_mon[entry_idx].valid                 ,
+        rs_mon[entry_idx].dec_inst.pc           ,
+        rs_mon[entry_idx].dec_inst.tag          ,
+        rs_mon[entry_idx].dec_inst.tag1         ,
+        rs_mon[entry_idx].dec_inst.tag1_ready   ,
+        rs_mon[entry_idx].dec_inst.tag2         ,
+        rs_mon[entry_idx].dec_inst.tag2_ready   ,
+        rs_mon[entry_idx].dec_inst.rob_idx      
+        );
+    end
+endfunction
+
 // ====================================================================
 // Transaction Object Start
 // ====================================================================
@@ -116,6 +153,9 @@ class monitor;
                     wfi_pc  =   vif.dp_rs_mon_o.dec_inst[dp_idx].pc;
                 end
             end
+
+            print_rob(vif.rob_mon_o);
+
 
             for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
                 if (vif.rt_valid_o[rt_idx]
@@ -348,6 +388,8 @@ module pipeline_dp_tb;
 
         // Because multiple components and clock are running
         // in the background, we need to call $finish explicitly
+        // print_rob(_if.rob_mon_o);
+        print_rs(_if.rs_mon_o);
         $display("@@PASSED");
         #50 $finish;
     end
