@@ -1,14 +1,14 @@
 # Begin_DVE_Session_Save_Info
 # DVE full session
-# Saved on Thu Mar 31 18:26:15 2022
+# Saved on Thu Mar 31 23:39:29 2022
 # Designs open: 1
 #   Sim: simv
 # Toplevel windows open: 2
 # 	TopLevel.1
 # 	TopLevel.2
 #   Source.1: pipeline_dp_tb
-#   Wave.1: 92 signals
-#   Group count = 16
+#   Wave.1: 29 signals
+#   Group count = 18
 #   Group FL_inst signal count = 16
 #   Group DP_inst signal count = 27
 #   Group ROB_inst signal count = 49
@@ -21,10 +21,7 @@
 #   Group MULT_channel signal count = 20
 #   Group mult_comb_module signal count = 10
 #   Group IB_inst signal count = 31
-#   Group DP_inst_1 signal count = 27
-#   Group MT_inst signal count = 15
-#   Group Group1 signal count = 1
-#   Group ROB_inst_1 signal count = 49
+#   Group DP_inst_1 signal count = 22
 # End_DVE_Session_Save_Info
 
 # DVE version: R-2020.12-SP2-1_Full64
@@ -83,7 +80,7 @@ if {![gui_exist_window -window TopLevel.1]} {
 } else { 
     set TopLevel.1 TopLevel.1
 }
-gui_show_window -window ${TopLevel.1} -show_state normal -rect {{205 151} {1726 934}}
+gui_show_window -window ${TopLevel.1} -show_state normal -rect {{205 191} {1724 972}}
 
 # ToolBar settings
 gui_set_toolbar_attributes -toolbar {TimeOperations} -dock_state top
@@ -130,28 +127,28 @@ gui_show_toolbar -toolbar {Testbench}
 # End ToolBar settings
 
 # Docked window settings
-set HSPane.1 [gui_create_window -type HSPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 233]
+set HSPane.1 [gui_create_window -type HSPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 231]
 catch { set Hier.1 [gui_share_window -id ${HSPane.1} -type Hier] }
 catch { set Stack.1 [gui_share_window -id ${HSPane.1} -type Stack -silent] }
 catch { set Class.1 [gui_share_window -id ${HSPane.1} -type Class -silent] }
 catch { set Object.1 [gui_share_window -id ${HSPane.1} -type Object -silent] }
-gui_set_window_pref_key -window ${HSPane.1} -key dock_width -value_type integer -value 233
+gui_set_window_pref_key -window ${HSPane.1} -key dock_width -value_type integer -value 231
 gui_set_window_pref_key -window ${HSPane.1} -key dock_height -value_type integer -value -1
 gui_set_window_pref_key -window ${HSPane.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${HSPane.1} {{left 0} {top 0} {width 232} {height 529} {dock_state left} {dock_on_new_line true} {child_hier_colhier 193} {child_hier_coltype 83} {child_hier_colpd 0} {child_hier_col1 0} {child_hier_col2 1} {child_hier_col3 -1}}
-set DLPane.1 [gui_create_window -type DLPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 343]
+gui_update_layout -id ${HSPane.1} {{left 0} {top 0} {width 230} {height 529} {dock_state left} {dock_on_new_line true} {child_hier_colhier 193} {child_hier_coltype 83} {child_hier_colpd 0} {child_hier_col1 0} {child_hier_col2 1} {child_hier_col3 -1}}
+set DLPane.1 [gui_create_window -type DLPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 341]
 catch { set Data.1 [gui_share_window -id ${DLPane.1} -type Data] }
 catch { set Local.1 [gui_share_window -id ${DLPane.1} -type Local -silent] }
 catch { set Member.1 [gui_share_window -id ${DLPane.1} -type Member -silent] }
-gui_set_window_pref_key -window ${DLPane.1} -key dock_width -value_type integer -value 343
+gui_set_window_pref_key -window ${DLPane.1} -key dock_width -value_type integer -value 341
 gui_set_window_pref_key -window ${DLPane.1} -key dock_height -value_type integer -value 529
 gui_set_window_pref_key -window ${DLPane.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${DLPane.1} {{left 0} {top 0} {width 342} {height 529} {dock_state left} {dock_on_new_line true} {child_data_colvariable 196} {child_data_colvalue 103} {child_data_coltype 101} {child_data_col1 0} {child_data_col2 1} {child_data_col3 2}}
-set Console.1 [gui_create_window -type Console -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line true -dock_extent 156]
+gui_update_layout -id ${DLPane.1} {{left 0} {top 0} {width 340} {height 529} {dock_state left} {dock_on_new_line true} {child_data_colvariable 196} {child_data_colvalue 103} {child_data_coltype 101} {child_data_col1 0} {child_data_col2 1} {child_data_col3 2}}
+set Console.1 [gui_create_window -type Console -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line true -dock_extent 154]
 gui_set_window_pref_key -window ${Console.1} -key dock_width -value_type integer -value 1532
-gui_set_window_pref_key -window ${Console.1} -key dock_height -value_type integer -value 156
+gui_set_window_pref_key -window ${Console.1} -key dock_height -value_type integer -value 154
 gui_set_window_pref_key -window ${Console.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${Console.1} {{left 0} {top 0} {width 1521} {height 155} {dock_state bottom} {dock_on_new_line true}}
+gui_update_layout -id ${Console.1} {{left 0} {top 0} {width 1519} {height 153} {dock_state bottom} {dock_on_new_line true}}
 #### Start - Readjusting docked view's offset / size
 set dockAreaList { top left right bottom }
 foreach dockArea $dockAreaList {
@@ -188,7 +185,7 @@ if {![gui_exist_window -window TopLevel.2]} {
 } else { 
     set TopLevel.2 TopLevel.2
 }
-gui_show_window -window ${TopLevel.2} -show_state normal -rect {{100 263} {1641 1080}}
+gui_show_window -window ${TopLevel.2} -show_state maximized -rect {{100 324} {1827 1231}}
 
 # ToolBar settings
 gui_set_toolbar_attributes -toolbar {TimeOperations} -dock_state top
@@ -240,7 +237,7 @@ gui_sync_global -id ${TopLevel.2} -option true
 # MDI window settings
 set Wave.1 [gui_create_window -type {Wave}  -parent ${TopLevel.2}]
 gui_show_window -window ${Wave.1} -show_state maximized
-gui_update_layout -id ${Wave.1} {{show_state maximized} {dock_state undocked} {dock_on_new_line false} {child_wave_left 448} {child_wave_right 1088} {child_wave_colname 196} {child_wave_colvalue 248} {child_wave_col1 0} {child_wave_col2 1}}
+gui_update_layout -id ${Wave.1} {{show_state maximized} {dock_state undocked} {dock_on_new_line false} {child_wave_left 502} {child_wave_right 1220} {child_wave_colname 213} {child_wave_colvalue 285} {child_wave_col1 0} {child_wave_col2 1}}
 
 # End MDI window settings
 
@@ -292,7 +289,6 @@ gui_load_child_values {pipeline_dp_tb.dut.DP_inst}
 gui_load_child_values {pipeline_dp_tb.dut.IB_inst.ALU_channel}
 gui_load_child_values {pipeline_dp_tb.dut.IB_inst}
 gui_load_child_values {pipeline_dp_tb.dut.FU_inst.mult_unit[0].mult_comb_module}
-gui_load_child_values {pipeline_dp_tb.dut}
 gui_load_child_values {pipeline_dp_tb.dut.FU_inst.alu_unit[0]}
 gui_load_child_values {pipeline_dp_tb.dut.IB_inst.MULT_channel}
 gui_load_child_values {pipeline_dp_tb.dut.FU_inst}
@@ -300,7 +296,6 @@ gui_load_child_values {pipeline_dp_tb.dut.FL_inst}
 gui_load_child_values {pipeline_dp_tb.dut.FU_inst.mult_unit[0]}
 gui_load_child_values {pipeline_dp_tb.dut.IB_inst.ALU_channel.IB_push_in_router_inst}
 gui_load_child_values {pipeline_dp_tb.dut.RS_inst}
-gui_load_child_values {pipeline_dp_tb.dut.MT_inst}
 
 
 set _session_group_1 FL_inst
@@ -539,85 +534,72 @@ set _session_group_13 DP_inst_1
 gui_sg_create "$_session_group_13"
 set DP_inst_1 "$_session_group_13"
 
-gui_sg_addsignal -group "$_session_group_13" { {pipeline_dp_tb.dut.DP_inst.$unit} pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_IDX_WIDTH pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_NUM pipeline_dp_tb.dut.DP_inst.C_DP_NUM pipeline_dp_tb.dut.DP_inst.C_DP_NUM_WIDTH pipeline_dp_tb.dut.DP_inst.C_PHY_REG_NUM pipeline_dp_tb.dut.DP_inst.C_ROB_ENTRY_NUM pipeline_dp_tb.dut.DP_inst.C_ROB_IDX_WIDTH pipeline_dp_tb.dut.DP_inst.C_TAG_IDX_WIDTH pipeline_dp_tb.dut.DP_inst.C_THREAD_IDX_WIDTH pipeline_dp_tb.dut.DP_inst.C_THREAD_NUM pipeline_dp_tb.dut.DP_inst.comp_1 pipeline_dp_tb.dut.DP_inst.comp_2 pipeline_dp_tb.dut.DP_inst.dp_fiq_o pipeline_dp_tb.dut.DP_inst.dp_fl_o pipeline_dp_tb.dut.DP_inst.dp_mt_read_o pipeline_dp_tb.dut.DP_inst.dp_mt_write_o pipeline_dp_tb.dut.DP_inst.dp_num pipeline_dp_tb.dut.DP_inst.dp_rob_o pipeline_dp_tb.dut.DP_inst.dp_rs_o pipeline_dp_tb.dut.DP_inst.fiq_dp_i pipeline_dp_tb.dut.DP_inst.fl_dp_i pipeline_dp_tb.dut.DP_inst.fl_route pipeline_dp_tb.dut.DP_inst.inst pipeline_dp_tb.dut.DP_inst.mt_dp_i pipeline_dp_tb.dut.DP_inst.rob_dp_i pipeline_dp_tb.dut.DP_inst.rs_dp_i }
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_DP_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_DP_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_DP_NUM_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_DP_NUM_WIDTH}
+gui_sg_addsignal -group "$_session_group_13" { pipeline_dp_tb.dut.clk_i pipeline_dp_tb.dut.rst_i pipeline_dp_tb.dut.DP_inst.C_PHY_REG_NUM pipeline_dp_tb.dut.DP_inst.C_THREAD_IDX_WIDTH pipeline_dp_tb.dut.DP_inst.C_TAG_IDX_WIDTH pipeline_dp_tb.dut.DP_inst.C_ROB_IDX_WIDTH pipeline_dp_tb.dut.DP_inst.C_DP_NUM_WIDTH pipeline_dp_tb.dut.DP_inst.dp_num pipeline_dp_tb.dut.DP_inst.inst pipeline_dp_tb.dut.DP_inst.C_ROB_ENTRY_NUM pipeline_dp_tb.dut.DP_inst.C_THREAD_NUM pipeline_dp_tb.dut.DP_inst.comp_1 pipeline_dp_tb.dut.DP_inst.comp_2 pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_NUM pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_IDX_WIDTH pipeline_dp_tb.dut.DP_inst.C_DP_NUM {pipeline_dp_tb.dut.DP_inst.$unit} }
 gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_PHY_REG_NUM}
 gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_PHY_REG_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ROB_ENTRY_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ROB_ENTRY_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ROB_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ROB_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_TAG_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_TAG_IDX_WIDTH}
 gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_THREAD_IDX_WIDTH}
 gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_THREAD_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_TAG_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_TAG_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ROB_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ROB_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_DP_NUM_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_DP_NUM_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ROB_ENTRY_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ROB_ENTRY_NUM}
 gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_THREAD_NUM}
 gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_THREAD_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_ARCH_REG_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_DP_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.DP_inst.C_DP_NUM}
 
-set _session_group_14 MT_inst
+set _session_group_14 $_session_group_13|
+append _session_group_14 Group5
 gui_sg_create "$_session_group_14"
-set MT_inst "$_session_group_14"
+set DP_inst_1|Group5 "$_session_group_14"
 
-gui_sg_addsignal -group "$_session_group_14" { {pipeline_dp_tb.dut.MT_inst.$unit} pipeline_dp_tb.dut.MT_inst.C_ARCH_REG_NUM pipeline_dp_tb.dut.MT_inst.C_CDB_NUM pipeline_dp_tb.dut.MT_inst.C_DP_NUM pipeline_dp_tb.dut.MT_inst.C_TAG_IDX_WIDTH pipeline_dp_tb.dut.MT_inst.amt_i pipeline_dp_tb.dut.MT_inst.cdb_i pipeline_dp_tb.dut.MT_inst.clk_i pipeline_dp_tb.dut.MT_inst.dp_mt_read_i pipeline_dp_tb.dut.MT_inst.dp_mt_write_i pipeline_dp_tb.dut.MT_inst.mt_dp_o pipeline_dp_tb.dut.MT_inst.mt_entry pipeline_dp_tb.dut.MT_inst.mt_mon_o pipeline_dp_tb.dut.MT_inst.rollback_i pipeline_dp_tb.dut.MT_inst.rst_i }
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.MT_inst.C_ARCH_REG_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.MT_inst.C_ARCH_REG_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.MT_inst.C_CDB_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.MT_inst.C_CDB_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.MT_inst.C_DP_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.MT_inst.C_DP_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.MT_inst.C_TAG_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.MT_inst.C_TAG_IDX_WIDTH}
+gui_sg_addsignal -group "$_session_group_14" { pipeline_dp_tb.dut.DP_inst.rob_dp_i pipeline_dp_tb.dut.DP_inst.dp_rob_o }
 
-set _session_group_15 Group1
+gui_sg_move "$_session_group_14" -after "$_session_group_13" -pos 10 
+
+set _session_group_15 $_session_group_13|
+append _session_group_15 Group3
 gui_sg_create "$_session_group_15"
-set Group1 "$_session_group_15"
+set DP_inst_1|Group3 "$_session_group_15"
 
-gui_sg_addsignal -group "$_session_group_15" { pipeline_dp_tb.dut.br_mis }
+gui_sg_addsignal -group "$_session_group_15" { pipeline_dp_tb.dut.DP_inst.rs_dp_i pipeline_dp_tb.dut.DP_inst.dp_rs_o }
 
-set _session_group_16 ROB_inst_1
+gui_sg_move "$_session_group_15" -after "$_session_group_13" -pos 4 
+
+set _session_group_16 $_session_group_13|
+append _session_group_16 Group2
 gui_sg_create "$_session_group_16"
-set ROB_inst_1 "$_session_group_16"
+set DP_inst_1|Group2 "$_session_group_16"
 
-gui_sg_addsignal -group "$_session_group_16" { {pipeline_dp_tb.dut.ROB_inst.$unit} pipeline_dp_tb.dut.ROB_inst.C_ARCH_REG_IDX_WIDTH pipeline_dp_tb.dut.ROB_inst.C_ARCH_REG_NUM pipeline_dp_tb.dut.ROB_inst.C_CDB_IDX_WIDTH pipeline_dp_tb.dut.ROB_inst.C_CDB_NUM pipeline_dp_tb.dut.ROB_inst.C_DP_IDX_WIDTH pipeline_dp_tb.dut.ROB_inst.C_DP_NUM pipeline_dp_tb.dut.ROB_inst.C_DP_NUM_WIDTH pipeline_dp_tb.dut.ROB_inst.C_PHY_REG_NUM pipeline_dp_tb.dut.ROB_inst.C_ROB_ENTRY_NUM pipeline_dp_tb.dut.ROB_inst.C_ROB_IDX_WIDTH pipeline_dp_tb.dut.ROB_inst.C_ROB_NUM_WIDTH pipeline_dp_tb.dut.ROB_inst.C_RT_IDX_WIDTH pipeline_dp_tb.dut.ROB_inst.C_RT_NUM pipeline_dp_tb.dut.ROB_inst.C_RT_NUM_WIDTH pipeline_dp_tb.dut.ROB_inst.C_TAG_IDX_WIDTH pipeline_dp_tb.dut.ROB_inst.C_XLEN pipeline_dp_tb.dut.ROB_inst.avail_num pipeline_dp_tb.dut.ROB_inst.br_mis_valid_o pipeline_dp_tb.dut.ROB_inst.br_mispredict pipeline_dp_tb.dut.ROB_inst.br_target_o pipeline_dp_tb.dut.ROB_inst.cdb_i pipeline_dp_tb.dut.ROB_inst.clk_i pipeline_dp_tb.dut.ROB_inst.cp_idx pipeline_dp_tb.dut.ROB_inst.cp_sel pipeline_dp_tb.dut.ROB_inst.dp_num pipeline_dp_tb.dut.ROB_inst.dp_rob_i pipeline_dp_tb.dut.ROB_inst.dp_sel pipeline_dp_tb.dut.ROB_inst.exception_i pipeline_dp_tb.dut.ROB_inst.head pipeline_dp_tb.dut.ROB_inst.head_rollover pipeline_dp_tb.dut.ROB_inst.head_sel pipeline_dp_tb.dut.ROB_inst.next_head pipeline_dp_tb.dut.ROB_inst.next_tail pipeline_dp_tb.dut.ROB_inst.rob_amt_o pipeline_dp_tb.dut.ROB_inst.rob_array pipeline_dp_tb.dut.ROB_inst.rob_dp_o pipeline_dp_tb.dut.ROB_inst.rob_fl_o pipeline_dp_tb.dut.ROB_inst.rob_mon_o pipeline_dp_tb.dut.ROB_inst.rob_vfl_o pipeline_dp_tb.dut.ROB_inst.rst_i pipeline_dp_tb.dut.ROB_inst.rt_num pipeline_dp_tb.dut.ROB_inst.rt_pc_o pipeline_dp_tb.dut.ROB_inst.rt_sel pipeline_dp_tb.dut.ROB_inst.rt_valid pipeline_dp_tb.dut.ROB_inst.rt_valid_o pipeline_dp_tb.dut.ROB_inst.rt_window pipeline_dp_tb.dut.ROB_inst.tail pipeline_dp_tb.dut.ROB_inst.tail_rollover }
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ARCH_REG_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ARCH_REG_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ARCH_REG_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ARCH_REG_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_CDB_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_CDB_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_CDB_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_CDB_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_DP_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_DP_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_DP_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_DP_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_DP_NUM_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_DP_NUM_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_PHY_REG_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_PHY_REG_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ROB_ENTRY_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ROB_ENTRY_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ROB_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ROB_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ROB_NUM_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_ROB_NUM_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_RT_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_RT_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_RT_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_RT_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_RT_NUM_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_RT_NUM_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_TAG_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_TAG_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_XLEN}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.ROB_inst.C_XLEN}
+gui_sg_addsignal -group "$_session_group_16" { pipeline_dp_tb.dut.DP_inst.dp_fl_o pipeline_dp_tb.dut.DP_inst.fl_route pipeline_dp_tb.dut.DP_inst.fl_dp_i }
+
+gui_sg_move "$_session_group_16" -after "$_session_group_13" -pos 3 
+
+set _session_group_17 $_session_group_13|
+append _session_group_17 Group1
+gui_sg_create "$_session_group_17"
+set DP_inst_1|Group1 "$_session_group_17"
+
+gui_sg_addsignal -group "$_session_group_17" { pipeline_dp_tb.dut.DP_inst.fiq_dp_i pipeline_dp_tb.dut.DP_inst.dp_fiq_o }
+
+gui_sg_move "$_session_group_17" -after "$_session_group_13" -pos 2 
+
+set _session_group_18 $_session_group_13|
+append _session_group_18 Group4
+gui_sg_create "$_session_group_18"
+set DP_inst_1|Group4 "$_session_group_18"
+
+gui_sg_addsignal -group "$_session_group_18" { pipeline_dp_tb.dut.DP_inst.dp_mt_read_o pipeline_dp_tb.dut.DP_inst.dp_mt_write_o pipeline_dp_tb.dut.DP_inst.mt_dp_i }
+
+gui_sg_move "$_session_group_18" -after "$_session_group_13" -pos 9 
 
 # Global: Highlighting
 
@@ -627,7 +609,7 @@ gui_change_stack_mode -mode list
 # Post database loading setting...
 
 # Restore C1 time
-gui_set_time -C1_only 10110
+gui_set_time -C1_only 70
 
 
 
@@ -653,8 +635,7 @@ gui_list_set_filter -id ${Hier.1} -text {*}
 gui_hier_list_init -id ${Hier.1}
 gui_change_design -id ${Hier.1} -design Sim
 catch {gui_list_expand -id ${Hier.1} pipeline_dp_tb}
-catch {gui_list_expand -id ${Hier.1} pipeline_dp_tb.dut}
-catch {gui_list_select -id ${Hier.1} {pipeline_dp_tb.dut.ROB_inst}}
+catch {gui_list_select -id ${Hier.1} {pipeline_dp_tb.dut}}
 gui_view_scroll -id ${Hier.1} -vertical -set 0
 gui_view_scroll -id ${Hier.1} -horizontal -set 0
 
@@ -671,7 +652,9 @@ gui_list_set_filter -id ${Member.1} -text {*}
 # Data 'Data.1'
 gui_list_set_filter -id ${Data.1} -list { {Buffer 1} {Input 1} {Others 1} {Linkage 1} {Output 1} {LowPower 1} {Parameter 1} {All 1} {Aggregate 1} {LibBaseMember 1} {Event 1} {Assertion 1} {Constant 1} {Interface 1} {BaseMembers 1} {Signal 1} {$unit 1} {Inout 1} {Variable 1} }
 gui_list_set_filter -id ${Data.1} -text {*}
-gui_list_show_data -id ${Data.1} {pipeline_dp_tb.dut.ROB_inst}
+gui_list_show_data -id ${Data.1} {pipeline_dp_tb.dut}
+gui_show_window -window ${Data.1}
+catch { gui_list_select -id ${Data.1} {pipeline_dp_tb.dut.rst_i }}
 gui_view_scroll -id ${Data.1} -vertical -set 0
 gui_view_scroll -id ${Data.1} -horizontal -set 0
 gui_view_scroll -id ${Hier.1} -vertical -set 0
@@ -695,18 +678,32 @@ gui_list_set_height -id Wave -height 25
 set origGroupCreationState [gui_list_create_group_when_add -wave]
 gui_list_create_group_when_add -wave -disable
 gui_marker_set_ref -id ${Wave.1}  C1
-gui_wv_zoom_timerange -id ${Wave.1} 10060 10159
+gui_wv_zoom_timerange -id ${Wave.1} 0 111
 gui_list_add_group -id ${Wave.1} -after {New Group} {DP_inst_1}
-gui_list_add_group -id ${Wave.1} -after {New Group} {MT_inst}
-gui_list_add_group -id ${Wave.1} -after {New Group} {Group1}
-gui_list_add_group -id ${Wave.1} -after {New Group} {ROB_inst_1}
-gui_list_collapse -id ${Wave.1} DP_inst_1
-gui_list_collapse -id ${Wave.1} MT_inst
-gui_list_collapse -id ${Wave.1} ROB_inst_1
-gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.br_mis
-gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.br_mis.valid
-gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.br_mis.br_target
-gui_list_select -id ${Wave.1} {pipeline_dp_tb.dut.br_mis.br_target }
+gui_list_add_group -id ${Wave.1} -after pipeline_dp_tb.dut.rst_i {DP_inst_1|Group1}
+gui_list_add_group -id ${Wave.1} -after DP_inst_1|Group1 {DP_inst_1|Group2}
+gui_list_add_group -id ${Wave.1} -after DP_inst_1|Group2 {DP_inst_1|Group3}
+gui_list_add_group -id ${Wave.1} -after {{pipeline_dp_tb.dut.DP_inst.C_ROB_IDX_WIDTH[31:0]}} {DP_inst_1|Group4}
+gui_list_add_group -id ${Wave.1} -after DP_inst_1|Group4 {DP_inst_1|Group5}
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.fiq_dp_i
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.fiq_dp_i.inst
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.fiq_dp_i.pc
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.dp_fl_o
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.fl_route
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.fl_dp_i
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.fl_dp_i.tag
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.dp_rs_o
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.dp_rs_o.dec_inst
+gui_list_expand -id ${Wave.1} {pipeline_dp_tb.dut.DP_inst.dp_rs_o.dec_inst[1]}
+gui_list_expand -id ${Wave.1} {pipeline_dp_tb.dut.DP_inst.dp_rs_o.dec_inst[0]}
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.dp_mt_read_o
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.dp_mt_write_o
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.mt_dp_i
+gui_list_expand -id ${Wave.1} {pipeline_dp_tb.dut.DP_inst.mt_dp_i[1]}
+gui_list_expand -id ${Wave.1} {pipeline_dp_tb.dut.DP_inst.mt_dp_i[0]}
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.rob_dp_i
+gui_list_expand -id ${Wave.1} pipeline_dp_tb.dut.DP_inst.dp_rob_o
+gui_list_select -id ${Wave.1} {{pipeline_dp_tb.dut.DP_inst.dp_mt_write_o[0]} }
 gui_seek_criteria -id ${Wave.1} {Any Edge}
 
 
@@ -722,17 +719,17 @@ if { $groupExD } {
 }
 gui_list_set_filter -id ${Wave.1} -list { {Buffer 1} {Input 1} {Others 1} {Linkage 1} {Output 1} {Parameter 1} {All 1} {Aggregate 1} {LibBaseMember 1} {Event 1} {Assertion 1} {Constant 1} {Interface 1} {BaseMembers 1} {Signal 1} {$unit 1} {Inout 1} {Variable 1} }
 gui_list_set_filter -id ${Wave.1} -text {*}
-gui_list_set_insertion_bar  -id ${Wave.1} -group ROB_inst_1  -position in
+gui_list_set_insertion_bar  -id ${Wave.1} -group DP_inst_1  -item pipeline_dp_tb.dut.rst_i -position below
 
-gui_marker_move -id ${Wave.1} {C1} 10110
-gui_view_scroll -id ${Wave.1} -vertical -set 0
+gui_marker_move -id ${Wave.1} {C1} 70
+gui_view_scroll -id ${Wave.1} -vertical -set 1826
 gui_show_grid -id ${Wave.1} -enable false
 # Restore toplevel window zorder
 # The toplevel window could be closed if it has no view/pane
 if {[gui_exist_window -window ${TopLevel.1}]} {
 	gui_set_active_window -window ${TopLevel.1}
 	gui_set_active_window -window ${Source.1}
-	gui_set_active_window -window ${HSPane.1}
+	gui_set_active_window -window ${DLPane.1}
 }
 if {[gui_exist_window -window ${TopLevel.2}]} {
 	gui_set_active_window -window ${TopLevel.2}

@@ -50,6 +50,7 @@ module MT_sim #(
     endtask
 
     task map_table_run();
+        mt_dp_o =   0;
         forever begin
             @(posedge clk_i);
             // System reset
@@ -76,38 +77,39 @@ module MT_sim #(
                         end
                     end
                 end
+            end
 
-                @(negedge clk_i);
-                // Dispatch, read tags and also update.
-                for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
-                    // Read RS1, RS2 and RD tags
-                    if (dp_mt_read_i[dp_idx].rs1 == `ZERO_REG) begin
-                        mt_dp_o[dp_idx].tag1        =   'd0 ;
-                        mt_dp_o[dp_idx].tag1_ready  =   1'b1;
-                    end else begin
-                        mt_dp_o[dp_idx].tag1        =   mt_entry[dp_mt_read_i[dp_idx].rs1].tag      ;
-                        mt_dp_o[dp_idx].tag1_ready  =   mt_entry[dp_mt_read_i[dp_idx].rs1].tag_ready;
-                    end
+            @(negedge clk_i);
+            #2;
+            // Dispatch, read tags and also update.
+            for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
+                // Read RS1, RS2 and RD tags
+                if (dp_mt_read_i[dp_idx].rs1 == `ZERO_REG) begin
+                    mt_dp_o[dp_idx].tag1        =   'd0 ;
+                    mt_dp_o[dp_idx].tag1_ready  =   1'b1;
+                end else begin
+                    mt_dp_o[dp_idx].tag1        =   mt_entry[dp_mt_read_i[dp_idx].rs1].tag      ;
+                    mt_dp_o[dp_idx].tag1_ready  =   mt_entry[dp_mt_read_i[dp_idx].rs1].tag_ready;
+                end
 
-                    if (dp_mt_read_i[dp_idx].rs2 == `ZERO_REG) begin
-                        mt_dp_o[dp_idx].tag2        =   'd0 ;
-                        mt_dp_o[dp_idx].tag2_ready  =   1'b1;
-                    end else begin
-                        mt_dp_o[dp_idx].tag2        =   mt_entry[dp_mt_read_i[dp_idx].rs2].tag      ;
-                        mt_dp_o[dp_idx].tag2_ready  =   mt_entry[dp_mt_read_i[dp_idx].rs2].tag_ready;
-                    end
+                if (dp_mt_read_i[dp_idx].rs2 == `ZERO_REG) begin
+                    mt_dp_o[dp_idx].tag2        =   'd0 ;
+                    mt_dp_o[dp_idx].tag2_ready  =   1'b1;
+                end else begin
+                    mt_dp_o[dp_idx].tag2        =   mt_entry[dp_mt_read_i[dp_idx].rs2].tag      ;
+                    mt_dp_o[dp_idx].tag2_ready  =   mt_entry[dp_mt_read_i[dp_idx].rs2].tag_ready;
+                end
 
-                    if (dp_mt_write_i[dp_idx].rd == `ZERO_REG) begin
-                        mt_dp_o[dp_idx].tag_old     =   'd0;
-                    end else begin
-                        mt_dp_o[dp_idx].tag_old     =   mt_entry[dp_mt_write_i[dp_idx].rd].tag      ;
-                    end
+                if (dp_mt_write_i[dp_idx].rd == `ZERO_REG) begin
+                    mt_dp_o[dp_idx].tag_old     =   'd0;
+                end else begin
+                    mt_dp_o[dp_idx].tag_old     =   mt_entry[dp_mt_write_i[dp_idx].rd].tag      ;
+                end
 
-                    // Update Map Table for newly dispatched instructions
-                    if (dp_mt_write_i[dp_idx].wr_en == 1'b1) begin
-                        mt_entry[dp_mt_write_i[dp_idx].rd].tag          =   dp_mt_write_i[dp_idx].tag;
-                        mt_entry[dp_mt_write_i[dp_idx].rd].tag_ready    =   1'b0;
-                    end
+                // Update Map Table for newly dispatched instructions
+                if (dp_mt_write_i[dp_idx].wr_en == 1'b1) begin
+                    mt_entry[dp_mt_write_i[dp_idx].rd].tag          =   dp_mt_write_i[dp_idx].tag;
+                    mt_entry[dp_mt_write_i[dp_idx].rd].tag_ready    =   1'b0;
                 end
             end
         end

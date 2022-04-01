@@ -296,9 +296,9 @@ module decoder#(
         opb_select  =   OPB_IS_RS2  ;
         alu_func    =   ALU_ADD     ;
 
-        rd          =   RD_NONE     ;
-        rs1         =   RS1_NONE    ;
-        rs2         =   RS2_NONE    ;
+        rd_select   =   RD_NONE     ;
+        rs1_select  =   RS1_NONE    ;
+        rs2_select  =   RS2_NONE    ;
 
         csr_op      =   `FALSE      ; // ALU=`TRUE
         rd_mem      =   `FALSE      ; // ALU=`TRUE
@@ -516,26 +516,25 @@ module decoder#(
                     illegal         =   `TRUE           ;
 
             endcase // casez (inst)
-
-            case (rd_select)
-                RD_USED:    rd  =   inst.r.rd   ;
-                RD_NONE:    rd  =   `ZERO_REG   ;
-                default:    rd  =   `ZERO_REG   ; 
-            endcase
-
-            case (rs1_select)
-                RS1_USED:   rs1 =   inst.r.rs1  ;
-                RS1_NONE:   rs1 =   `ZERO_REG   ;
-                default:    rs1 =   `ZERO_REG   ; 
-            endcase
-
-            case (rs2_select)
-                RS2_USED:   rs2 =   inst.r.rs2  ;
-                RS2_NONE:   rs2 =   `ZERO_REG   ;
-                default:    rs2 =   `ZERO_REG   ; 
-            endcase
-
         end // if(valid_inst_in)
+
+        case (rd_select)
+            RD_USED:    rd  =   inst.r.rd   ;
+            RD_NONE:    rd  =   `ZERO_REG   ;
+            default:    rd  =   `ZERO_REG   ; 
+        endcase
+
+        case (rs1_select)
+            RS1_USED:   rs1 =   inst.r.rs1  ;
+            RS1_NONE:   rs1 =   `ZERO_REG   ;
+            default:    rs1 =   `ZERO_REG   ; 
+        endcase
+
+        case (rs2_select)
+            RS2_USED:   rs2 =   inst.r.rs2  ;
+            RS2_NONE:   rs2 =   `ZERO_REG   ;
+            default:    rs2 =   `ZERO_REG   ; 
+        endcase
     end // always
 
 // ====================================================================

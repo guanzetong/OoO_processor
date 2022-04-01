@@ -72,13 +72,13 @@ module FL_sim #(
     endtask
 
     task freelist_run();
+        fl_dp_o =   0;
         forever begin
             @(posedge clk_i);
             // System reset
             if (rst_i) begin
                 freelist.delete();
                 freelist_init();
-                fl_dp_o.avail_num   =   C_DP_NUM;
                 // $display("Reset Freelist size=%0d", freelist.size());
             end else if (rollback_i) begin
                 freelist.delete();
@@ -96,25 +96,28 @@ module FL_sim #(
                         freelist.push_back(fl_entry);
                     end
                 end
+            end
 
-                `SD;
-                // Dispatch
-                avail_num   =   freelist.size();
-                // $display("Normal Freelist size=%0d", freelist.size());
-                if (avail_num > C_DP_NUM) begin
-                    fl_dp_o.avail_num   =   C_DP_NUM;
+            @(negedge clk_i);
+            
+            // Dispatch
+            avail_num   =   freelist.size();
+            // $display("Normal Freelist size=%0d", freelist.size());
+            if (avail_num > C_DP_NUM) begin
+                fl_dp_o.avail_num   =   C_DP_NUM;
+            end else begin
+                fl_dp_o.avail_num   =   avail_num;
+            end
+
+            #1;
+            // $display("avail num=%0d", avail_num);
+            // $display("FL avail num=%0d", fl_dp_o.avail_num);
+
+            for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
+                if(dp_idx < dp_fl_i.dp_num)begin
+                    fl_dp_o.tag[dp_idx] = freelist.pop_front();    
                 end else begin
-                    fl_dp_o.avail_num   =   avail_num;
-                end
-                // $display("avail num=%0d", avail_num);
-                // $display("FL avail num=%0d", fl_dp_o.avail_num);
-
-                for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
-                    if(dp_idx < dp_fl_i.dp_num)begin
-                        fl_dp_o.tag[dp_idx] = freelist.pop_front();    
-                    end else begin
-                        fl_dp_o.tag[dp_idx] = 'b0;
-                    end
+                    fl_dp_o.tag[dp_idx] = 'b0;
                 end
             end
         end

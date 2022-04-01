@@ -62,7 +62,7 @@ PIPEFILES   = $(wildcard verilog/*.sv)
 # PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
 
 # PIPEFILES	= verilog/MT.sv
-PIPEFILES	= verilog/freelist.sv
+# PIPEFILES	= verilog/freelist.sv
 SIMFILES    = $(PIPEFILES)
 
 # SYNTHESIS CONFIG
