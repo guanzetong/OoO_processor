@@ -47,7 +47,7 @@ module MT_SS #(
 
             // Check CDB.tag to forward tag_ready
             for (int unsigned cp_idx = 0; cp_idx < C_CDB_NUM; cp_idx++) begin
-                if (cdb_i[cp_idx].valid) begin
+                if (cdb_i[cp_idx].valid && (cdb_i[cp_idx].tag != `ZERO_REG)) begin
                     // Compare "tag1" of this channel to "tag" of a CDB channel
                     if (cdb_i[cp_idx].tag == mt_dp[dp_idx].tag1) begin
                         mt_dp[dp_idx].tag1_ready    =   1'b1;
@@ -64,17 +64,20 @@ module MT_SS #(
                 // Check the older Dispatch channels
                 if (rd_idx < dp_idx) begin
                     // Compare "rs1" of this channel to "rd" of the older channel
-                    if ((dp_mt[dp_idx].rs1 == dp_mt[rd_idx].rd) && (dp_mt[rd_idx].wr_en == 1'b1)) begin
+                    if ((dp_mt[dp_idx].rs1 != `ZERO_REG) && (dp_mt[dp_idx].rs1 == dp_mt[rd_idx].rd)
+                    && (dp_mt[rd_idx].wr_en == 1'b1)) begin
                         mt_dp[dp_idx].tag1          =   dp_mt[rd_idx].tag;
                         mt_dp[dp_idx].tag1_ready    =   1'b0;
                     end
                     // Compare "rs2" of this channel to "rd" of the older channel
-                    if ((dp_mt[dp_idx].rs2 == dp_mt[rd_idx].rd) && (dp_mt[rd_idx].wr_en == 1'b1)) begin
+                    if ((dp_mt[dp_idx].rs2 != `ZERO_REG) && (dp_mt[dp_idx].rs2 == dp_mt[rd_idx].rd)
+                    && (dp_mt[rd_idx].wr_en == 1'b1)) begin
                         mt_dp[dp_idx].tag2          =   dp_mt[rd_idx].tag;
                         mt_dp[dp_idx].tag2_ready    =   1'b0;
                     end
                     // Compare "rd" of this channel to "rd" of the older channel
-                    if ((dp_mt[dp_idx].rd == dp_mt[rd_idx].rd) && (dp_mt[rd_idx].wr_en == 1'b1)) begin
+                    if ((dp_mt[dp_idx].rd != `ZERO_REG) && (dp_mt[dp_idx].rd == dp_mt[rd_idx].rd)
+                    && (dp_mt[rd_idx].wr_en == 1'b1)) begin
                         mt_dp[dp_idx].tag_old       =   dp_mt[rd_idx].tag;
                     end
                 end
@@ -121,6 +124,10 @@ module MT_SS #(
             // System Reset
             if (rst_i) begin
                 mt_entry[entry_idx].tag         <=  `SD entry_idx;
+                mt_entry[entry_idx].tag_ready   <=  `SD 1'b1;
+            // Rollback
+            end else if (rollback_i) begin
+                mt_entry[entry_idx].tag         <=  `SD amt_i[entry_idx].tag;
                 mt_entry[entry_idx].tag_ready   <=  `SD 1'b1;
             // Update entries
             end else begin
