@@ -236,7 +236,7 @@ module pipeline_dp (
 // Module name  :   BC
 // Description  :   Broadcaster
 // --------------------------------------------------------------------
-    BC_sim BC_inst (
+    BC BC_inst (
         .clk_i          (clk_i      ),
         .rst_i          (rst_i      ),
         .fu_bc_i        (fu_bc      ),

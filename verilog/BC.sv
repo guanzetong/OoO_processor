@@ -22,7 +22,7 @@ module BC #(
     input   logic                            rst_i               ,   // Reset
     input   FU_BC  [C_FU_NUM-1:0]            fu_bc_i             ,
     output  BC_FU  [C_FU_NUM-1:0]            bc_fu_o             ,
-    output  CDB    [C_CDB_NUM-1:0]           bc_cdb_o            ,
+    output  CDB    [C_CDB_NUM-1:0]           cdb_o            ,
     output  BC_PRF [C_CDB_NUM-1:0]           bc_prf_o            
 
 
@@ -85,13 +85,13 @@ module BC #(
 
     generate
         for(i = 0; i < C_CDB_NUM; i++) begin                                   : gen_CDB_IO
-            assign bc_cdb_o[i].valid      = mux_valid[i] ;
-            assign bc_cdb_o[i].pc         = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].pc         : 'b0;
-            assign bc_cdb_o[i].tag        = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].tag        : 'b0;
-            assign bc_cdb_o[i].rob_idx    = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].rob_idx    : 'b0;
-            assign bc_cdb_o[i].thread_idx = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].thread_idx : 'b0;
-            assign bc_cdb_o[i].br_result  = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].br_result  : 'b0;
-            assign bc_cdb_o[i].br_target  = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].br_target  : 'b0;
+            assign cdb_o[i].valid      = mux_valid[i] ;
+            assign cdb_o[i].pc         = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].pc         : 'b0;
+            assign cdb_o[i].tag        = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].tag        : 'b0;
+            assign cdb_o[i].rob_idx    = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].rob_idx    : 'b0;
+            assign cdb_o[i].thread_idx = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].thread_idx : 'b0;
+            assign cdb_o[i].br_result  = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].br_result  : 'b0;
+            assign cdb_o[i].br_target  = mux_valid[i] ? fu_bc_i[mux_select_enc[i]].br_target  : 'b0;
         end
     endgenerate
 
@@ -112,66 +112,6 @@ module BC #(
 
 endmodule // BC
 
-
-module pe #(
-    parameter   C_IN_WIDTH  =   32                  ,
-    parameter   C_OUT_WIDTH =   $clog2(C_IN_WIDTH)
-)(
-    input   logic   [C_IN_WIDTH-1:0]    bit_i   ,
-    output  logic   [C_OUT_WIDTH-1:0]   enc_o   ,
-    output  logic                       valid_o 
-);
-
-// ====================================================================
-// RTL Logic Start
-// ====================================================================
-
-// --------------------------------------------------------------------
-// Encoding
-// --------------------------------------------------------------------
-    always_comb begin
-        enc_o   =   0;
-        for (int i = C_IN_WIDTH-1; i >=0 ; i--) begin
-            if (bit_i[i]) begin
-                enc_o   =   i;
-            end
-        end
-    end
-
-// --------------------------------------------------------------------
-// Valid
-// --------------------------------------------------------------------
-    assign  valid_o =   bit_i ? 1'b1 : 1'b0;
-
-// ====================================================================
-// RTL Logic End
-// ====================================================================
-
-endmodule
-
-
-
-module binary_decoder #(
-    parameter   C_OUT_WIDTH =   32                  ,
-    parameter   C_IN_WIDTH  =   $clog2(C_OUT_WIDTH)
-)(
-    input   logic   [C_IN_WIDTH-1:0]    enc_i   ,
-    input   logic                       valid_i ,
-    output  logic   [C_OUT_WIDTH-1:0]   bit_o   
-);
-
-// ====================================================================
-// RTL Logic Start
-// ====================================================================
-
-    assign  bit_o   =   valid_i ? {{(C_OUT_WIDTH-1){1'b0}},1'b1} << enc_i
-                                : {C_OUT_WIDTH{1'b0}};
-
-// ====================================================================
-// RTL Logic End
-// ====================================================================
-
-endmodule
 
 
 
