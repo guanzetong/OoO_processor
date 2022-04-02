@@ -16,7 +16,7 @@ module FL_SS #(
 ) (
     input   logic               clk_i           ,   //  Clock
     input   logic               rst_i           ,   //  Reset
-    input   logic               rollback_i      ,
+    input   logic               rollback_i      ,  
     input   DP_FL               dp_fl_i         ,
     input   ROB_FL              rob_fl_i        ,
     input   FL_ENTRY            vfl_fl_i        ,
@@ -28,6 +28,8 @@ module FL_SS #(
 // ====================================================================
     localparam  C_FL_IDX_WIDTH  =   $clog2(C_FL_ENTRY_NUM);
     localparam  C_FL_NUM_WIDTH  =   $clog2(C_FL_ENTRY_NUM+1);
+
+    localparam  C_RT_NUM_WIDTH  =   $clog2(C_RT_NUM+1);
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -35,21 +37,23 @@ module FL_SS #(
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-    FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    fl_entry            ;   // Freelist entry
-    FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    next_fl_entry       ;   // Next state of freelist entry
+    FL_ENTRY    [C_FL_ENTRY_NUM-1:0]            fl_entry            ;   // Freelist entry
+    FL_ENTRY    [C_FL_ENTRY_NUM-1:0]            next_fl_entry       ;   // Next state of freelist entry
     
     // logic       [C_FL_IDX-1:0]            fl_rollback_idx;
     
-    logic       [C_FL_IDX_WIDTH-1:0]    head                ;
-    logic       [C_FL_IDX_WIDTH-1:0]    tail                ;
-    logic                               head_rollover       ;
-    logic                               tail_rollover       ;
+    logic       [C_FL_IDX_WIDTH-1:0]            head                ;
+    logic       [C_FL_IDX_WIDTH-1:0]            tail                ;   
+    logic       [C_FL_IDX_WIDTH-1:0]            next_head           ;
+    logic       [C_FL_IDX_WIDTH-1:0]            next_tail           ;  
+    logic                                       head_rollover       ;   // check head/tail at same page
+    logic                                       tail_rollover       ;   
 
-    logic       [C_FL_NUM_WIDTH-1:0]    avail_num           ;   // 0 ~ C_FL_ENTRY_NUM
+    logic       [C_FL_NUM_WIDTH-1:0]            avail_num           ;   // 0 ~ C_FL_ENTRY_NUM
 
-    logic       [C_RT_NUM_WIDTH-1:0]    rt_num              ;
+    logic       [C_RT_NUM_WIDTH-1:0]            rt_num              ;
 
-    logic       [RT_NUM-1:0][RT_NUM-1:0]    rt_route        ;
+    logic       [C_RT_NUM-1:0][C_RT_NUM-1:0]    rt_route            ;
 
 // ====================================================================
 // Signal Declarations End
@@ -69,7 +73,7 @@ module FL_SS #(
             out_idx =   0;
             route   =   0;
             for (int in_idx = 0; in_idx < C_RT_NUM; in_idx++) begin
-                if (rob_fl_i.tag[in_idx] == 'd0) begin
+                if ((in_idx < rob_fl_i.rt_num) && (rob_fl_i.tag[in_idx] != 'd0)) begin
                     route[out_idx][in_idx]  =   1'b1    ;
                     out_idx++;
                 end
@@ -85,18 +89,12 @@ module FL_SS #(
         if (rst_i) begin
             head            <=  `SD 'd0;
             tail            <=  `SD 'd0;
-            head_rollover   <=  `SD 'd0;
-            tail_rollover   <=  `SD 'd1;
         end else if (rollback_i) begin
             head            <=  `SD 'd0;
             tail            <=  `SD 'd0;
-            head_rollover   <=  `SD 'd0;
-            tail_rollover   <=  `SD 'd1;
         end else begin
-            head            <=  `SD next_head           ;
-            tail            <=  `SD next_tail           ;
-            head_rollover   <=  `SD next_head_rollover  ;
-            tail_rollover   <=  `SD next_tail_rollover  ;
+            head            <=  `SD next_head;
+            tail            <=  `SD next_tail;
         end
     end
 
@@ -168,7 +166,7 @@ module FL_SS #(
                     if (tail + out_idx >= C_FL_ENTRY_NUM) begin
                         next_fl_entry[tail + out_idx - C_FL_ENTRY_NUM]  =   rob_fl_i.tag[in_idx];
                     end else begin
-                        next_fl_entry[tail + out_idx] = rob_fl_i.tag[in_idx]
+                        next_fl_entry[tail + out_idx]   =   rob_fl_i.tag[in_idx];
                     end
                 end
             end

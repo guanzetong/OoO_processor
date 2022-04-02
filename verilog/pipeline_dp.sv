@@ -31,6 +31,8 @@ module pipeline_dp (
     output  BR_MIS                                      br_mis_mon_o        ,   // Branch Misprediction
     //      Contents
     output  ROB_ENTRY   [`ROB_ENTRY_NUM-1:0]            rob_mon_o           ,   // ROB contents monitor
+    output  logic       [`ROB_IDX_WIDTH-1:0]            rob_head_mon_o      ,   // ROB head pointer
+    output  logic       [`ROB_IDX_WIDTH-1:0]            rob_tail_mon_o      ,   // ROB tail pointer
     output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ,   // RS contents monitor
     output  MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ,   // Map Table contents monitor
     output  IS_INST     [`ALU_Q_SIZE  -1:0]             ALU_queue_mon_o     ,   // IB queue monitor
@@ -80,7 +82,7 @@ module pipeline_dp (
     FU_IB       [`FU_NUM-1:0]               fu_ib           ;
     IB_FU       [`FU_NUM-1:0]               ib_fu           ;
     BC_PRF      [`CDB_NUM-1:0]              bc_prf          ;
-    FL_ENTRY    [`FL_ENTRY_NUM-1:0]         vfl             ;
+    FL_ENTRY    [`FL_ENTRY_NUM-1:0]         vfl_fl          ;
     AMT_ENTRY   [`ARCH_REG_NUM-1:0]         amt             ;
     MT_DP       [`DP_NUM-1:0]               mt_dp           ;
     FU_BC       [`FU_NUM-1:0]               fu_bc           ;
@@ -152,6 +154,8 @@ module pipeline_dp (
         .br_target_o        (br_mis.br_target[0]),
         //ROB testing
         .rob_mon_o          (rob_mon_o          ),
+        .rob_head_mon_o     (rob_head_mon_o     ),
+        .rob_tail_mon_o     (rob_tail_mon_o     ),
         .rt_pc_o            (rt_pc_o            ),
         .rt_valid_o         (rt_valid_o         )
     );
@@ -283,12 +287,13 @@ module pipeline_dp (
     //     .vfl_i          (vfl                            ),
     //     .rollback_i     (exception_i || br_mis.valid[0] )
     // );
-    freelist FL_inst (
+    FL_SS FL_inst (
         .clk_i      (clk_i                          ),
         .rst_i      (rst_i                          ),
         .rollback_i (exception_i || br_mis.valid[0] ),
         .dp_fl_i    (dp_fl                          ),
         .rob_fl_i   (rob_fl                         ),
+        .vfl_fl_i   (vfl_fl                         ),
         .fl_dp_o    (fl_dp                          )
     );
 // --------------------------------------------------------------------
@@ -304,6 +309,12 @@ module pipeline_dp (
     //     .vfl_o          (vfl                            ),
     //     .roll_back_i    (exception_i || br_mis.valid[0] )
     // );
+    VFL VFL_inst (
+        .clk_i          (clk_i      ),
+        .rst_i          (rst_i      ),
+        .rob_vfl_i      (rob_vfl    ),
+        .vfl_fl_o       (vfl_fl     )
+    );
 // --------------------------------------------------------------------
 
 // ====================================================================

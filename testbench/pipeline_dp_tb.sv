@@ -1,5 +1,10 @@
-function void print_rob(ROB_ENTRY [`ROB_ENTRY_NUM-1:0] rob_mon);
+function void print_rob(
+    ROB_ENTRY   [`ROB_ENTRY_NUM-1:0]    rob_mon         ,
+    logic       [`ROB_IDX_WIDTH-1:0]    rob_head_mon    ,
+    logic       [`ROB_IDX_WIDTH-1:0]    rob_tail_mon
+);
     $display("T=%0t ROB Contents", $time);
+    $display("head=%0d, tail=%0d", rob_head_mon, rob_tail_mon);
     $display("Index\t|valid\t|PC\t|rd\t|told\t|tag\t|br_predict\t|br_result\t|br_target\t|complete");
     for (int entry_idx = 0; entry_idx < `ROB_ENTRY_NUM; entry_idx++) begin
         $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t\t|%0d\t\t|%0d\t\t|%0d",
@@ -97,6 +102,17 @@ function void print_BR_ib(IS_INST  [`BR_Q_SIZE-1:0] BR_queue_mon, logic  [`BR_Q_
         BR_queue_mon[entry_idx].tag,
         BR_queue_mon[entry_idx].rob_idx
         );
+    end
+endfunction
+
+function void print_prf(logic   [`PHY_REG_NUM-1:0] [`XLEN-1:0] prf_mon_o);
+    $display("T=%0t PRF Contents", $time);
+    $display("addr\t|data\t|addr\t|data\t");
+    for (int reg_idx = 0; reg_idx < `PHY_REG_NUM/4; reg_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+        reg_idx, prf_mon_o[reg_idx], reg_idx+`PHY_REG_NUM/4, prf_mon_o[reg_idx+`PHY_REG_NUM/4],
+        reg_idx+`PHY_REG_NUM/2, prf_mon_o[reg_idx+`PHY_REG_NUM/2],
+        reg_idx+`PHY_REG_NUM*3/4, prf_mon_o[reg_idx+`PHY_REG_NUM*3/4]);
     end
 endfunction
 
@@ -219,11 +235,12 @@ class monitor;
                 end
             end
 
-            print_rob(vif.rob_mon_o);
+            print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
             print_rs(vif.rs_mon_o);
             print_mt(vif.mt_mon_o);
             print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o);
             print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o);
+            print_prf(vif.prf_mon_o);
 
 
             for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
@@ -360,6 +377,8 @@ interface pipeline_dp_if (input bit clk_i);
     BR_MIS                                      br_mis_mon_o        ;   // Branch Misprediction
     //      Contents
     ROB_ENTRY   [`ROB_ENTRY_NUM-1:0]            rob_mon_o           ;   // ROB contents monitor
+    logic       [`ROB_IDX_WIDTH-1:0]            rob_head_mon_o      ;   // ROB head pointer
+    logic       [`ROB_IDX_WIDTH-1:0]            rob_tail_mon_o      ;   // ROB tail pointer
     RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ;   // RS contents monitor
     MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ;   // Map Table contents monitor
     IS_INST     [`ALU_Q_SIZE  -1:0]             ALU_queue_mon_o     ;   // IB queue monitor
@@ -429,6 +448,8 @@ module pipeline_dp_tb;
         .rob_vfl_mon_o      (_if.rob_vfl_mon_o      ),
         .br_mis_mon_o       (_if.br_mis_mon_o       ),
         .rob_mon_o          (_if.rob_mon_o          ),
+        .rob_head_mon_o     (_if.rob_head_mon_o     ),
+        .rob_tail_mon_o     (_if.rob_tail_mon_o     ),
         .rs_mon_o           (_if.rs_mon_o           ),
         .mt_mon_o           (_if.mt_mon_o           ),
         .ALU_queue_mon_o    (_if.ALU_queue_mon_o    ),

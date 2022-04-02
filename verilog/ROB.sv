@@ -16,7 +16,8 @@ module ROB # (
     parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM  ,
     parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM   ,
     parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    ,
-    parameter   C_XLEN              =   `XLEN           
+    parameter   C_XLEN              =   `XLEN           ,
+    parameter   C_ROB_IDX_WIDTH     =   $clog2(C_ROB_ENTRY_NUM)
 ) (
     input   logic                           clk_i               ,   // Clock
     input   logic                           rst_i               ,   // Reset
@@ -32,6 +33,8 @@ module ROB # (
 
     // For testing
     output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
+    output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_head_mon_o  ,
+    output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_tail_mon_o  ,
     output  logic   [C_RT_NUM-1:0][C_XLEN-1:0]  rt_pc_o         ,
     output  logic   [C_RT_NUM-1:0]              rt_valid_o      
 );
@@ -43,7 +46,7 @@ module ROB # (
 // ====================================================================
     localparam  C_ARCH_REG_IDX_WIDTH    =   $clog2(C_ARCH_REG_NUM)      ;
     localparam  C_TAG_IDX_WIDTH         =   $clog2(C_PHY_REG_NUM)       ;
-    localparam  C_ROB_IDX_WIDTH         =   $clog2(C_ROB_ENTRY_NUM)     ;
+    // localparam  C_ROB_IDX_WIDTH         =   $clog2(C_ROB_ENTRY_NUM)     ;
     localparam  C_RT_IDX_WIDTH          =   $clog2(C_RT_NUM)            ;
     localparam  C_DP_IDX_WIDTH          =   $clog2(C_DP_NUM)            ;
     localparam  C_CDB_IDX_WIDTH         =   $clog2(C_CDB_NUM)           ;
@@ -81,7 +84,6 @@ module ROB # (
 
     // Branch mispredict
     logic       [C_ROB_ENTRY_NUM-1:0]   br_mispredict                       ;
-    logic       [C_ROB_IDX_WIDTH-1:0]   br_mis_idx                          ;
 
     // Retire
     logic       [C_ROB_ENTRY_NUM-1:0]   rt_window                           ;
@@ -252,10 +254,18 @@ module ROB # (
         // Output retire valid signal to Architectural Map Table 
         // & Free List
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
-            if (head + idx >= C_ROB_ENTRY_NUM) begin
-                rt_valid[idx]   =   rt_sel[head+idx-C_ROB_ENTRY_NUM];
+            if (idx == 0) begin
+                rt_valid[idx]   =   rt_sel[head] && br_mispredict[head];
             end else begin
-                rt_valid[idx]   =   rt_sel[head+idx];
+                if (head + idx >= C_ROB_ENTRY_NUM) begin
+                    rt_valid[idx]   =   rt_sel[head+idx-C_ROB_ENTRY_NUM]
+                                    && br_mispredict[head+idx-C_ROB_ENTRY_NUM]
+                                    && rt_valid[idx-1];
+                end else begin
+                    rt_valid[idx]   =   rt_sel[head+idx]
+                                    && br_mispredict[head+idx]
+                                    && rt_valid[idx-1];
+                end
             end
         end
 
@@ -275,7 +285,6 @@ module ROB # (
     always_comb begin
         br_mis_valid_o  =   1'b0;
         br_target_o     =   'b0;
-        br_mis_idx      =   'd0;
         for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
             br_mispredict[idx]  =   (rob_array[idx].br_predict 
                                     != rob_array[idx].br_result);
@@ -283,7 +292,6 @@ module ROB # (
             if (rt_sel[idx] && br_mispredict[idx]) begin
                 br_mis_valid_o  =   1'b1;
                 br_target_o     =   rob_array[idx].br_target;
-                br_mis_idx      =   idx;
             end
         end
     end
@@ -362,15 +370,17 @@ module ROB # (
                 rob_vfl_o[idx].tag      =   rob_array[head+idx].tag;
                 rob_vfl_o[idx].tag_old  =   rob_array[head+idx].tag_old;
             end
-            rob_amt_o[idx].wr_en    =   rt_valid[idx] && (!br_mis_valid_o);
-            rob_vfl_o[idx].wr_en    =   rt_valid[idx] && (!br_mis_valid_o);
+            rob_amt_o[idx].wr_en    =   rt_valid[idx];
+            rob_vfl_o[idx].wr_en    =   rt_valid[idx];
         end
     end
 
 // --------------------------------------------------------------------
 // For Pipeline Testing
 // --------------------------------------------------------------------
-    assign  rob_mon_o   =   rob_array;
+    assign  rob_mon_o       =   rob_array   ;
+    assign  rob_head_mon_o  =   head        ;
+    assign  rob_tail_mon_o  =   tail        ;
 
     always_comb begin
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
