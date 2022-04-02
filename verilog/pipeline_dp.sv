@@ -52,6 +52,16 @@ module pipeline_dp (
     output  logic       [`BR_Q_SIZE   -1:0]             BR_valid_mon_o      ,   // IB queue monitor
     output  logic       [`LOAD_Q_SIZE -1:0]             LOAD_valid_mon_o    ,   // IB queue monitor
     output  logic       [`STORE_Q_SIZE-1:0]             STORE_valid_mon_o   ,   // IB queue monitor
+    output  logic       [`ALU_IDX_WIDTH  -1:0]          ALU_head_mon_o      ,   // IB queue pointer monitor
+    output  logic       [`ALU_IDX_WIDTH  -1:0]          ALU_tail_mon_o      ,   // IB queue pointer monitor
+    output  logic       [`MULT_IDX_WIDTH -1:0]          MULT_head_mon_o     ,   // IB queue pointer monitor
+    output  logic       [`MULT_IDX_WIDTH -1:0]          MULT_tail_mon_o     ,   // IB queue pointer monitor
+    output  logic       [`BR_IDX_WIDTH   -1:0]          BR_head_mon_o       ,   // IB queue pointer monitor
+    output  logic       [`BR_IDX_WIDTH   -1:0]          BR_tail_mon_o       ,   // IB queue pointer monitor
+    output  logic       [`LOAD_IDX_WIDTH -1:0]          LOAD_head_mon_o     ,   // IB queue pointer monitor
+    output  logic       [`LOAD_IDX_WIDTH -1:0]          LOAD_tail_mon_o     ,   // IB queue pointer monitor
+    output  logic       [`STORE_IDX_WIDTH-1:0]          STORE_head_mon_o    ,   // IB queue pointer monitor
+    output  logic       [`STORE_IDX_WIDTH-1:0]          STORE_tail_mon_o    ,   // IB queue pointer monitor
     output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]  prf_mon_o               // Physical Register File monitor
 );
 
@@ -193,7 +203,17 @@ module pipeline_dp (
         .MULT_valid_mon_o   (MULT_valid_mon_o   ),
         .BR_valid_mon_o     (BR_valid_mon_o     ),
         .LOAD_valid_mon_o   (LOAD_valid_mon_o   ),
-        .STORE_valid_mon_o  (STORE_valid_mon_o  )
+        .STORE_valid_mon_o  (STORE_valid_mon_o  ),
+        .ALU_head_mon_o     (ALU_head_mon_o     ),
+        .ALU_tail_mon_o     (ALU_tail_mon_o     ),
+        .MULT_head_mon_o    (MULT_head_mon_o    ),
+        .MULT_tail_mon_o    (MULT_tail_mon_o    ),
+        .BR_head_mon_o      (BR_head_mon_o      ),
+        .BR_tail_mon_o      (BR_tail_mon_o      ),
+        .LOAD_head_mon_o    (LOAD_head_mon_o    ),
+        .LOAD_tail_mon_o    (LOAD_tail_mon_o    ),
+        .STORE_head_mon_o   (STORE_head_mon_o   ),
+        .STORE_tail_mon_o   (STORE_tail_mon_o   )
     );
 // --------------------------------------------------------------------
 

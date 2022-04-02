@@ -48,6 +48,8 @@ module PRF # (
 //   rd_idx: loop over read ports
 //   wr_idx: loop over write ports
     always_comb begin
+        hit1    =   0;
+        hit2    =   0;
         for (int unsigned rd_idx = 0 ; rd_idx < C_IS_NUM; rd_idx++) begin
             for (int unsigned wr_idx = 0 ; wr_idx < C_CDB_NUM; wr_idx++) begin
                 if(bc_prf_i[wr_idx].wr_addr == rs_prf_i[rd_idx].rd_addr1) begin

@@ -9,18 +9,23 @@
 /////////////////////////////////////////////////////////////////////////
 
 module IB #(
-    parameter   C_IS_NUM        =   `IS_NUM         ,
-    parameter   C_ALU_NUM       =   `ALU_NUM        , 
-    parameter   C_MULT_NUM      =   `MULT_NUM       , 
-    parameter   C_BR_NUM        =   `BR_NUM         , 
-    parameter   C_LOAD_NUM      =   `LOAD_NUM       , 
-    parameter   C_STORE_NUM     =   `STORE_NUM      , 
-    parameter   C_FU_NUM        =   `FU_NUM         ,
-    parameter   C_ALU_Q_SIZE    =   `ALU_Q_SIZE     ,
-    parameter   C_MULT_Q_SIZE   =   `MULT_Q_SIZE    ,
-    parameter   C_BR_Q_SIZE     =   `BR_Q_SIZE      ,
-    parameter   C_LOAD_Q_SIZE   =   `LOAD_Q_SIZE    ,
-    parameter   C_STORE_Q_SIZE  =   `STORE_Q_SIZE   
+    parameter   C_IS_NUM            =   `IS_NUM                 ,
+    parameter   C_ALU_NUM           =   `ALU_NUM                , 
+    parameter   C_MULT_NUM          =   `MULT_NUM               , 
+    parameter   C_BR_NUM            =   `BR_NUM                 , 
+    parameter   C_LOAD_NUM          =   `LOAD_NUM               , 
+    parameter   C_STORE_NUM         =   `STORE_NUM              , 
+    parameter   C_FU_NUM            =   `FU_NUM                 ,
+    parameter   C_ALU_Q_SIZE        =   `ALU_Q_SIZE             ,
+    parameter   C_MULT_Q_SIZE       =   `MULT_Q_SIZE            ,
+    parameter   C_BR_Q_SIZE         =   `BR_Q_SIZE              ,
+    parameter   C_LOAD_Q_SIZE       =   `LOAD_Q_SIZE            ,
+    parameter   C_STORE_Q_SIZE      =   `STORE_Q_SIZE           ,
+    parameter   C_ALU_IDX_WIDTH     =   $clog2(C_ALU_Q_SIZE  )  ,
+    parameter   C_MULT_IDX_WIDTH    =   $clog2(C_MULT_Q_SIZE )  ,
+    parameter   C_BR_IDX_WIDTH      =   $clog2(C_BR_Q_SIZE   )  ,
+    parameter   C_LOAD_IDX_WIDTH    =   $clog2(C_LOAD_Q_SIZE )  ,
+    parameter   C_STORE_IDX_WIDTH   =   $clog2(C_STORE_Q_SIZE)
 ) (
     input   logic                       clk_i           ,   //  Clock
     input   logic                       rst_i           ,   //  Reset
@@ -41,7 +46,19 @@ module IB #(
     output  logic   [C_MULT_Q_SIZE -1:0]    MULT_valid_mon_o    ,
     output  logic   [C_BR_Q_SIZE   -1:0]    BR_valid_mon_o      ,
     output  logic   [C_LOAD_Q_SIZE -1:0]    LOAD_valid_mon_o    ,
-    output  logic   [C_STORE_Q_SIZE-1:0]    STORE_valid_mon_o   
+    output  logic   [C_STORE_Q_SIZE-1:0]    STORE_valid_mon_o   ,
+
+    output  logic   [C_ALU_IDX_WIDTH  -1:0] ALU_head_mon_o      ,
+    output  logic   [C_ALU_IDX_WIDTH  -1:0] ALU_tail_mon_o      ,
+    output  logic   [C_MULT_IDX_WIDTH -1:0] MULT_head_mon_o     ,
+    output  logic   [C_MULT_IDX_WIDTH -1:0] MULT_tail_mon_o     ,
+    output  logic   [C_BR_IDX_WIDTH   -1:0] BR_head_mon_o       ,
+    output  logic   [C_BR_IDX_WIDTH   -1:0] BR_tail_mon_o       ,
+    output  logic   [C_LOAD_IDX_WIDTH -1:0] LOAD_head_mon_o     ,
+    output  logic   [C_LOAD_IDX_WIDTH -1:0] LOAD_tail_mon_o     ,
+    output  logic   [C_STORE_IDX_WIDTH-1:0] STORE_head_mon_o    ,
+    output  logic   [C_STORE_IDX_WIDTH-1:0] STORE_tail_mon_o    
+    
 );
 
 // ====================================================================
@@ -86,7 +103,9 @@ module IB #(
         .br_mis_i       (br_mis_i                                   ),
         .exception_i    (exception_i                                ),
         .queue_mon_o    (ALU_queue_mon_o                            ),
-        .valid_mon_o    (ALU_valid_mon_o                            )
+        .valid_mon_o    (ALU_valid_mon_o                            ),
+        .head_mon_o     (ALU_head_mon_o                             ),
+        .tail_mon_o     (ALU_tail_mon_o                             )
     );
 // --------------------------------------------------------------------
 
@@ -109,7 +128,9 @@ module IB #(
         .br_mis_i       (br_mis_i                                       ),
         .exception_i    (exception_i                                    ),
         .queue_mon_o    (MULT_queue_mon_o                               ),
-        .valid_mon_o    (MULT_valid_mon_o                               )
+        .valid_mon_o    (MULT_valid_mon_o                               ),
+        .head_mon_o     (MULT_head_mon_o                                ),
+        .tail_mon_o     (MULT_tail_mon_o                                )
     );
 // --------------------------------------------------------------------
 
@@ -132,7 +153,9 @@ module IB #(
         .br_mis_i       (br_mis_i                                   ),
         .exception_i    (exception_i                                ),
         .queue_mon_o    (BR_queue_mon_o                             ),
-        .valid_mon_o    (BR_valid_mon_o                             )
+        .valid_mon_o    (BR_valid_mon_o                             ),
+        .head_mon_o     (BR_head_mon_o                              ),
+        .tail_mon_o     (BR_tail_mon_o                              )
     );
 // --------------------------------------------------------------------
 
@@ -155,7 +178,9 @@ module IB #(
         .br_mis_i       (br_mis_i                                       ),
         .exception_i    (exception_i                                    ),
         .queue_mon_o    (LOAD_queue_mon_o                               ),
-        .valid_mon_o    (LOAD_valid_mon_o                               )
+        .valid_mon_o    (LOAD_valid_mon_o                               ),
+        .head_mon_o     (LOAD_head_mon_o                                ),
+        .tail_mon_o     (LOAD_tail_mon_o                                )
     );
 // --------------------------------------------------------------------
 
@@ -178,7 +203,9 @@ module IB #(
         .br_mis_i       (br_mis_i                                           ),
         .exception_i    (exception_i                                        ),
         .queue_mon_o    (STORE_queue_mon_o                                  ),
-        .valid_mon_o    (STORE_valid_mon_o                                  )
+        .valid_mon_o    (STORE_valid_mon_o                                  ),
+        .head_mon_o     (STORE_head_mon_o                                   ),
+        .tail_mon_o     (STORE_tail_mon_o                                   )
     );
 // --------------------------------------------------------------------
 

@@ -407,6 +407,10 @@ module RS #(
             end else if (dp_sel[idx]) begin
                 rs_array[idx].valid     <=  `SD 1'b1;
                 rs_array[idx].dec_inst  <=  `SD dp_switch[idx];
+            // Issue
+            end else if (is_sel[idx]) begin
+                rs_array[idx].valid     <=  `SD 'b0;
+                rs_array[idx].dec_inst  <=  `SD 'b0;
             // Complete
             end else if (rs_array[idx].valid && (cp_sel_tag1[idx] || cp_sel_tag2[idx])) begin
                 // tag1_ready & tag2_ready should be independently set
@@ -416,10 +420,6 @@ module RS #(
                 if (cp_sel_tag2[idx]) begin
                     rs_array[idx].dec_inst.tag2_ready   <=  `SD 1'b1;
                 end
-            // Issue
-            end else if (is_sel[idx]) begin
-                rs_array[idx].valid     <=  `SD 'b0;
-                rs_array[idx].dec_inst  <=  `SD 'b0;
             end
         end
     end

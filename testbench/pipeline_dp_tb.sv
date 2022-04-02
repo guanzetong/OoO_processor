@@ -74,8 +74,14 @@ function void print_mt(MT_ENTRY [`ARCH_REG_NUM-1:0] mt_mon);
     end
 endfunction
 
-function void print_ALU_ib(IS_INST  [`ALU_Q_SIZE-1:0] ALU_queue_mon, logic  [`ALU_Q_SIZE-1:0] ALU_valid_mon);
+function void print_ALU_ib(
+    IS_INST     [`ALU_Q_SIZE-1:0]       ALU_queue_mon   , 
+    logic       [`ALU_Q_SIZE-1:0]       ALU_valid_mon   ,
+    logic       [`ALU_IDX_WIDTH-1:0]    ALU_head_mon    ,
+    logic       [`ALU_IDX_WIDTH-1:0]    ALU_tail_mon    
+);
     $display("T=%0t ALU IB Queue Contents", $time);
+    $display("head=%0d, tail=%0d", ALU_head_mon, ALU_tail_mon);
     $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
     for (int entry_idx = 0; entry_idx < `ALU_Q_SIZE; entry_idx++) begin
         $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
@@ -90,8 +96,14 @@ function void print_ALU_ib(IS_INST  [`ALU_Q_SIZE-1:0] ALU_queue_mon, logic  [`AL
     end
 endfunction
 
-function void print_MULT_ib(IS_INST  [`MULT_Q_SIZE-1:0] MULT_queue_mon, logic  [`MULT_Q_SIZE-1:0] MULT_valid_mon);
+function void print_MULT_ib(
+    IS_INST     [`MULT_Q_SIZE-1:0]      MULT_queue_mon  ,
+    logic       [`MULT_Q_SIZE-1:0]      MULT_valid_mon  ,
+    logic       [`MULT_IDX_WIDTH-1:0]   MULT_head_mon   ,
+    logic       [`MULT_IDX_WIDTH-1:0]   MULT_tail_mon    
+);
     $display("T=%0t MULT IB Queue Contents", $time);
+    $display("head=%0d, tail=%0d", MULT_head_mon, MULT_tail_mon);
     $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
     for (int entry_idx = 0; entry_idx < `MULT_Q_SIZE; entry_idx++) begin
         $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
@@ -106,8 +118,14 @@ function void print_MULT_ib(IS_INST  [`MULT_Q_SIZE-1:0] MULT_queue_mon, logic  [
     end
 endfunction
 
-function void print_BR_ib(IS_INST  [`BR_Q_SIZE-1:0] BR_queue_mon, logic  [`BR_Q_SIZE-1:0] BR_valid_mon);
+function void print_BR_ib(
+    IS_INST     [`BR_Q_SIZE-1:0]        BR_queue_mon    , 
+    logic       [`BR_Q_SIZE-1:0]        BR_valid_mon    ,
+    logic       [`BR_IDX_WIDTH-1:0]     BR_head_mon     ,
+    logic       [`BR_IDX_WIDTH-1:0]     BR_tail_mon    
+);
     $display("T=%0t BR IB Queue Contents", $time);
+    $display("head=%0d, tail=%0d", BR_head_mon, BR_tail_mon);
     $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
     for (int entry_idx = 0; entry_idx < `BR_Q_SIZE; entry_idx++) begin
         $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
@@ -323,10 +341,10 @@ class monitor;
             print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
             print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
             print_mt(vif.mt_mon_o);
-            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o);
-            print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o);
-            print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o);
             print_prf(vif.prf_mon_o);
+            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
+            print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
+            print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
             print_fl(vif.fl_mon_o, vif.fl_head_mon_o, vif.fl_tail_mon_o);
             print_vfl(vif.vfl_fl_mon_o);
             print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
@@ -354,7 +372,7 @@ endclass
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   500;
+    int     num     =   1000;
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -483,11 +501,21 @@ interface pipeline_dp_if (input bit clk_i);
     IS_INST     [`BR_Q_SIZE   -1:0]             BR_queue_mon_o      ;   // IB queue monitor
     IS_INST     [`LOAD_Q_SIZE -1:0]             LOAD_queue_mon_o    ;   // IB queue monitor
     IS_INST     [`STORE_Q_SIZE-1:0]             STORE_queue_mon_o   ;   // IB queue monitor
-    logic       [`ALU_Q_SIZE  -1:0]             ALU_valid_mon_o     ;
-    logic       [`MULT_Q_SIZE -1:0]             MULT_valid_mon_o    ;
-    logic       [`BR_Q_SIZE   -1:0]             BR_valid_mon_o      ;
-    logic       [`LOAD_Q_SIZE -1:0]             LOAD_valid_mon_o    ;
-    logic       [`STORE_Q_SIZE-1:0]             STORE_valid_mon_o   ;
+    logic       [`ALU_Q_SIZE  -1:0]             ALU_valid_mon_o     ;   // IB queue monitor
+    logic       [`MULT_Q_SIZE -1:0]             MULT_valid_mon_o    ;   // IB queue monitor
+    logic       [`BR_Q_SIZE   -1:0]             BR_valid_mon_o      ;   // IB queue monitor
+    logic       [`LOAD_Q_SIZE -1:0]             LOAD_valid_mon_o    ;   // IB queue monitor
+    logic       [`STORE_Q_SIZE-1:0]             STORE_valid_mon_o   ;   // IB queue monitor
+    logic       [`ALU_IDX_WIDTH  -1:0]          ALU_head_mon_o      ;   // IB queue pointer monitor
+    logic       [`ALU_IDX_WIDTH  -1:0]          ALU_tail_mon_o      ;   // IB queue pointer monitor
+    logic       [`MULT_IDX_WIDTH -1:0]          MULT_head_mon_o     ;   // IB queue pointer monitor
+    logic       [`MULT_IDX_WIDTH -1:0]          MULT_tail_mon_o     ;   // IB queue pointer monitor
+    logic       [`BR_IDX_WIDTH   -1:0]          BR_head_mon_o       ;   // IB queue pointer monitor
+    logic       [`BR_IDX_WIDTH   -1:0]          BR_tail_mon_o       ;   // IB queue pointer monitor
+    logic       [`LOAD_IDX_WIDTH -1:0]          LOAD_head_mon_o     ;   // IB queue pointer monitor
+    logic       [`LOAD_IDX_WIDTH -1:0]          LOAD_tail_mon_o     ;   // IB queue pointer monitor
+    logic       [`STORE_IDX_WIDTH-1:0]          STORE_head_mon_o    ;   // IB queue pointer monitor
+    logic       [`STORE_IDX_WIDTH-1:0]          STORE_tail_mon_o    ;   // IB queue pointer monitor
     logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]  prf_mon_o           ;   // Physical Register File monitor
 endinterface // pipeline_dp_if
 // ====================================================================
@@ -566,6 +594,16 @@ module pipeline_dp_tb;
         .BR_valid_mon_o     (_if.BR_valid_mon_o     ),
         .LOAD_valid_mon_o   (_if.LOAD_valid_mon_o   ),
         .STORE_valid_mon_o  (_if.STORE_valid_mon_o  ),
+        .ALU_head_mon_o     (_if.ALU_head_mon_o     ),   // IB queue pointer monitor
+        .ALU_tail_mon_o     (_if.ALU_tail_mon_o     ),   // IB queue pointer monitor
+        .MULT_head_mon_o    (_if.MULT_head_mon_o    ),   // IB queue pointer monitor
+        .MULT_tail_mon_o    (_if.MULT_tail_mon_o    ),   // IB queue pointer monitor
+        .BR_head_mon_o      (_if.BR_head_mon_o      ),   // IB queue pointer monitor
+        .BR_tail_mon_o      (_if.BR_tail_mon_o      ),   // IB queue pointer monitor
+        .LOAD_head_mon_o    (_if.LOAD_head_mon_o    ),   // IB queue pointer monitor
+        .LOAD_tail_mon_o    (_if.LOAD_tail_mon_o    ),   // IB queue pointer monitor
+        .STORE_head_mon_o   (_if.STORE_head_mon_o   ),   // IB queue pointer monitor
+        .STORE_tail_mon_o   (_if.STORE_tail_mon_o   ),   // IB queue pointer monitor
         .prf_mon_o          (_if.prf_mon_o          )
     );
 // --------------------------------------------------------------------

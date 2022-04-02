@@ -10,30 +10,33 @@
 module IB_queue #(
     parameter   C_SIZE      =   8           ,
     parameter   C_IN_NUM    =   `IS_NUM     ,
-    parameter   C_OUT_NUM   =   `ALU_NUM    
+    parameter   C_OUT_NUM   =   `ALU_NUM    ,
+    parameter   C_IDX_WIDTH =   $clog2(C_SIZE)
 ) (
-    input   logic                   clk_i           ,   // Clock
-    input   logic                   rst_i           ,   // Reset
+    input   logic                       clk_i           ,   // Clock
+    input   logic                       rst_i           ,   // Reset
     // Push-In
-    input   logic   [C_IN_NUM-1:0]  s_valid_i       ,   // Push-in Valid
-    output  logic   [C_IN_NUM-1:0]  s_ready_o       ,   // Push-in Ready
-    input   IS_INST [C_IN_NUM-1:0]  s_data_i        ,   // Push-in Data
+    input   logic   [C_IN_NUM-1:0]      s_valid_i       ,   // Push-in Valid
+    output  logic   [C_IN_NUM-1:0]      s_ready_o       ,   // Push-in Ready
+    input   IS_INST [C_IN_NUM-1:0]      s_data_i        ,   // Push-in Data
     // Pop-Out
-    output  logic   [C_OUT_NUM-1:0] m_valid_o       ,   // Pop-out Valid
-    input   logic   [C_OUT_NUM-1:0] m_ready_i       ,   // Pop-out Ready
-    output  IS_INST [C_OUT_NUM-1:0] m_data_o        ,   // Pop-out Data
+    output  logic   [C_OUT_NUM-1:0]     m_valid_o       ,   // Pop-out Valid
+    input   logic   [C_OUT_NUM-1:0]     m_ready_i       ,   // Pop-out Ready
+    output  IS_INST [C_OUT_NUM-1:0]     m_data_o        ,   // Pop-out Data
     // Flush
-    input   BR_MIS                  br_mis_i        ,   // Branch Misprediction
-    input   logic                   exception_i     ,   // External Exception
+    input   BR_MIS                      br_mis_i        ,   // Branch Misprediction
+    input   logic                       exception_i     ,   // External Exception
     // For Testing
-    output  IS_INST [C_SIZE-1:0]    queue_mon_o     ,
-    output  logic   [C_SIZE-1:0]    valid_mon_o
+    output  IS_INST [C_SIZE-1:0]        queue_mon_o     ,
+    output  logic   [C_SIZE-1:0]        valid_mon_o     ,
+    output  logic   [C_IDX_WIDTH-1:0]   head_mon_o      ,
+    output  logic   [C_IDX_WIDTH-1:0]   tail_mon_o      
 );
 
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_IDX_WIDTH =   $clog2(C_SIZE);
+    // localparam  C_IDX_WIDTH =   $clog2(C_SIZE);
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -254,6 +257,8 @@ module IB_queue #(
 // --------------------------------------------------------------------
     assign  queue_mon_o =   queue   ;
     assign  valid_mon_o =   valid   ;
+    assign  head_mon_o  =   head    ;
+    assign  tail_mon_o  =   tail    ;
 
 // ====================================================================
 // RTL Logic End

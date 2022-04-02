@@ -10,22 +10,25 @@ module IB_channel #(
     parameter   C_SIZE          =   8           ,
     parameter   C_IN_NUM        =   `IS_NUM     ,
     parameter   C_OUT_NUM       =   `ALU_NUM    ,
-    parameter   C_FU_TYPE       =   "ALU"       
+    parameter   C_FU_TYPE       =   "ALU"       ,
+    parameter   C_IDX_WIDTH     =   $clog2(C_SIZE)
 ) (
-    input   logic                   clk_i           ,   // Clock
-    input   logic                   rst_i           ,   // Reset
+    input   logic                       clk_i           ,   // Clock
+    input   logic                       rst_i           ,   // Reset
     // RS Interface
-    input   RS_IB   [C_IN_NUM-1:0]  rs_ib_i         ,   // Issue channel from RS
-    output  logic                   ready_o         ,   // Queue ready output to RS
+    input   RS_IB   [C_IN_NUM-1:0]      rs_ib_i         ,   // Issue channel from RS
+    output  logic                       ready_o         ,   // Queue ready output to RS
     // FU Interface
-    input   FU_IB   [C_OUT_NUM-1:0] fu_ib_i         ,   // FU ready input
-    output  IB_FU   [C_OUT_NUM-1:0] ib_fu_o         ,   // Issue channel to FU
+    input   FU_IB   [C_OUT_NUM-1:0]     fu_ib_i         ,   // FU ready input
+    output  IB_FU   [C_OUT_NUM-1:0]     ib_fu_o         ,   // Issue channel to FU
     // Flush
-    input   BR_MIS                  br_mis_i        ,   // Branch Misprediction
-    input   logic                   exception_i     ,   // External Exception
+    input   BR_MIS                      br_mis_i        ,   // Branch Misprediction
+    input   logic                       exception_i     ,   // External Exception
     // For Testing
-    output  IS_INST [C_SIZE-1:0]    queue_mon_o     ,
-    output  logic   [C_SIZE-1:0]    valid_mon_o     
+    output  IS_INST [C_SIZE-1:0]        queue_mon_o     ,
+    output  logic   [C_SIZE-1:0]        valid_mon_o     ,
+    output  logic   [C_IDX_WIDTH-1:0]   head_mon_o      ,
+    output  logic   [C_IDX_WIDTH-1:0]   tail_mon_o      
 );
 
 // ====================================================================
@@ -82,7 +85,9 @@ module IB_channel #(
         .br_mis_i       (br_mis_i       ),
         .exception_i    (exception_i    ),
         .queue_mon_o    (queue_mon_o    ),
-        .valid_mon_o    (valid_mon_o    )
+        .valid_mon_o    (valid_mon_o    ),
+        .head_mon_o     (head_mon_o     ),
+        .tail_mon_o     (tail_mon_o     )
     );
 // --------------------------------------------------------------------
 

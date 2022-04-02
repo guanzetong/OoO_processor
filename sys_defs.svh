@@ -342,12 +342,17 @@ typedef struct packed {
 `define MULT_CYCLE      3
 `define BR_CYCLE        3
 
-
 `define ALU_Q_SIZE      8
 `define MULT_Q_SIZE     8
 `define BR_Q_SIZE       8
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
+
+`define ALU_IDX_WIDTH   $clog2(`ALU_Q_SIZE  )
+`define MULT_IDX_WIDTH  $clog2(`MULT_Q_SIZE )
+`define BR_IDX_WIDTH    $clog2(`BR_Q_SIZE   )
+`define LOAD_IDX_WIDTH  $clog2(`LOAD_Q_SIZE )
+`define STORE_IDX_WIDTH $clog2(`STORE_Q_SIZE)
 
 `define ALU_CYCLE       2
 `define MULT_CYCLE      2
