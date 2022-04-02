@@ -17,6 +17,10 @@ module RS #(
     parameter   C_CDB_NUM       =   `CDB_NUM        ,
     parameter   C_THREAD_NUM    =   `THREAD_NUM     
 ) (
+    // For Testing
+    output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o,
+    output [$clog2(`RS_ENTRY_NUM)-1:0]          rs_cod_mon_o,
+    // Testing end
     input   logic                       clk_i           ,   //  Clock
     input   logic                       rst_i           ,   //  Reset
     output  RS_DP                       rs_dp_o         ,
@@ -27,10 +31,9 @@ module RS #(
     output  RS_PRF  [C_IS_NUM-1:0]      rs_prf_o        ,
     input   PRF_RS  [C_IS_NUM-1:0]      prf_rs_i        ,
     input   BR_MIS                      br_mis_i        ,
-    input   logic                       exception_i     ,
+    input   logic                       exception_i     
 
-    // For Testing
-    output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o
+
 );
 
 // ====================================================================
@@ -425,6 +428,8 @@ module RS #(
 // For Pipeline Testing
 // --------------------------------------------------------------------
     assign  rs_mon_o    =   rs_array    ;
+    assign  rs_cod_mon_o=   cod         ;
+
 // ====================================================================
 // RTL Logic End
 // ====================================================================

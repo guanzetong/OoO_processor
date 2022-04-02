@@ -22,9 +22,10 @@ function void print_rob(
     end
 endfunction
 
-function void print_rs(RS_ENTRY [`RS_ENTRY_NUM-1:0] rs_mon);
+function void print_rs(RS_ENTRY [`RS_ENTRY_NUM-1:0] rs_mon, logic [$clog2(`RS_ENTRY_NUM)-1:0] rs_cod_mon);
     string  op_string   ;
     $display("T=%0t RS Contents", $time);
+    $display("RS COD=%0d", rs_cod_mon);
     $display("Index\t|op\t|valid\t|PC\t|tag\t|tag1\t|ready\t|tag2\t|ready\t|rob_idx");
     for (int entry_idx = 0; entry_idx < `RS_ENTRY_NUM; entry_idx++) begin
         if (rs_mon[entry_idx].dec_inst.rd_mem   ) begin
@@ -320,7 +321,7 @@ class monitor;
             end
 
             print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
-            print_rs(vif.rs_mon_o);
+            print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
             print_mt(vif.mt_mon_o);
             print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o);
             print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o);
@@ -471,6 +472,7 @@ interface pipeline_dp_if (input bit clk_i);
     logic       [`ROB_IDX_WIDTH-1:0]            rob_head_mon_o      ;   // ROB head pointer
     logic       [`ROB_IDX_WIDTH-1:0]            rob_tail_mon_o      ;   // ROB tail pointer
     RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ;   // RS contents monitor
+    logic       [$clog2(`RS_ENTRY_NUM)-1:0]     rs_cod_mon_o        ;
     MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ;   // Map Table contents monitor
     FL_ENTRY    [`FL_ENTRY_NUM-1:0]             fl_mon_o            ;   // Freelist contents monitor
     logic       [`FL_IDX_WIDTH-1:0]             fl_head_mon_o       ;
@@ -548,6 +550,7 @@ module pipeline_dp_tb;
         .rob_head_mon_o     (_if.rob_head_mon_o     ),
         .rob_tail_mon_o     (_if.rob_tail_mon_o     ),
         .rs_mon_o           (_if.rs_mon_o           ),
+        .rs_cod_mon_o       (_if.rs_cod_mon_o       ),
         .mt_mon_o           (_if.mt_mon_o           ),
         .fl_mon_o           (_if.fl_mon_o           ),
         .fl_head_mon_o      (_if.fl_head_mon_o      ),
@@ -590,7 +593,7 @@ module pipeline_dp_tb;
         // Because multiple components and clock are running
         // in the background, we need to call $finish explicitly
         // print_rob(_if.rob_mon_o);
-        print_rs(_if.rs_mon_o);
+        print_rs(_if.rs_mon_o, _if.rs_cod_mon_o);
         $display("@@PASSED");
         #50 $finish;
     end

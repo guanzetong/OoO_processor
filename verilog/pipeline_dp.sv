@@ -36,6 +36,7 @@ module pipeline_dp (
     output  logic       [`ROB_IDX_WIDTH-1:0]            rob_head_mon_o      ,   // ROB head pointer
     output  logic       [`ROB_IDX_WIDTH-1:0]            rob_tail_mon_o      ,   // ROB tail pointer
     output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ,   // RS contents monitor
+    output  logic       [$clog2(`RS_ENTRY_NUM)-1:0]     rs_cod_mon_o        ,
     output  MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ,   // Map Table contents monitor
     output  FL_ENTRY    [`FL_ENTRY_NUM-1:0]             fl_mon_o            ,   // Freelist monitor
     output  logic       [`FL_IDX_WIDTH-1:0]             fl_head_mon_o       ,
@@ -126,6 +127,10 @@ module pipeline_dp (
 // Description  :   Reservation Station
 // --------------------------------------------------------------------
     RS RS_inst (
+        //RS testing
+        .rs_mon_o       (rs_mon_o       ),
+        .rs_cod_mon_o   (rs_cod_mon_o   ),
+        // testing end
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
         .rs_dp_o        (rs_dp          ),
@@ -136,9 +141,7 @@ module pipeline_dp (
         .rs_prf_o       (rs_prf         ),
         .prf_rs_i       (prf_rs         ),
         .br_mis_i       (br_mis         ),
-        .exception_i    (exception_i    ),
-        //RS testing
-        .rs_mon_o       (rs_mon_o       )
+        .exception_i    (exception_i    )
     );
 // --------------------------------------------------------------------
 
