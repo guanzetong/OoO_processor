@@ -8,6 +8,7 @@
 
 module VFL #(
     parameter   C_RT_NUM        =   `RT_NUM         ,
+    parameter   C_ARCH_REG_NUM  =   `ARCH_REG_NUM   ,
     parameter   C_FL_ENTRY_NUM  =   `FL_ENTRY_NUM 
 ) (
     input   logic                               clk_i       ,   //  Clock
@@ -40,7 +41,7 @@ module VFL #(
         for (int unsigned entry_idx = 0; entry_idx < C_FL_ENTRY_NUM; entry_idx++) begin
             // System Reset
             if (rst_i) begin
-                vfl_entry[entry_idx].tag    <=  `SD entry_idx;
+                vfl_entry[entry_idx].tag    <=  `SD entry_idx + C_ARCH_REG_NUM;
             end else begin
                 for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
                     // At Retire

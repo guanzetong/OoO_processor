@@ -12,21 +12,26 @@ module FL_SS #(
     parameter   C_RT_NUM        =   `RT_NUM             ,
     parameter   C_ARCH_REG_NUM  =   `ARCH_REG_NUM       ,
     parameter   C_PHY_REG_NUM   =   `PHY_REG_NUM        ,
-    parameter   C_TAG_IDX_WIDTH =   `TAG_IDX_WIDTH      
+    parameter   C_TAG_IDX_WIDTH =   `TAG_IDX_WIDTH      ,
+    parameter   C_FL_IDX_WIDTH  =   $clog2(C_FL_ENTRY_NUM)
 ) (
-    input   logic               clk_i           ,   //  Clock
-    input   logic               rst_i           ,   //  Reset
-    input   logic               rollback_i      ,  
-    input   DP_FL               dp_fl_i         ,
-    input   ROB_FL              rob_fl_i        ,
-    input   FL_ENTRY            vfl_fl_i        ,
-    output  FL_DP               fl_dp_o
+    input   logic                               clk_i           ,   //  Clock
+    input   logic                               rst_i           ,   //  Reset
+    input   logic                               rollback_i      ,  
+    input   DP_FL                               dp_fl_i         ,
+    input   ROB_FL                              rob_fl_i        ,
+    input   FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    vfl_fl_i        ,
+    output  FL_DP                               fl_dp_o         ,
+    // For Testing
+    output  FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    fl_mon_o        ,
+    output  logic       [C_FL_IDX_WIDTH-1:0]    fl_head_mon_o   ,
+    output  logic       [C_FL_IDX_WIDTH-1:0]    fl_tail_mon_o   
 );
 
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_FL_IDX_WIDTH  =   $clog2(C_FL_ENTRY_NUM);
+    // localparam  C_FL_IDX_WIDTH  =   $clog2(C_FL_ENTRY_NUM);
     localparam  C_FL_NUM_WIDTH  =   $clog2(C_FL_ENTRY_NUM+1);
 
     localparam  C_RT_NUM_WIDTH  =   $clog2(C_RT_NUM+1);
@@ -120,7 +125,7 @@ module FL_SS #(
 
         rt_num  =   rob_fl_i.rt_num;
         for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
-            if (rob_fl_i.tag[rt_idx] == 'd0) begin
+            if ((rt_idx < rob_fl_i.rt_num) && (rob_fl_i.tag[rt_idx] == 'd0)) begin
                 rt_num = rt_num - 'd1;
             end
         end
@@ -164,9 +169,9 @@ module FL_SS #(
             for (int unsigned out_idx = 0; out_idx < C_RT_NUM; out_idx++) begin
                 if (rt_route[out_idx][in_idx] == 1'b1) begin
                     if (tail + out_idx >= C_FL_ENTRY_NUM) begin
-                        next_fl_entry[tail + out_idx - C_FL_ENTRY_NUM]  =   rob_fl_i.tag[in_idx];
+                        next_fl_entry[tail + out_idx - C_FL_ENTRY_NUM]  =   rob_fl_i.tag_old[in_idx];
                     end else begin
-                        next_fl_entry[tail + out_idx]   =   rob_fl_i.tag[in_idx];
+                        next_fl_entry[tail + out_idx]   =   rob_fl_i.tag_old[in_idx];
                     end
                 end
             end
@@ -184,6 +189,10 @@ module FL_SS #(
             end
         end
     end
+
+    assign  fl_mon_o        =   fl_entry;
+    assign  fl_head_mon_o   =   head    ;
+    assign  fl_tail_mon_o   =   tail    ;
 
 // ====================================================================
 // RTL Logic End

@@ -89,6 +89,22 @@ function void print_ALU_ib(IS_INST  [`ALU_Q_SIZE-1:0] ALU_queue_mon, logic  [`AL
     end
 endfunction
 
+function void print_MULT_ib(IS_INST  [`MULT_Q_SIZE-1:0] MULT_queue_mon, logic  [`MULT_Q_SIZE-1:0] MULT_valid_mon);
+    $display("T=%0t MULT IB Queue Contents", $time);
+    $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
+    for (int entry_idx = 0; entry_idx < `MULT_Q_SIZE; entry_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+        entry_idx,
+        MULT_valid_mon[entry_idx],
+        MULT_queue_mon[entry_idx].pc,
+        MULT_queue_mon[entry_idx].rs1_value,
+        MULT_queue_mon[entry_idx].rs2_value,
+        MULT_queue_mon[entry_idx].tag,
+        MULT_queue_mon[entry_idx].rob_idx
+        );
+    end
+endfunction
+
 function void print_BR_ib(IS_INST  [`BR_Q_SIZE-1:0] BR_queue_mon, logic  [`BR_Q_SIZE-1:0] BR_valid_mon);
     $display("T=%0t BR IB Queue Contents", $time);
     $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
@@ -107,15 +123,83 @@ endfunction
 
 function void print_prf(logic   [`PHY_REG_NUM-1:0] [`XLEN-1:0] prf_mon_o);
     $display("T=%0t PRF Contents", $time);
-    $display("addr\t|data\t|addr\t|data\t");
+    $display("addr\t|data\t|addr\t|data\t|addr\t|data\t|addr\t|data\t");
+    // $display("%0d", `PHY_REG_NUM/4);
     for (int reg_idx = 0; reg_idx < `PHY_REG_NUM/4; reg_idx++) begin
         $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
-        reg_idx, prf_mon_o[reg_idx], reg_idx+`PHY_REG_NUM/4, prf_mon_o[reg_idx+`PHY_REG_NUM/4],
+        reg_idx, prf_mon_o[reg_idx], 
+        reg_idx+`PHY_REG_NUM/4, prf_mon_o[reg_idx+`PHY_REG_NUM/4],
         reg_idx+`PHY_REG_NUM/2, prf_mon_o[reg_idx+`PHY_REG_NUM/2],
         reg_idx+`PHY_REG_NUM*3/4, prf_mon_o[reg_idx+`PHY_REG_NUM*3/4]);
     end
 endfunction
 
+function void print_fl(FL_ENTRY [`FL_ENTRY_NUM-1:0]  fl_mon, fl_head_mon, fl_tail_mon);
+    $display("T=%0t FL Contents", $time);
+    $display("head=%0d, tail=%0d", fl_head_mon, fl_tail_mon);
+    $display("Index\t|Tag\t|Index\t|Tag\t|Index\t|Tag\t|Index\t|Tag\t");
+    // $display("%0d", `FL_ENTRY_NUM/4);
+    for (int fl_idx = 0; fl_idx < `FL_ENTRY_NUM/4; fl_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+        fl_idx, fl_mon[fl_idx].tag, 
+        fl_idx+`FL_ENTRY_NUM/4, fl_mon[fl_idx+`FL_ENTRY_NUM/4].tag,
+        fl_idx+`FL_ENTRY_NUM/2, fl_mon[fl_idx+`FL_ENTRY_NUM/2].tag,
+        fl_idx+`FL_ENTRY_NUM*3/4, fl_mon[fl_idx+`FL_ENTRY_NUM*3/4].tag);
+    end
+endfunction
+
+function void print_vfl(FL_ENTRY [`FL_ENTRY_NUM-1:0]  vfl_fl_mon);
+    $display("T=%0t VFL Contents", $time);
+    $display("Index\t|Tag\t|Index\t|Tag\t|Index\t|Tag\t|Index\t|Tag\t");
+    // $display("%0d", `FL_ENTRY_NUM/4);
+    for (int fl_idx = 0; fl_idx < `FL_ENTRY_NUM/4; fl_idx++) begin
+        $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+        fl_idx, vfl_fl_mon[fl_idx].tag, 
+        fl_idx+`FL_ENTRY_NUM/4, vfl_fl_mon[fl_idx+`FL_ENTRY_NUM/4].tag,
+        fl_idx+`FL_ENTRY_NUM/2, vfl_fl_mon[fl_idx+`FL_ENTRY_NUM/2].tag,
+        fl_idx+`FL_ENTRY_NUM*3/4, vfl_fl_mon[fl_idx+`FL_ENTRY_NUM*3/4].tag);
+    end
+endfunction
+
+function void print_mt_dp(
+    DP_MT       [`DP_NUM-1:0]   dp_mt_mon   ,
+    MT_DP       [`DP_NUM-1:0]   mt_dp_mon   
+);
+    for (int dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
+        $display("T=%0t DP_MT[%0d] rs1=%0d, rs2=%0d, rd=%0d, tag=%0d, wr_en=%0d, thread_idx=%0d",
+            $time, dp_idx       ,
+            dp_mt_mon[dp_idx].rs1       ,
+            dp_mt_mon[dp_idx].rs2       ,
+            dp_mt_mon[dp_idx].rd        ,
+            dp_mt_mon[dp_idx].tag       ,
+            dp_mt_mon[dp_idx].wr_en     ,
+            dp_mt_mon[dp_idx].thread_idx);
+
+        $display("T=%0t MT_DP[%0d] tag1=%0d, tag1_ready=%0d, tag2=%0d, tag2_ready=%0d, tag_old=%0d",
+            $time, dp_idx       ,
+            mt_dp_mon[dp_idx].tag1      ,
+            mt_dp_mon[dp_idx].tag1_ready,
+            mt_dp_mon[dp_idx].tag2      ,
+            mt_dp_mon[dp_idx].tag2_ready,
+            mt_dp_mon[dp_idx].tag_old   );
+
+    end
+endfunction
+
+function void print_cdb(CDB [`CDB_NUM-1:0] cdb_mon);
+    for (int cp_idx = 0; cp_idx < `CDB_NUM; cp_idx++) begin
+        $display("T=%0t CDB[%0d] valid=%0d, pc=%0d, tag=%0d, rob_idx=%0d, thread_idx=%0d, br_result=%0d, br_traget=%0d",
+            $time, cp_idx, 
+            cdb_mon[cp_idx].valid     ,
+            cdb_mon[cp_idx].pc        ,
+            cdb_mon[cp_idx].tag       ,
+            cdb_mon[cp_idx].rob_idx   ,
+            cdb_mon[cp_idx].thread_idx,
+            cdb_mon[cp_idx].br_result ,
+            cdb_mon[cp_idx].br_target );
+    end
+    
+endfunction
 // ====================================================================
 // Transaction Object Start
 // ====================================================================
@@ -239,8 +323,13 @@ class monitor;
             print_rs(vif.rs_mon_o);
             print_mt(vif.mt_mon_o);
             print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o);
+            print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o);
             print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o);
             print_prf(vif.prf_mon_o);
+            print_fl(vif.fl_mon_o, vif.fl_head_mon_o, vif.fl_tail_mon_o);
+            print_vfl(vif.vfl_fl_mon_o);
+            print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
+            print_cdb(vif.cdb_mon_o);
 
 
             for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
@@ -361,13 +450,15 @@ interface pipeline_dp_if (input bit clk_i);
     // Testing
     //      Dispatch
     DP_RS                                       dp_rs_mon_o         ;   // From Dispatcher to RS
+    DP_MT   [`DP_NUM-1:0]                       dp_mt_mon_o         ;
+    MT_DP   [`DP_NUM-1:0]                       mt_dp_mon_o         ;
     //      Issue
     RS_IB                                       rs_ib_mon_o         ;   // From RS to IB
     //      Execute
     IB_FU   [`FU_NUM-1:0]                       ib_fu_mon_o         ;   // From IB to FU
     //      Complete
     FU_BC                                       fu_bc_mon_o         ;   // From FU to BC
-    CDB                                         cdb_mon_o           ;   // CDB
+    CDB     [`CDB_NUM-1:0]                      cdb_mon_o           ;   // CDB
     //      Retire
     logic   [`RT_NUM-1:0][`XLEN-1:0]            rt_pc_o             ;   // PC of retired instructions
     logic   [`RT_NUM-1:0]                       rt_valid_o          ;   // Retire valid
@@ -381,6 +472,10 @@ interface pipeline_dp_if (input bit clk_i);
     logic       [`ROB_IDX_WIDTH-1:0]            rob_tail_mon_o      ;   // ROB tail pointer
     RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ;   // RS contents monitor
     MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ;   // Map Table contents monitor
+    FL_ENTRY    [`FL_ENTRY_NUM-1:0]             fl_mon_o            ;   // Freelist contents monitor
+    logic       [`FL_IDX_WIDTH-1:0]             fl_head_mon_o       ;
+    logic       [`FL_IDX_WIDTH-1:0]             fl_tail_mon_o       ;
+    FL_ENTRY    [`FL_ENTRY_NUM-1:0]             vfl_fl_mon_o        ;
     IS_INST     [`ALU_Q_SIZE  -1:0]             ALU_queue_mon_o     ;   // IB queue monitor
     IS_INST     [`MULT_Q_SIZE -1:0]             MULT_queue_mon_o    ;   // IB queue monitor
     IS_INST     [`BR_Q_SIZE   -1:0]             BR_queue_mon_o      ;   // IB queue monitor
@@ -437,6 +532,8 @@ module pipeline_dp_tb;
         .dp_fiq             (_if.dp_fiq             ),
         .exception_i        (_if.exception_i        ),
         .dp_rs_mon_o        (_if.dp_rs_mon_o        ),
+        .dp_mt_mon_o        (_if.dp_mt_mon_o        ),
+        .mt_dp_mon_o        (_if.mt_dp_mon_o        ),
         .rs_ib_mon_o        (_if.rs_ib_mon_o        ),
         .ib_fu_mon_o        (_if.ib_fu_mon_o        ),
         .fu_bc_mon_o        (_if.fu_bc_mon_o        ),
@@ -452,6 +549,10 @@ module pipeline_dp_tb;
         .rob_tail_mon_o     (_if.rob_tail_mon_o     ),
         .rs_mon_o           (_if.rs_mon_o           ),
         .mt_mon_o           (_if.mt_mon_o           ),
+        .fl_mon_o           (_if.fl_mon_o           ),
+        .fl_head_mon_o      (_if.fl_head_mon_o      ),
+        .fl_tail_mon_o      (_if.fl_tail_mon_o      ),
+        .vfl_fl_mon_o       (_if.vfl_fl_mon_o       ),
         .ALU_queue_mon_o    (_if.ALU_queue_mon_o    ),
         .MULT_queue_mon_o   (_if.MULT_queue_mon_o   ),
         .BR_queue_mon_o     (_if.BR_queue_mon_o     ),

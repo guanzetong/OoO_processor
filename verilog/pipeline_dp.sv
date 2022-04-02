@@ -15,13 +15,15 @@ module pipeline_dp (
     // Testing
     //      Dispatch
     output  DP_RS                                       dp_rs_mon_o         ,   // From Dispatcher to RS
+    output  DP_MT       [`DP_NUM-1:0]                   dp_mt_mon_o         ,
+    output  MT_DP       [`DP_NUM-1:0]                   mt_dp_mon_o         ,
     //      Issue
     output  RS_IB                                       rs_ib_mon_o         ,   // From RS to IB
     //      Execute
     output  IB_FU       [`FU_NUM-1:0]                   ib_fu_mon_o         ,   // From IB to FU
     //      Complete
     output  FU_BC                                       fu_bc_mon_o         ,   // From FU to BC
-    output  CDB                                         cdb_mon_o           ,   // CDB
+    output  CDB         [`CDB_NUM-1:0]                  cdb_mon_o           ,   // CDB
     //      Retire
     output  logic       [`RT_NUM-1:0][`XLEN-1:0]        rt_pc_o             ,   // PC of retired instructions
     output  logic       [`RT_NUM-1:0]                   rt_valid_o          ,   // Retire valid
@@ -35,6 +37,10 @@ module pipeline_dp (
     output  logic       [`ROB_IDX_WIDTH-1:0]            rob_tail_mon_o      ,   // ROB tail pointer
     output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ,   // RS contents monitor
     output  MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ,   // Map Table contents monitor
+    output  FL_ENTRY    [`FL_ENTRY_NUM-1:0]             fl_mon_o            ,   // Freelist monitor
+    output  logic       [`FL_IDX_WIDTH-1:0]             fl_head_mon_o       ,
+    output  logic       [`FL_IDX_WIDTH-1:0]             fl_tail_mon_o       ,
+    output  FL_ENTRY    [`FL_ENTRY_NUM-1:0]             vfl_fl_mon_o        ,   // Victim Freelist monitor
     output  IS_INST     [`ALU_Q_SIZE  -1:0]             ALU_queue_mon_o     ,   // IB queue monitor
     output  IS_INST     [`MULT_Q_SIZE -1:0]             MULT_queue_mon_o    ,   // IB queue monitor
     output  IS_INST     [`BR_Q_SIZE   -1:0]             BR_queue_mon_o      ,   // IB queue monitor
@@ -288,13 +294,16 @@ module pipeline_dp (
     //     .rollback_i     (exception_i || br_mis.valid[0] )
     // );
     FL_SS FL_inst (
-        .clk_i      (clk_i                          ),
-        .rst_i      (rst_i                          ),
-        .rollback_i (exception_i || br_mis.valid[0] ),
-        .dp_fl_i    (dp_fl                          ),
-        .rob_fl_i   (rob_fl                         ),
-        .vfl_fl_i   (vfl_fl                         ),
-        .fl_dp_o    (fl_dp                          )
+        .clk_i          (clk_i                          ),
+        .rst_i          (rst_i                          ),
+        .rollback_i     (exception_i || br_mis.valid[0] ),
+        .dp_fl_i        (dp_fl                          ),
+        .rob_fl_i       (rob_fl                         ),
+        .vfl_fl_i       (vfl_fl                         ),
+        .fl_dp_o        (fl_dp                          ),
+        .fl_mon_o       (fl_mon_o                       ),
+        .fl_head_mon_o  (fl_head_mon_o                  ),
+        .fl_tail_mon_o  (fl_tail_mon_o                  )
     );
 // --------------------------------------------------------------------
 
@@ -327,6 +336,8 @@ module pipeline_dp (
     // Testing
     //      Dispatch
     assign  dp_rs_mon_o     =   dp_rs       ;
+    assign  dp_mt_mon_o     =   dp_mt       ;
+    assign  mt_dp_mon_o     =   mt_dp       ;
     //      Issue
     assign  rs_ib_mon_o     =   rs_ib       ;
     //      Execute
@@ -342,6 +353,8 @@ module pipeline_dp (
 
     assign  br_mis.valid[`THREAD_NUM-1:1]       =   'b0 ;
     assign  br_mis.br_target[`THREAD_NUM-1:1]   =   'b0 ;
+
+    assign  vfl_fl_mon_o    =   vfl_fl      ;
 // --------------------------------------------------------------------
 // Logic Divider
 // --------------------------------------------------------------------

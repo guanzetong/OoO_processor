@@ -327,7 +327,7 @@ typedef struct packed {
 `define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
 `define PHY_REG_NUM     64  // The number of Physical registers.
-`define FL_ENTRY_NUM    `PHY_REG_NUM - `ARCH_REG_NUM
+`define FL_ENTRY_NUM    (`PHY_REG_NUM - `ARCH_REG_NUM)
 `define THREAD_NUM      2
 `define MT_ENTRY_NUM    32
 
@@ -336,7 +336,7 @@ typedef struct packed {
 `define BR_NUM          1
 `define LOAD_NUM        1
 `define STORE_NUM       1
-`define FU_NUM          `ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM
+`define FU_NUM          (`ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM)
 
 `define ALU_CYCLE       3
 `define MULT_CYCLE      3
@@ -363,7 +363,7 @@ typedef struct packed {
 `define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
 `define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
 `define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
-`define FL_IDX              $clog2(`FL_ENTRY_NUM)
+`define FL_IDX_WIDTH        $clog2(`FL_ENTRY_NUM)
 `define ZERO_PREG           ({`TAG_IDX_WIDTH{1'b0}})
 
 `define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
