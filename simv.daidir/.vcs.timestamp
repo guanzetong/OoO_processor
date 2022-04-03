@@ -1,0 +1,187 @@
+0 
+69
++cli+1
++itf+/usr/caen/vcs-2020.12-SP2-1/linux64/lib/vcsdp.tab
++memcbk
++vc
++vcs+vcdpluson
++vcsd
++vpi
+-Mamsrun=
+-Masflags=
+-Mcc=gcc
+-Mcfl= -pipe -fPIC -O -I/usr/caen/vcs-2020.12-SP2-1/include
+-Mcplusplus=g++
+-Mcrt0=
+-Mcrtn=
+-Mcsrc=
+-Mexternalobj=
+-Mldflags= -rdynamic
+-Mobjects= /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvirsim.so /usr/caen/vcs-2020.12-SP2-1/linux64/lib/liberrorinf.so /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libsnpsmalloc.so /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvfs.so
+-Mout=simv
+-Msaverestoreobj=/usr/caen/vcs-2020.12-SP2-1/linux64/lib/vcs_save_restore_new.o
+-Msyslibs=-ldl
+-Mupdate
+-Mvcsaceobjs=
+-Mxcflags= -pipe -fPIC -I/usr/caen/vcs-2020.12-SP2-1/include
+-Mxllcflags=
+-V
+-Xcbug=0x1
+-cm
+-debug=4
+-full64
+-gen_obj
+-line
+-o simv
+-picarchive
+-sverilog
+/usr/caen/vcs-2020.12-SP2-1/linux64/bin/vcs1
+simv
+line+tgl
+sys_defs.svh
+ISA.svh
+verilog/AMT.sv
+verilog/MT_sim.sv
+verilog/MT.sv
+verilog/DP.sv
+verilog/FU.sv
+verilog/VFL_sim.sv
+verilog/ROB.sv
+verilog/binary_encoder.sv
+verilog/freelist.sv
+verilog/IB_channel.sv
+verilog/IB_queue.sv
+verilog/PRF.sv
+verilog/IB.sv
+verilog/icache.sv
+verilog/RS.sv
+verilog/VFL.sv
+verilog/BC.sv
+verilog/pe.sv
+verilog/BC_sim.sv
+verilog/FL_sim.sv
+verilog/COD.sv
+verilog/MT_SS.sv
+verilog/IB_push_in_router.sv
+verilog/pipeline_dp.sv
+verilog/FL_SS.sv
+verilog/adder.sv
+verilog/IB_pop_out_router.sv
+verilog/pe_mult.sv
+testbench/pipeline_dp_tb.sv
+72
+which_declare=declare -f
+__LMOD_REF_COUNT__LMFILES_=/usr/caen/misc/modules/vcs/2020.12-SP2-1:1
+__LMOD_REF_COUNT_PATH=/usr/caen/vcs-2020.12-SP2-1/bin:1;/afs/umich.edu/user/x/y/xyuanx/.vscode-server/bin/e18005f0f1b33c29e81d732535d8c0e47cafb0b5/bin/remote-cli:1;/usr/local/bin:1;/usr/bin:1;/usr/local/sbin:1;/usr/sbin:1;/usr/um/bin:1;/usr/caen/bin:1
+__LMOD_REF_COUNT_MODULEPATH=/usr/caen/misc/modules:2;/etc/scl/modulefiles:1;/etc/modulefiles:1;/usr/share/modulefiles:1;/afs/umich.edu/class/coe/modules:1;/usr/share/modulefiles/Linux:1;/usr/share/modulefiles/Core:1;/usr/share/lmod/lmod/modulefiles/Core:1
+__LMOD_REF_COUNT_LOADEDMODULES=vcs/2020.12-SP2-1:1
+__LMOD_REF_COUNT_LM_LICENSE_FILE=license.dat:1;/usr/caen/FLEXlm/data/license.dat.synopsys:1
+__GL_SHADER_DISK_CACHE=0
+_ModuleTable_Sz_=2
+_ModuleTable002_=aC5lZHUvY2xhc3MvY29lL21vZHVsZXMiLCIvdXNyL3NoYXJlL21vZHVsZWZpbGVzL0xpbnV4IiwiL3Vzci9zaGFyZS9tb2R1bGVmaWxlcy9Db3JlIiwiL3Vzci9zaGFyZS9sbW9kL2xtb2QvbW9kdWxlZmlsZXMvQ29yZSIsfSxbInN5c3RlbUJhc2VNUEFUSCJdPSIvZXRjL3NjbC9tb2R1bGVmaWxlczovZXRjL21vZHVsZWZpbGVzOi91c3Ivc2hhcmUvbW9kdWxlZmlsZXM6L3Vzci9jYWVuL21pc2MvbW9kdWxlczovYWZzL3VtaWNoLmVkdS9jbGFzcy9jb2UvbW9kdWxlczovdXNyL3NoYXJlL21vZHVsZWZpbGVzL0xpbnV4Oi91c3Ivc2hhcmUvbW9kdWxlZmlsZXMvQ29yZTovdXNyL3NoYXJlL2xtb2QvbG1vZC9tb2R1bGVmaWxlcy9Db3JlIix9
+_ModuleTable001_=X01vZHVsZVRhYmxlXz17WyJNVHZlcnNpb24iXT0zLFsiY19yZWJ1aWxkVGltZSJdPWZhbHNlLFsiY19zaG9ydFRpbWUiXT1mYWxzZSxkZXB0aFQ9e30sZmFtaWx5PXt9LG1UPXt2Y3M9e1siZm4iXT0iL3Vzci9jYWVuL21pc2MvbW9kdWxlcy92Y3MvMjAyMC4xMi1TUDItMSIsWyJmdWxsTmFtZSJdPSJ2Y3MvMjAyMC4xMi1TUDItMSIsWyJsb2FkT3JkZXIiXT0xLHByb3BUPXt9LFsic3RhY2tEZXB0aCJdPTAsWyJzdGF0dXMiXT0iYWN0aXZlIixbInVzZXJOYW1lIl09InZjcyIsfSx9LG1wYXRoQT17Ii91c3IvY2Flbi9taXNjL21vZHVsZXMiLCIvZXRjL3NjbC9tb2R1bGVmaWxlcyIsIi9ldGMvbW9kdWxlZmlsZXMiLCIvdXNyL3NoYXJlL21vZHVsZWZpbGVzIiwiL2Fmcy91bWlj
+_LMFILES_=/usr/caen/misc/modules/vcs/2020.12-SP2-1
+XDG_SESSION_ID=987
+XDG_RUNTIME_DIR=/run/user/114282724
+XDG_DATA_DIRS=/home/xyuanx/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
+VSCODE_IPC_HOOK_CLI=/run/user/114282724/vscode-ipc-683099ca-24e7-4e45-b54f-6d2293c5fa18.sock
+VSCODE_GIT_IPC_HANDLE=/run/user/114282724/vscode-git-8bc3d04156.sock
+VSCODE_GIT_ASKPASS_NODE=/afs/umich.edu/user/x/y/xyuanx/.vscode-server/bin/e18005f0f1b33c29e81d732535d8c0e47cafb0b5/node
+VSCODE_GIT_ASKPASS_MAIN=/afs/umich.edu/user/x/y/xyuanx/.vscode-server/bin/e18005f0f1b33c29e81d732535d8c0e47cafb0b5/extensions/git/dist/askpass-main.js
+VSCODE_GIT_ASKPASS_EXTRA_ARGS=
+VMR_MODE_FLAG=64
+VCS_PATHMAP_PRELOAD_DONE=1
+VCS_MX_HOME_INTERNAL=1
+VCS_MODE_FLAG=64
+VCS_HOME=/usr/caen/vcs-2020.12-SP2-1
+VCS_EXEC_DONE=1
+VCS_DEPTH=0
+VCS_ARG_ADDED_FOR_TMP=1
+VCS_ARCH=linux64
+UNAME=/bin/uname
+TOOL_HOME=/usr/caen/vcs-2020.12-SP2-1/linux64
+TERM_PROGRAM_VERSION=1.66.0
+TERM_PROGRAM=vscode
+SSH_CONNECTION=23.115.160.246 60490 141.211.232.118 22
+SSH_CLIENT=23.115.160.246 60490 22
+SCRNAME=vcs
+SCRIPT_NAME=vcs
+RESET_NET_NAME=rst_i
+PIPELINE_NAME=pipeline_dp
+PIPEFILES=verilog/MT.sv verilog/VFL_sim.sv verilog/ROB.sv verilog/IB_push_in_router.sv verilog/DP.sv verilog/pe.sv verilog/PRF.sv verilog/FL_sim.sv verilog/icache.sv verilog/BC_sim.sv verilog/COD.sv verilog/freelist.sv verilog/binary_encoder.sv verilog/RS.sv verilog/pipeline_dp.sv verilog/IB_pop_out_router.sv verilog/adder.sv verilog/MT_SS.sv verilog/pe_mult.sv verilog/BC.sv verilog/AMT.sv verilog/IB_queue.sv verilog/MT_sim.sv verilog/IB_channel.sv verilog/FL_SS.sv verilog/VFL.sv verilog/IB.sv verilog/FU.sv
+OVA_UUM=0
+MSI2LMP_LIBRARY=/usr/share/lammps/frc_files
+MODULESHOME=/usr/share/lmod/lmod
+MODULEPATH_ROOT=/usr/share/modulefiles
+MODULEPATH=/usr/caen/misc/modules:/etc/scl/modulefiles:/etc/modulefiles:/usr/share/modulefiles:/afs/umich.edu/class/coe/modules:/usr/share/modulefiles/Linux:/usr/share/modulefiles/Core:/usr/share/lmod/lmod/modulefiles/Core
+MFLAGS=
+MAKE_TERMOUT=/dev/pts/15
+MAKE_TERMERR=/dev/pts/15
+MAKELEVEL=1
+MAKEFLAGS=
+LOADEDMODULES=vcs/2020.12-SP2-1
+LMOD_sys=Linux
+LMOD_VERSION=8.2.7
+LMOD_SETTARG_FULL_SUPPORT=no
+LMOD_ROOT=/usr/share/lmod
+LMOD_PKG=/usr/share/lmod/lmod
+LMOD_DIR=/usr/share/lmod/lmod/libexec
+LMOD_CMD=/usr/share/lmod/lmod/libexec/lmod
+LESSOPEN=||/usr/bin/lesspipe.sh %s
+LC_ALL=C
+LAMMPS_POTENTIALS=/usr/share/lammps/potentials
+KRB5CCNAME=KEYRING:persistent:114282724
+HISTCONTROL=ignoredups
+HEADERS=sys_defs.svh ISA.svh
+GIT_ASKPASS=/afs/umich.edu/user/x/y/xyuanx/.vscode-server/bin/e18005f0f1b33c29e81d732535d8c0e47cafb0b5/extensions/git/dist/askpass.sh
+COLORTERM=truecolor
+CLOCK_PERIOD=20	
+CLOCK_NET_NAME=clk_i
+BASH_FUNC_which%%=() {  ( alias;_ eval ${which_declare} ) | /usr/bin/which --tty-only --read-alias --read-functions --show-tilde --show-dot "$@"_}
+BASH_FUNC_scl%%=() {  if [ "$1" = "load" -o "$1" = "unload" ]; then_ eval "module $@";_ else_ /usr/bin/scl "$@";_ fi_}
+BASH_FUNC_module%%=() {  eval $($LMOD_CMD bash "$@") && eval $(${LMOD_SETTARG_CMD:-:} -s sh)_}
+BASH_FUNC_ml%%=() {  eval $($LMOD_DIR/ml_cmd "$@")_}
+BASH_ENV=/usr/share/lmod/lmod/init/bash
+0
+0
+33
+1648945986 testbench/pipeline_dp_tb.sv
+1648417183 verilog/pe_mult.sv
+1648917645 verilog/IB_pop_out_router.sv
+1648417183 verilog/adder.sv
+1648917645 verilog/FL_SS.sv
+1648945986 verilog/pipeline_dp.sv
+1648418309 verilog/IB_push_in_router.sv
+1648917645 verilog/MT_SS.sv
+1648417183 verilog/COD.sv
+1648917645 verilog/FL_sim.sv
+1648758089 verilog/BC_sim.sv
+1648417183 verilog/pe.sv
+1648917644 verilog/BC.sv
+1648917645 verilog/VFL.sv
+1648944961 verilog/RS.sv
+1648758089 verilog/icache.sv
+1648944961 verilog/IB.sv
+1648944961 verilog/PRF.sv
+1648944961 verilog/IB_queue.sv
+1648944961 verilog/IB_channel.sv
+1648917645 verilog/freelist.sv
+1648417183 verilog/binary_encoder.sv
+1648945986 verilog/ROB.sv
+1648758089 verilog/VFL_sim.sv
+1648945986 verilog/FU.sv
+1648946661 verilog/DP.sv
+1648917645 verilog/MT.sv
+1648917645 verilog/MT_sim.sv
+1648917644 verilog/AMT.sv
+1646614688 ISA.svh
+1648945986 sys_defs.svh
+1626663922 /usr/caen/vcs-2020.12-SP2-1/include/cm_vcsd.tab
+1626663962 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/vcsdp.tab
+4
+1626665287 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvirsim.so
+1626664738 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/liberrorinf.so
+1626664460 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libsnpsmalloc.so
+1626664734 /usr/caen/vcs-2020.12-SP2-1/linux64/lib/libvfs.so
+1648946690 simv.daidir
+-1 partitionlib

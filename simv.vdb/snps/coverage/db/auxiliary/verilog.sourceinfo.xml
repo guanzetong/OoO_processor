@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!DOCTYPE cov SYSTEM "ucdb_srcinfo.dtd">
+  <srcinfo name="/afs/umich.edu/user/x/y/xyuanx/470/group6w22"  >
+    <ucapi_version  major_ver="13"  minor_ver="1"  patch_str="R-2020.12-SP2-1"  />
+      <fileinfo name="sys_defs.svh"  id="0"  timestamp="1648945986"  />
+      <fileinfo name="ISA.svh"  id="1"  timestamp="1646614688"  />
+      <fileinfo name="verilog/AMT.sv"  id="2"  timestamp="1648917644"  />
+      <fileinfo name="verilog/MT_sim.sv"  id="3"  timestamp="1648917645"  />
+      <fileinfo name="verilog/MT.sv"  id="4"  timestamp="1648917645"  />
+      <fileinfo name="verilog/DP.sv"  id="5"  timestamp="1648946661"  />
+      <fileinfo name="verilog/FU.sv"  id="6"  timestamp="1648945986"  />
+      <fileinfo name="verilog/VFL_sim.sv"  id="7"  timestamp="1648758089"  />
+      <fileinfo name="verilog/ROB.sv"  id="8"  timestamp="1648945986"  />
+      <fileinfo name="verilog/binary_encoder.sv"  id="9"  timestamp="1648417183"  />
+      <fileinfo name="verilog/freelist.sv"  id="10"  timestamp="1648917645"  />
+      <fileinfo name="verilog/IB_channel.sv"  id="11"  timestamp="1648944961"  />
+      <fileinfo name="verilog/IB_queue.sv"  id="12"  timestamp="1648944961"  />
+      <fileinfo name="verilog/PRF.sv"  id="13"  timestamp="1648944961"  />
+      <fileinfo name="verilog/IB.sv"  id="14"  timestamp="1648944961"  />
+      <fileinfo name="verilog/icache.sv"  id="15"  timestamp="1648758089"  />
+      <fileinfo name="verilog/RS.sv"  id="16"  timestamp="1648944961"  />
+      <fileinfo name="verilog/VFL.sv"  id="17"  timestamp="1648917645"  />
+      <fileinfo name="verilog/BC.sv"  id="18"  timestamp="1648917644"  />
+      <fileinfo name="verilog/pe.sv"  id="19"  timestamp="1648417183"  />
+      <fileinfo name="verilog/BC_sim.sv"  id="20"  timestamp="1648758089"  />
+      <fileinfo name="verilog/FL_sim.sv"  id="21"  timestamp="1648917645"  />
+      <fileinfo name="verilog/COD.sv"  id="22"  timestamp="1648417183"  />
+      <fileinfo name="verilog/MT_SS.sv"  id="23"  timestamp="1648917645"  />
+      <fileinfo name="verilog/IB_push_in_router.sv"  id="24"  timestamp="1648418309"  />
+      <fileinfo name="verilog/pipeline_dp.sv"  id="25"  timestamp="1648945986"  />
+      <fileinfo name="verilog/FL_SS.sv"  id="26"  timestamp="1648917645"  />
+      <fileinfo name="verilog/adder.sv"  id="27"  timestamp="1648417183"  />
+      <fileinfo name="verilog/IB_pop_out_router.sv"  id="28"  timestamp="1648917645"  />
+      <fileinfo name="verilog/pe_mult.sv"  id="29"  timestamp="1648417183"  />
+      <fileinfo name="testbench/pipeline_dp_tb.sv"  id="30"  timestamp="1648945986"  />
+    </srcinfo>

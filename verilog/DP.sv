@@ -153,6 +153,12 @@ module DP # (
             dp_num  =   comp_2   ;
         end//if-else
 
+        for (int cnt = 0 ; cnt < C_DP_NUM ; cnt++) begin
+            if(dp_rs_o.dec_inst[cnt].illegal)begin
+                dp_num--;
+            end
+        end
+
         dp_rob_o.dp_num  =   dp_num    ;
         dp_fiq_o.dp_num  =   dp_num    ;
         dp_rs_o.dp_num   =   dp_num    ;
@@ -250,7 +256,7 @@ module decoder#(
     output  logic                               illegal     ,
     output  logic                               mult        ,
     output  logic                               alu         ,
-
+    
     output  logic   [C_ARCH_REG_IDX_WIDTH-1:0]  rd          ,
     output  logic   [C_ARCH_REG_IDX_WIDTH-1:0]  rs1         ,
     output  logic   [C_ARCH_REG_IDX_WIDTH-1:0]  rs2         
