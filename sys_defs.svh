@@ -318,11 +318,11 @@ typedef struct packed {
 // Architecture Parameters
 // 
 //////////////////////////////////////////////
-`define IF_NUM          8
-`define DP_NUM          8  // The number of Dispatch channels.
-`define IS_NUM          8  // The number of Issue channels.
-`define CDB_NUM         8  // The number of CDB/Complete channels.
-`define RT_NUM          8  // The number of Retire channels.
+`define IF_NUM          4
+`define DP_NUM          4  // The number of Dispatch channels.
+`define IS_NUM          4  // The number of Issue channels.
+`define CDB_NUM         4  // The number of CDB/Complete channels.
+`define RT_NUM          4  // The number of Retire channels.
 `define ROB_ENTRY_NUM   32  // The number of ROB entries.
 `define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.

@@ -132,18 +132,18 @@ class monitor;
             end
 
             print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
-            print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
-            print_mt(vif.mt_mon_o);
+            // print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
+            // print_mt(vif.mt_mon_o);
             // print_amt(vif.amt_mon_o);
             // print_prf(vif.prf_mon_o);
             // print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
             // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
             // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
             print_fl(vif.fl_mon_o, vif.fl_head_mon_o, vif.fl_tail_mon_o);
-            // print_vfl(vif.vfl_fl_mon_o);
-            print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
-            print_cdb(vif.cdb_mon_o);
-            print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
+            print_vfl(vif.vfl_fl_mon_o);
+            // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
+            // print_cdb(vif.cdb_mon_o);
+            // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
 
             // Monitor Retire
             for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
