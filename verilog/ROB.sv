@@ -255,15 +255,15 @@ module ROB # (
         // & Free List
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             if (idx == 0) begin
-                rt_valid[idx]   =   rt_sel[head] && (!br_mispredict[head]);
+                rt_valid[idx]   =   rt_sel[head];
             end else begin
-                if (head + idx >= C_ROB_ENTRY_NUM) begin
+                if ((head + idx - 1) >= C_ROB_ENTRY_NUM) begin
                     rt_valid[idx]   =   rt_sel[head+idx-C_ROB_ENTRY_NUM]
-                                    && (!br_mispredict[head+idx-C_ROB_ENTRY_NUM])
+                                    && (!br_mispredict[head+idx-1-C_ROB_ENTRY_NUM])
                                     && rt_valid[idx-1];
                 end else begin
                     rt_valid[idx]   =   rt_sel[head+idx]
-                                    && (!br_mispredict[head+idx])
+                                    && (!br_mispredict[head+idx-1])
                                     && rt_valid[idx-1];
                 end
             end

@@ -38,6 +38,7 @@ module pipeline_dp (
     output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]             rs_mon_o            ,   // RS contents monitor
     output  logic       [$clog2(`RS_ENTRY_NUM)-1:0]     rs_cod_mon_o        ,
     output  MT_ENTRY    [`ARCH_REG_NUM-1:0]             mt_mon_o            ,   // Map Table contents monitor
+    output  AMT_ENTRY   [`ARCH_REG_NUM-1:0]             amt_mon_o           ,   // Arch Map Table contents monitor
     output  FL_ENTRY    [`FL_ENTRY_NUM-1:0]             fl_mon_o            ,   // Freelist monitor
     output  logic       [`FL_IDX_WIDTH-1:0]             fl_head_mon_o       ,
     output  logic       [`FL_IDX_WIDTH-1:0]             fl_tail_mon_o       ,
@@ -280,12 +281,14 @@ module pipeline_dp (
 // Description  :   Arch. Map Table
 // --------------------------------------------------------------------
     FU FU_inst (
-        .clk_i          (clk_i      ),
-        .rst_i          (rst_i      ),
-        .ib_fu_i        (ib_fu      ),
-        .fu_ib_o        (fu_ib      ),
-        .fu_bc_o        (fu_bc      ),
-        .bc_fu_i        (bc_fu      )
+        .clk_i          (clk_i          ),
+        .rst_i          (rst_i          ),
+        .ib_fu_i        (ib_fu          ),
+        .fu_ib_o        (fu_ib          ),
+        .fu_bc_o        (fu_bc          ),
+        .bc_fu_i        (bc_fu          ),
+        .br_mis_i       (br_mis         ),
+        .exception_i    (exception_i    )
     );
 // --------------------------------------------------------------------
 
@@ -378,6 +381,7 @@ module pipeline_dp (
     assign  br_mis.br_target[`THREAD_NUM-1:1]   =   'b0 ;
 
     assign  vfl_fl_mon_o    =   vfl_fl      ;
+    assign  amt_mon_o       =   amt         ;
 // --------------------------------------------------------------------
 // Logic Divider
 // --------------------------------------------------------------------

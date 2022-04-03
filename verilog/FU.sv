@@ -42,14 +42,17 @@ module alu_comb(
 endmodule // alu_comb
 
 module alu #( 
-    parameter   C_CYCLE =   `ALU_CYCLE              
+    parameter   C_CYCLE         =   `ALU_CYCLE  ,
+    parameter   C_THREAD_NUM    =   `THREAD_NUM 
 )(
-    input   logic       clk_i   ,
-    input   logic       rst_i   ,
-    input   IB_FU       ib_fu_i ,
-    output  FU_IB       fu_ib_o ,
-    output  FU_BC       fu_bc_o ,
-    input   BC_FU       bc_fu_i
+    input   logic       clk_i       ,
+    input   logic       rst_i       ,
+    input   IB_FU       ib_fu_i     ,
+    output  FU_IB       fu_ib_o     ,
+    output  FU_BC       fu_bc_o     ,
+    input   BC_FU       bc_fu_i     ,
+    input   BR_MIS      br_mis_i    ,
+    input   logic       exception_i 
 );
 
     logic   [`XLEN-1:0]         rd_value        ;
@@ -57,6 +60,7 @@ module alu #(
     logic   [C_CYCLE-1:0]       valid_sh        ;
     logic                       ex_start        ;
     logic                       ex_end          ;
+    logic                       squash          ;
 
 	logic   [`XLEN-1:0]         opa_mux_out, opb_mux_out;
 
@@ -116,6 +120,9 @@ module alu #(
         // System reset
         if (rst_i) begin
             valid_sh    <=  `SD 'b0;
+        // Squash
+        end else if (squash || exception_i) begin
+            valid_sh    <=  `SD 'b0;
         // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
         end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
             valid_sh    <=  `SD valid_sh;
@@ -153,6 +160,15 @@ module alu #(
         fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
     end
 
+    always_comb begin
+        squash   =   1'b0;
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            if ((br_mis_i.valid[thread_idx] == 1'b1) && (ib_fu.is_inst.thread_idx == thread_idx)) begin
+               squash   =   1'b1; 
+            end
+        end
+    end
+
 endmodule // alu
 
 
@@ -187,20 +203,24 @@ endmodule // mult_comb
 
 
 module mult #( 
-    parameter   C_CYCLE     =   `MULT_CYCLE              
+    parameter   C_CYCLE         =   `MULT_CYCLE ,
+    parameter   C_THREAD_NUM    =   `THREAD_NUM 
 )(
-    input   logic           clk_i       ,
-    input   logic           rst_i       ,
-    input   IB_FU           ib_fu_i     ,
-    output  FU_IB           fu_ib_o     ,
-    output  FU_BC           fu_bc_o     ,
-    input   BC_FU           bc_fu_i     
+    input   logic       clk_i       ,
+    input   logic       rst_i       ,
+    input   IB_FU       ib_fu_i     ,
+    output  FU_IB       fu_ib_o     ,
+    output  FU_BC       fu_bc_o     ,
+    input   BC_FU       bc_fu_i     ,
+    input   BR_MIS      br_mis_i    ,
+    input   logic       exception_i 
 );
     logic   [`XLEN-1:0]     rd_value        ;
     IB_FU                   ib_fu           ;
     logic   [C_CYCLE-1:0]   valid_sh        ;
     logic                   ex_start        ;
     logic                   ex_end          ;
+    logic                   squash          ;
 
 	logic   [`XLEN-1:0]     opa_mux_out, opb_mux_out;
 
@@ -263,6 +283,8 @@ module mult #(
         // System reset
         if (rst_i) begin
             valid_sh    <=  `SD 'b0;
+        end else if (squash || exception_i) begin
+            valid_sh    <=  `SD 'b0;
         // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
         end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
             valid_sh    <=  `SD valid_sh;
@@ -298,6 +320,15 @@ module mult #(
         fu_bc_o.br_target   =   'b0                         ;
         fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx    ;
         fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
+    end
+
+    always_comb begin
+        squash   =   1'b0;
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            if ((br_mis_i.valid[thread_idx] == 1'b1) && (ib_fu.is_inst.thread_idx == thread_idx)) begin
+               squash   =   1'b1; 
+            end
+        end
     end
 
 endmodule // mult
@@ -339,14 +370,17 @@ endmodule // branch_condition
 
 
 module branch #( 
-    parameter   C_CYCLE =   `BR_CYCLE   
+    parameter   C_CYCLE         =   `BR_CYCLE   ,
+    parameter   C_THREAD_NUM    =   `THREAD_NUM 
 )(
-    input   logic           clk_i   ,
-    input   logic           rst_i   ,
-    input   IB_FU           ib_fu_i ,
-    output  FU_IB           fu_ib_o ,
-    output  FU_BC           fu_bc_o ,
-    input   BC_FU           bc_fu_i 
+    input   logic       clk_i       ,
+    input   logic       rst_i       ,
+    input   IB_FU       ib_fu_i     ,
+    output  FU_IB       fu_ib_o     ,
+    output  FU_BC       fu_bc_o     ,
+    input   BC_FU       bc_fu_i     ,
+    input   BR_MIS      br_mis_i    ,
+    input   logic       exception_i 
 );
 
     logic   [`XLEN-1:0]     rd_value        ;
@@ -354,12 +388,13 @@ module branch #(
     logic   [C_CYCLE-1:0]   valid_sh        ;
     logic                   ex_start        ;
     logic                   ex_end          ;
+    logic                   squash          ;
 
     logic                   br_result       ;
-    logic [`XLEN-1:0]       br_target       ;
+    logic   [`XLEN-1:0]     br_target       ;
     logic                   brcond_result   ;
 
-	logic [`XLEN-1:0] opa_mux_out, opb_mux_out;
+	logic   [`XLEN-1:0]     opa_mux_out, opb_mux_out;
 
     //
     // Latch valid instruction
@@ -434,6 +469,8 @@ module branch #(
         // System reset
         if (rst_i) begin
             valid_sh    <=  `SD 'b0;
+        end else if (squash || exception_i) begin
+            valid_sh    <=  `SD 'b0;
         // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
         end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
             valid_sh    <=  `SD valid_sh;
@@ -470,6 +507,16 @@ module branch #(
         fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx    ;
         fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
     end
+
+    always_comb begin
+        squash   =   1'b0;
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            if ((br_mis_i.valid[thread_idx] == 1'b1) && (ib_fu.is_inst.thread_idx == thread_idx)) begin
+               squash   =   1'b1; 
+            end
+        end
+    end
+    
 endmodule // branch
 
 
@@ -718,12 +765,14 @@ module FU #(
     parameter   C_LOAD_NUM           =   `LOAD_NUM               ,
     parameter   C_STORE_NUM          =   `STORE_NUM              
 )(
-    input   logic                            clk_i               ,   // Clock
-    input   logic                            rst_i               ,   // Reset
-    input   IB_FU [C_FU_NUM-1:0]             ib_fu_i             ,
-    output  FU_IB [C_FU_NUM-1:0]             fu_ib_o             ,
-    output  FU_BC [C_FU_NUM-1:0]             fu_bc_o             ,
-    input   BC_FU [C_FU_NUM-1:0]             bc_fu_i             
+    input   logic                       clk_i               ,   // Clock
+    input   logic                       rst_i               ,   // Reset
+    input   IB_FU   [C_FU_NUM-1:0]      ib_fu_i             ,
+    output  FU_IB   [C_FU_NUM-1:0]      fu_ib_o             ,
+    output  FU_BC   [C_FU_NUM-1:0]      fu_bc_o             ,
+    input   BC_FU   [C_FU_NUM-1:0]      bc_fu_i             ,
+    input   BR_MIS                      br_mis_i            ,
+    input   logic                       exception_i         
 
     // output logic [C_STORE_NUM+C_LOAD_NUM-1:0][1:0]       proc2Dmem_command_o,
     // output logic [C_STORE_NUM-1:0][`XLEN-1:0]            proc2Dmem_data_o,      // Data sent to data-memory
@@ -747,30 +796,36 @@ module FU #(
 // Local Parameters Declarations End
 // ====================================================================
     alu alu_unit [C_ALU_NUM-1:0] (
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-        .ib_fu_i(ib_fu_i[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]),
-        .fu_ib_o(fu_ib_o[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]),
-        .fu_bc_o(fu_bc_o[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]),
-        .bc_fu_i(bc_fu_i[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE])
+        .clk_i          (clk_i                                          ),
+        .rst_i          (rst_i                                          ),
+        .ib_fu_i        (ib_fu_i[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]     ),
+        .fu_ib_o        (fu_ib_o[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]     ),
+        .fu_bc_o        (fu_bc_o[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]     ),
+        .bc_fu_i        (bc_fu_i[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]     ),
+        .br_mis_i       (br_mis_i                                       ),
+        .exception_i    (exception_i                                    )
     );
 
     mult mult_unit [C_MULT_NUM-1:0](
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-        .ib_fu_i(ib_fu_i[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]),
-        .fu_ib_o(fu_ib_o[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]),
-        .fu_bc_o(fu_bc_o[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]),
-        .bc_fu_i(bc_fu_i[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE])
+        .clk_i          (clk_i                                          ),
+        .rst_i          (rst_i                                          ),
+        .ib_fu_i        (ib_fu_i[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
+        .fu_ib_o        (fu_ib_o[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
+        .fu_bc_o        (fu_bc_o[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
+        .bc_fu_i        (bc_fu_i[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
+        .br_mis_i       (br_mis_i                                       ),
+        .exception_i    (exception_i                                    )
     );
 
     branch branch_unit [C_BR_NUM-1:0](
-        .clk_i(clk_i),
-        .rst_i(rst_i),
-        .ib_fu_i(ib_fu_i[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]),
-        .fu_ib_o(fu_ib_o[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]),
-        .fu_bc_o(fu_bc_o[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]),
-        .bc_fu_i(bc_fu_i[C_BR_BASE+C_BR_NUM-1:C_BR_BASE])
+        .clk_i          (clk_i                                          ),
+        .rst_i          (rst_i                                          ),
+        .ib_fu_i        (ib_fu_i[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]        ),
+        .fu_ib_o        (fu_ib_o[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]        ),
+        .fu_bc_o        (fu_bc_o[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]        ),
+        .bc_fu_i        (bc_fu_i[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]        ),
+        .br_mis_i       (br_mis_i                                       ),
+        .exception_i    (exception_i                                    )
     );
 
     // load load_unit [C_LOAD_NUM-1:0](
