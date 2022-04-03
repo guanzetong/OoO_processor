@@ -114,6 +114,9 @@ module IB_queue #(
         end else if (exception_i) begin
             head    <=  `SD 'd0;
             tail    <=  `SD 'd0;
+        // end else if (br_mis_i.valid[0]) begin
+        //     head    <=  `SD 'd0;
+        //     tail    <=  `SD 'd0;
         end else begin
             head    <=  `SD next_head;
             tail    <=  `SD next_tail;
@@ -143,6 +146,9 @@ module IB_queue #(
         end else if (exception_i) begin
             head_rollover   <=  `SD 1'b0;
             tail_rollover   <=  `SD 1'b0;
+        // end else if (br_mis_i.valid[0]) begin
+        //     head_rollover   <=  `SD 1'b0;
+        //     tail_rollover   <=  `SD 1'b0;
         end else begin
             if (head + pop_out_num >= C_SIZE) begin
                 head_rollover   <=  `SD ~head_rollover;
@@ -234,6 +240,7 @@ module IB_queue #(
                 queue[entry_idx]   <=  `SD 'b0;
             // Branch Misprediction of a thread -> Empty the entry
             end else if (br_mis_i.valid[queue[entry_idx].thread_idx]) begin
+            // end else if (br_mis_i.valid[0]) begin
                 valid[entry_idx]    <=  `SD 1'b0;
                 queue[entry_idx]    <=  `SD 'b0;
             // Push-in the entry (including Pop-up at the same time)

@@ -47,6 +47,7 @@ module DP # (
     logic   [C_DP_NUM_WIDTH-1:0]                comp_1      ;   // Dispatch number comparator output
     logic   [C_DP_NUM_WIDTH-1:0]                comp_2      ;   // Dispatch number comparator output
     logic   [C_DP_NUM_WIDTH-1:0]                dp_num      ;
+    logic   [C_DP_NUM_WIDTH-1:0]                legal_dp_num;
     logic   [C_DP_NUM-1:0][C_DP_NUM_WIDTH-1:0]  fl_route    ;
     INST    [C_DP_NUM-1:0]                      inst        ;
 // ====================================================================
@@ -153,19 +154,20 @@ module DP # (
             dp_num  =   comp_2   ;
         end//if-else
 
-        for (int cnt = 0 ; cnt < C_DP_NUM ; cnt++) begin
-            if(dp_rs_o.dec_inst[cnt].illegal)begin
-                dp_num--;
+        legal_dp_num    =   dp_num;
+        for (int dp_idx = 0 ; dp_idx < C_DP_NUM ; dp_idx++) begin
+            if((dp_idx < dp_num) && dp_rs_o.dec_inst[dp_idx].illegal)begin
+                legal_dp_num--;
             end
         end
 
-        dp_rob_o.dp_num  =   dp_num    ;
-        dp_fiq_o.dp_num  =   dp_num    ;
-        dp_rs_o.dp_num   =   dp_num    ;
-        dp_fl_o.dp_num   =   dp_num    ;
+        dp_rob_o.dp_num  =   legal_dp_num   ;
+        dp_fiq_o.dp_num  =   legal_dp_num   ;
+        dp_rs_o.dp_num   =   legal_dp_num   ;
+        dp_fl_o.dp_num   =   legal_dp_num   ;
 
         for (int idx = 0; idx < C_DP_NUM; idx++) begin
-            if(idx < dp_num && (dp_mt_o[idx].rd == `ZERO_REG))begin
+            if((idx < legal_dp_num) && (dp_mt_o[idx].rd == `ZERO_REG))begin
                 dp_fl_o.dp_num-- ;
             end//if    
         end//for

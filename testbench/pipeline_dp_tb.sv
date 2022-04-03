@@ -51,6 +51,7 @@ class driver;
             // Fetch Instructions
             // $display("T=%0t [Driver] Feeding instructions", $time);
 
+            // vif.fiq_dp.avail_num =   $urandom % (`DP_NUM + 1);
             vif.fiq_dp.avail_num =   `DP_NUM;
 
             for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
@@ -131,7 +132,7 @@ class monitor;
             end
 
             print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
-            // print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
+            print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
             print_mt(vif.mt_mon_o);
             print_amt(vif.amt_mon_o);
             print_prf(vif.prf_mon_o);
