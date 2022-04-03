@@ -32,7 +32,20 @@ module VFL #(
 // --------------------------------------------------------------------
 // Output Victim Freelist to Freelist
 // --------------------------------------------------------------------
-    assign  vfl_fl_o    =   vfl_entry   ;
+    // assign  vfl_fl_o    =   vfl_entry   ;
+
+    always_comb begin
+        vfl_fl_o    =   vfl_entry;
+        for (int unsigned entry_idx = 0; entry_idx < C_FL_ENTRY_NUM; entry_idx++) begin
+            for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
+                if (rob_vfl_i[rt_idx].wr_en) begin 
+                    if (rob_vfl_i[rt_idx].tag == vfl_entry[entry_idx].tag) begin 
+                        vfl_fl_o[entry_idx].tag =   rob_vfl_i[rt_idx].tag_old;
+                    end
+                end
+            end
+        end
+    end
 
 // --------------------------------------------------------------------
 // CAM into VFL at Retire

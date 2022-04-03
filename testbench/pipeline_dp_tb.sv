@@ -134,14 +134,14 @@ class monitor;
             print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
             print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
             print_mt(vif.mt_mon_o);
-            print_amt(vif.amt_mon_o);
-            print_prf(vif.prf_mon_o);
-            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
+            // print_amt(vif.amt_mon_o);
+            // print_prf(vif.prf_mon_o);
+            // print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
             // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
             // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
-            // print_fl(vif.fl_mon_o, vif.fl_head_mon_o, vif.fl_tail_mon_o);
+            print_fl(vif.fl_mon_o, vif.fl_head_mon_o, vif.fl_tail_mon_o);
             // print_vfl(vif.vfl_fl_mon_o);
-            // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
+            print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
             print_cdb(vif.cdb_mon_o);
             print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
 
@@ -328,10 +328,10 @@ class monitor;
 
     function void print_prf(logic   [`PHY_REG_NUM-1:0] [`XLEN-1:0] prf_mon_o);
         $display("T=%0t PRF Contents", $time);
-        $display("addr\t|data\t|addr\t|data\t|addr\t|data\t|addr\t|data\t");
+        $display("addr\t|data\t\t|addr\t|data\t\t|addr\t|data\t\t|addr\t|data\t\t");
         // $display("%0d", `PHY_REG_NUM/4);
         for (int reg_idx = 0; reg_idx < `PHY_REG_NUM/4; reg_idx++) begin
-            $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+            $display("%0d\t|%8h\t|%0d\t|%8h\t|%0d\t|%8h\t|%0d\t|%8h\t", 
             reg_idx, prf_mon_o[reg_idx], 
             reg_idx+`PHY_REG_NUM/4, prf_mon_o[reg_idx+`PHY_REG_NUM/4],
             reg_idx+`PHY_REG_NUM/2, prf_mon_o[reg_idx+`PHY_REG_NUM/2],
