@@ -17,6 +17,10 @@ module RS #(
     parameter   C_CDB_NUM       =   `CDB_NUM        ,
     parameter   C_THREAD_NUM    =   `THREAD_NUM     
 ) (
+    // For Testing
+    output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o,
+    output [$clog2(`RS_ENTRY_NUM)-1:0]          rs_cod_mon_o,
+    // Testing end
     input   logic                       clk_i           ,   //  Clock
     input   logic                       rst_i           ,   //  Reset
     output  RS_DP                       rs_dp_o         ,
@@ -28,6 +32,8 @@ module RS #(
     input   PRF_RS  [C_IS_NUM-1:0]      prf_rs_i        ,
     input   BR_MIS                      br_mis_i        ,
     input   logic                       exception_i     
+
+
 );
 
 // ====================================================================
@@ -356,6 +362,7 @@ module RS #(
                     rs_prf_o[is_idx].rd_addr2           =   rs_array[entry_idx].dec_inst.tag2       ;
                     rs_ib_o[is_idx].valid               =   1'b1                                    ;
                     rs_ib_o[is_idx].is_inst.pc          =   rs_array[entry_idx].dec_inst.pc         ;
+                    rs_ib_o[is_idx].is_inst.npc         =   rs_array[entry_idx].dec_inst.pc + 'd4   ;
                     rs_ib_o[is_idx].is_inst.inst        =   rs_array[entry_idx].dec_inst.inst       ;
                     rs_ib_o[is_idx].is_inst.rs1_value   =   prf_rs_i[is_idx].data_out1              ;
                     rs_ib_o[is_idx].is_inst.rs2_value   =   prf_rs_i[is_idx].data_out2              ;
@@ -372,6 +379,8 @@ module RS #(
                     rs_ib_o[is_idx].is_inst.halt        =   rs_array[entry_idx].dec_inst.halt       ;
                     rs_ib_o[is_idx].is_inst.illegal     =   rs_array[entry_idx].dec_inst.illegal    ;
                     rs_ib_o[is_idx].is_inst.csr_op      =   rs_array[entry_idx].dec_inst.csr_op     ;
+                    rs_ib_o[is_idx].is_inst.alu         =   rs_array[entry_idx].dec_inst.alu        ;
+                    rs_ib_o[is_idx].is_inst.mult        =   rs_array[entry_idx].dec_inst.mult       ;
                 end
             end
         end
@@ -398,6 +407,10 @@ module RS #(
             end else if (dp_sel[idx]) begin
                 rs_array[idx].valid     <=  `SD 1'b1;
                 rs_array[idx].dec_inst  <=  `SD dp_switch[idx];
+            // Issue
+            end else if (is_sel[idx]) begin
+                rs_array[idx].valid     <=  `SD 'b0;
+                rs_array[idx].dec_inst  <=  `SD 'b0;
             // Complete
             end else if (rs_array[idx].valid && (cp_sel_tag1[idx] || cp_sel_tag2[idx])) begin
                 // tag1_ready & tag2_ready should be independently set
@@ -407,13 +420,15 @@ module RS #(
                 if (cp_sel_tag2[idx]) begin
                     rs_array[idx].dec_inst.tag2_ready   <=  `SD 1'b1;
                 end
-            // Issue
-            end else if (is_sel[idx]) begin
-                rs_array[idx].valid     <=  `SD 'b0;
-                rs_array[idx].dec_inst  <=  `SD 'b0;
             end
         end
     end
+
+// --------------------------------------------------------------------
+// For Pipeline Testing
+// --------------------------------------------------------------------
+    assign  rs_mon_o    =   rs_array    ;
+    assign  rs_cod_mon_o=   cod         ;
 
 // ====================================================================
 // RTL Logic End

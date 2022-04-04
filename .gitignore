@@ -1,2 +1,14 @@
 *.out
 extras
+csrc/
+simv.daidir/
+simv.vdb/
+program.mem
+program.debug.dump
+program.dump
+program.elf
+session.inter.vpd.tcl
+ucli.key
+vcdplus.vpd
+simv
+.DS_Store
