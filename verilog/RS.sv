@@ -199,7 +199,7 @@ module RS #(
                 dp_entry_idx[dp_pe_idx]   =   0;
                 for (int unsigned entry_idx = C_RS_ENTRY_NUM; entry_idx > 0 ; entry_idx--) begin
                     if (dp_pe_bit[dp_pe_idx][entry_idx-1]) begin
-                        dp_entry_idx[dp_pe_idx] =   entry_idx;
+                        dp_entry_idx[dp_pe_idx] =   entry_idx - 1;
                     end
                 end
                 dp_entry_idx_valid[dp_pe_idx]   =   dp_pe_bit[dp_pe_idx] ? 1'b1 : 1'b0;
@@ -390,7 +390,7 @@ module RS #(
                 is_entry_idx_cod[is_pe_idx]   =   0;
                 for (int unsigned entry_idx = C_RS_ENTRY_NUM; entry_idx > 0 ; entry_idx--) begin
                     if (is_pe_bit[is_pe_idx][entry_idx-1]) begin
-                        is_entry_idx_cod[is_pe_idx] =   entry_idx;
+                        is_entry_idx_cod[is_pe_idx] =   entry_idx - 1;
                     end
                 end
                 is_entry_idx_valid[is_pe_idx]   =   is_pe_bit[is_pe_idx] ? 1'b1 : 1'b0;
