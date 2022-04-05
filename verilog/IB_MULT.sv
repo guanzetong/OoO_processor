@@ -1,16 +1,15 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//  Modulename  :  IB_channel.sv                                       //
+//  Modulename  :  IB_MULT.sv                                          //
 //                                                                     //
-//  Description :  IB_channel                                          // 
+//  Description :  Issue buffer for MULT                               // 
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module IB_channel #(
-    parameter   C_SIZE          =   8           ,
-    parameter   C_IN_NUM        =   `IS_NUM     ,
-    parameter   C_OUT_NUM       =   `ALU_NUM    ,
-    parameter   C_FU_TYPE       =   "ALU"       ,
+module IB_MULT #(
+    parameter   C_SIZE          =   `MULT_Q_SIZE    ,
+    parameter   C_IN_NUM        =   `IS_NUM         ,
+    parameter   C_OUT_NUM       =   `MULT_NUM       ,
     parameter   C_IDX_WIDTH     =   $clog2(C_SIZE)
 ) (
     input   logic                       clk_i           ,   // Clock
@@ -49,14 +48,10 @@ module IB_channel #(
 // Module Instantiations Start
 // ====================================================================
 // --------------------------------------------------------------------
-// Module name  :   IB_push_in_router
-// Description  :   Router for Push-in to IB_queue. 
+// Module name  :   IB_MULT_push_in_router
+// Description  :   Router for Push-in to IB_MULT_queue. 
 // --------------------------------------------------------------------
-    IB_push_in_router #(
-        .C_IN_NUM       (C_IN_NUM       ),
-        .C_OUT_NUM      (C_IN_NUM       ),
-        .C_FU_TYPE      (C_FU_TYPE      )
-    ) IB_push_in_router_inst (
+    IB_MULT_push_in_router IB_MULT_push_in_router_inst (
         .rs_ib_i        (rs_ib_i        ),
         .ready_o        (ready_o        ),
         .m_valid_o      (push_in_valid  ),
@@ -66,14 +61,10 @@ module IB_channel #(
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   IB_queue
+// Module name  :   IB_MULT_queue
 // Description  :   Instruction queue to a type of FU. 
 // --------------------------------------------------------------------
-    IB_queue #(
-        .C_SIZE         (C_SIZE         ),
-        .C_IN_NUM       (C_IN_NUM       ),
-        .C_OUT_NUM      (C_OUT_NUM      )
-    ) IB_queue_inst (
+    IB_MULT_queue IB_MULT_queue_inst (
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
         .s_valid_i      (push_in_valid  ),
@@ -92,13 +83,10 @@ module IB_channel #(
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   IB_pop_out_router
-// Description  :   Router for Pop-out from IB_queue. 
+// Module name  :   IB_MULT_pop_out_router
+// Description  :   Router for Pop-out from IB_MULT_queue. 
 // --------------------------------------------------------------------
-    IB_pop_out_router #(
-        .C_IN_NUM       (C_OUT_NUM      ),
-        .C_OUT_NUM      (C_OUT_NUM      )
-    ) IB_pop_out_router_inst (
+    IB_MULT_pop_out_router IB_MULT_pop_out_router_inst (
         .s_data_i       (pop_out_data   ),
         .s_valid_i      (pop_out_valid  ),
         .s_ready_o      (pop_out_ready  ),
