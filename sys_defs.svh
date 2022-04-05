@@ -32,7 +32,7 @@
 
 //you can change the clock period to whatever, 10 is just fine
 `define VERILOG_CLOCK_PERIOD   10.0
-`define SYNTH_CLOCK_PERIOD     10.0 // Clock period for synth and memory latency
+`define SYNTH_CLOCK_PERIOD     20.0 // Clock period for synth and memory latency
 
 `define MEM_LATENCY_IN_CYCLES (100.0/`SYNTH_CLOCK_PERIOD+0.49999)
 // the 0.49999 is to force ceiling(100/period).  The default behavior for
@@ -51,10 +51,10 @@ typedef union packed {
 //////////////////////////////////////////////
 `define FETCH_NUM       8   // The number of fetch channels.
 `define IF_NUM          16  // The number of instructions buffered.
-`define DP_NUM          4   // The number of Dispatch channels.
-`define IS_NUM          4   // The number of Issue channels.
-`define CDB_NUM         4   // The number of CDB/Complete channels.
-`define RT_NUM          4   // The number of Retire channels.
+`define DP_NUM          5   // The number of Dispatch channels.
+`define IS_NUM          5   // The number of Issue channels.
+`define CDB_NUM         5   // The number of CDB/Complete channels.
+`define RT_NUM          5   // The number of Retire channels.
 `define ROB_ENTRY_NUM   32  // The number of ROB entries.
 `define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
@@ -312,67 +312,38 @@ typedef enum logic [1:0] {
 	RD_NONE  = 2'h1
 } RD_SEL;
 
-//////////////////////////////////////////////
-// 
-// Architecture Parameters
-// 
-//////////////////////////////////////////////
-`define IF_NUM          4
-`define DP_NUM          4  // The number of Dispatch channels.
-`define IS_NUM          4  // The number of Issue channels.
-`define CDB_NUM         4  // The number of CDB/Complete channels.
-`define RT_NUM          4  // The number of Retire channels.
-`define ROB_ENTRY_NUM   32  // The number of ROB entries.
-`define RS_ENTRY_NUM    16	// The number of RS entries.
-`define ARCH_REG_NUM    32  // The number of Architectural registers.
-`define PHY_REG_NUM     64  // The number of Physical registers.
-`define FL_ENTRY_NUM    (`PHY_REG_NUM - `ARCH_REG_NUM)
-`define THREAD_NUM      2
+typedef enum logic [1:0] {
+	RS1_USED  = 2'h0,
+	RS1_NONE  = 2'h1
+} RS1_SEL;
 
-`define ALU_NUM         3
-`define MULT_NUM        2
-`define BR_NUM          1
-`define LOAD_NUM        1
-`define STORE_NUM       1
-`define FU_NUM          (`ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM)
+typedef enum logic [1:0] {
+	RS2_USED  = 2'h0,
+	RS2_NONE  = 2'h1
+} RS2_SEL;
 
-`define ALU_CYCLE       1
-`define MULT_CYCLE      3
-`define BR_CYCLE        1
-
-`define ALU_Q_SIZE      8
-`define MULT_Q_SIZE     8
-`define BR_Q_SIZE       8
-`define LOAD_Q_SIZE     8
-`define STORE_Q_SIZE    8
-
-`define ALU_IDX_WIDTH   $clog2(`ALU_Q_SIZE  )
-`define MULT_IDX_WIDTH  $clog2(`MULT_Q_SIZE )
-`define BR_IDX_WIDTH    $clog2(`BR_Q_SIZE   )
-`define LOAD_IDX_WIDTH  $clog2(`LOAD_Q_SIZE )
-`define STORE_IDX_WIDTH $clog2(`STORE_Q_SIZE)
-
-`define ALU_CYCLE       2
-`define MULT_CYCLE      2
-`define BR_CYCLE        2
 //////////////////////////////////////////////
 // 
 // Entry contents struct
 // 
 //////////////////////////////////////////////
 
-`define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
-`define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
-`define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
-`define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
-`define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
-`define FL_IDX_WIDTH        $clog2(`FL_ENTRY_NUM)
-`define ZERO_PREG           ({`TAG_IDX_WIDTH{1'b0}})
-
-`define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
-`define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
-
 // Array Entry Contents Start
+
+// Struct that holds both the PC and the 
+typedef struct packed {
+    INST                                inst                ;
+    logic   [`XLEN-1:0]                 pc                  ;
+} INST_PC;
+
+// Per-thread data structures.
+typedef struct packed {
+    logic   [`XLEN-1:0]                 PC_reg             ;
+    INST_PC [`IF_NUM-1:0]               inst_buff          ;           // Instruction buffer (remember doesn't have logic since we're using a user defined type)
+    logic   [`IF_NUM_WIDTH-1:0]         avail_size         ;           // Essentially size of buff where can fetch (used to indicate 
+    logic   [`IF_IDX_WIDTH:0]           hd_ptr             ;           // Points to the front of the queue (extra bit for wrapping around).
+    logic   [`IF_IDX_WIDTH:0]           tail_ptr           ;           // Points to the back of the queue.
+} CONTEXT;
 
 typedef struct packed {
     logic   [`XLEN-1:0]                 pc          ;
@@ -434,8 +405,8 @@ typedef struct packed {
 } ROB_ENTRY;
 
 typedef struct packed {
-	logic   [`TAG_IDX_WIDTH-1:0]                    tag          ;
-    logic                                           tag_ready    ;
+	logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
+    logic                               tag_ready   ;
 } MT_ENTRY; // Per-channel
 
 typedef struct packed {
@@ -605,7 +576,7 @@ typedef struct packed {
 } FU_BC; // Per-Channel
 
 typedef struct packed {
-    logic                                           broadcasted       ;
+    logic                                           broadcasted ;
 } BC_FU; // Per-Channel
 
 typedef struct packed {
@@ -620,36 +591,11 @@ typedef struct packed {
 } BR_MIS; // Combined
 
 typedef struct packed {
-    logic   [`TAG_IDX_WIDTH-1:0]                    amt_tag      ;
-} AMT_ENTRY;
-
-typedef struct packed {
-    logic   [`TAG_IDX_WIDTH-1:0]                    amt_tag      ;
-} AMT_OUTPUT;
-
-typedef enum logic [1:0] {
-	RD_USED  = 2'h0,
-	RD_NONE  = 2'h1
-} RD_SEL;
-
-typedef enum logic [1:0] {
-	RS1_USED  = 2'h0,
-	RS1_NONE  = 2'h1
-} RS1_SEL;
-
-typedef enum logic [1:0] {
-	RS2_USED  = 2'h0,
-	RS2_NONE  = 2'h1
-} RS2_SEL;
-
-typedef struct packed {
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-} FL_ENTRY;
-
-typedef struct packed {
     logic                                           wr_en       ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;
 } ROB_VFL;  // Per-Channel
 
 // Interface End
+
+`endif // __SYS_DEFS_VH__

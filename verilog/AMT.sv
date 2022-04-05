@@ -9,7 +9,7 @@ module AMT #(
 
     input   ROB_AMT      [C_RT_NUM-1:0]   rob_amt_i, 
    
-    output  AMT_OUTPUT   [C_ARCH_REG_NUM-1:0] amt_o
+    output  AMT_ENTRY   [C_ARCH_REG_NUM-1:0] amt_o
 
 );
 
