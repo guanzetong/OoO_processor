@@ -12,3 +12,6 @@ ucli.key
 vcdplus.vpd
 simv
 .DS_Store
+syn_simv
+syn_simv.daidir/
+synth/

@@ -15,23 +15,24 @@ module RS #(
     parameter   C_DP_NUM        =   `DP_NUM         ,
     parameter   C_IS_NUM        =   `IS_NUM         ,
     parameter   C_CDB_NUM       =   `CDB_NUM        ,
-    parameter   C_THREAD_NUM    =   `THREAD_NUM     
+    parameter   C_THREAD_NUM    =   `THREAD_NUM     ,
+    localparam  C_RS_IDX_WIDTH  =   $clog2(C_RS_ENTRY_NUM)
 ) (
     // For Testing
-    output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o,
-    output [$clog2(`RS_ENTRY_NUM)-1:0]          rs_cod_mon_o,
+    output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o        ,
+    output  logic       [C_RS_IDX_WIDTH-1:0]    rs_cod_mon_o    ,
     // Testing end
-    input   logic                       clk_i           ,   //  Clock
-    input   logic                       rst_i           ,   //  Reset
-    output  RS_DP                       rs_dp_o         ,
-    input   DP_RS                       dp_rs_i         ,
-    input   CDB     [C_CDB_NUM-1:0]     cdb_i           ,
-    output  RS_IB   [C_IS_NUM-1:0]      rs_ib_o         ,
-    input   IB_RS                       ib_rs_i         ,
-    output  RS_PRF  [C_IS_NUM-1:0]      rs_prf_o        ,
-    input   PRF_RS  [C_IS_NUM-1:0]      prf_rs_i        ,
-    input   BR_MIS                      br_mis_i        ,
-    input   logic                       exception_i     
+    input   logic                               clk_i           ,   //  Clock
+    input   logic                               rst_i           ,   //  Reset
+    output  RS_DP                               rs_dp_o         ,
+    input   DP_RS                               dp_rs_i         ,
+    input   CDB         [C_CDB_NUM-1:0]         cdb_i           ,
+    output  RS_IB       [C_IS_NUM-1:0]          rs_ib_o         ,
+    input   IB_RS                               ib_rs_i         ,
+    output  RS_PRF      [C_IS_NUM-1:0]          rs_prf_o        ,
+    input   PRF_RS      [C_IS_NUM-1:0]          prf_rs_i        ,
+    input   BR_MIS                              br_mis_i        ,
+    input   logic                               exception_i     
 
 
 );
@@ -41,8 +42,13 @@ module RS #(
 // ====================================================================
     localparam  C_DP_NUM_WIDTH  =   $clog2(C_DP_NUM+1);
     localparam  C_IS_NUM_WIDTH  =   $clog2(C_IS_NUM+1);
-    localparam  C_RS_IDX_WIDTH  =   $clog2(C_RS_ENTRY_NUM);
+    // localparam  C_RS_IDX_WIDTH  =   $clog2(C_RS_ENTRY_NUM);
     localparam  C_RS_NUM_WIDTH  =   $clog2(C_RS_ENTRY_NUM+1);
+
+    // Center-Of-Dispatch
+    localparam  C_DP_IDX_WIDTH  =   $clog2(C_DP_NUM);
+    localparam  C_ADDER_IN_NUM  =   2 ** C_DP_IDX_WIDTH;
+    localparam  C_SOD_WIDTH     =   C_DP_IDX_WIDTH + C_RS_IDX_WIDTH;
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -51,90 +57,42 @@ module RS #(
 // Signal Declarations Start
 // ====================================================================
     // Array
-    RS_ENTRY    [C_RS_ENTRY_NUM-1:0]                    rs_array                ;
+    RS_ENTRY    [C_RS_ENTRY_NUM-1:0]                    rs_array            ;
 
     // Available Entry Counter
-    logic       [C_RS_NUM_WIDTH-1:0]                    avail_cnt               ;
-    logic       [C_THREAD_NUM-1:0][C_RS_NUM_WIDTH-1:0]  valid_cnt               ;
-    logic       [C_THREAD_NUM-1:0][C_DP_NUM_WIDTH-1:0]  dp_cnt                  ;
-    logic       [C_THREAD_NUM-1:0][C_IS_NUM_WIDTH-1:0]  is_cnt                  ;
+    logic       [C_RS_NUM_WIDTH-1:0]                    avail_cnt           ;
+    logic       [C_THREAD_NUM-1:0][C_RS_NUM_WIDTH-1:0]  valid_cnt           ;
+    logic       [C_THREAD_NUM-1:0][C_DP_NUM_WIDTH-1:0]  dp_cnt              ;
+    logic       [C_THREAD_NUM-1:0][C_IS_NUM_WIDTH-1:0]  is_cnt              ;
 
     // Dispatch
-    logic       [C_RS_ENTRY_NUM-1:0]                    entry_empty_concat      ;
-    logic       [C_DP_NUM-1:0][C_RS_IDX_WIDTH-1:0]      dp_entry_idx            ;
-    logic       [C_DP_NUM-1:0]                          dp_pe_valid             ;
-    logic       [C_DP_NUM-1:0]                          dp_valid                ;
-    DEC_INST    [C_RS_ENTRY_NUM-1:0]                    dp_switch               ;
-    logic       [C_RS_ENTRY_NUM-1:0]                    dp_sel                  ;
+    logic       [C_RS_ENTRY_NUM-1:0]                    entry_empty_concat  ;   // Concatenate the availability of entries
+    logic       [C_DP_NUM-1:0][C_RS_ENTRY_NUM-1:0]      dp_pe_bit           ;   // The input to each level of Priority Encoder for Dispatch
+    logic       [C_DP_NUM-2:0][C_RS_ENTRY_NUM-1:0]      dp_pe_mask          ;   // The mask from each level of Priority Encoder for Dispatch
+    logic       [C_DP_NUM-1:0][C_RS_IDX_WIDTH-1:0]      dp_entry_idx        ;   // The selected entry indexes for Dispatch
+    logic       [C_DP_NUM-1:0]                          dp_entry_idx_valid  ;   // The validity of dp_entry_idx
+    logic       [C_DP_NUM-1:0]                          dp_valid            ;   // The ultimate validity of Dispatch channels
+    DEC_INST    [C_RS_ENTRY_NUM-1:0]                    dp_switch           ;   // The newly Dispatched instructions routed to entries
+    logic       [C_RS_ENTRY_NUM-1:0]                    dp_sel              ;   // Indicates if a entry is selected for Dispatch
 
     // Complete
-    logic       [C_RS_ENTRY_NUM-1:0]                    cp_sel_tag1             ;
-    logic       [C_RS_ENTRY_NUM-1:0]                    cp_sel_tag2             ;
+    logic       [C_RS_ENTRY_NUM-1:0]                    cp_sel_tag1         ;
+    logic       [C_RS_ENTRY_NUM-1:0]                    cp_sel_tag2         ;
 
     // Issue
-    logic       [C_RS_IDX_WIDTH-1:0]                    cod                     ;
-    logic       [C_RS_ENTRY_NUM-1:0]                    is_ready                ;
-    logic       [C_RS_ENTRY_NUM-1:0]                    is_ready_cod            ;
-    logic       [C_IS_NUM-1:0][C_RS_IDX_WIDTH-1:0]      is_entry_idx            ;
-    logic       [C_IS_NUM-1:0][C_RS_IDX_WIDTH-1:0]      is_entry_idx_cod        ;
-    logic       [C_IS_NUM-1:0]                          is_pe_valid             ;
-    logic       [C_RS_ENTRY_NUM-1:0]                    is_sel                  ;
+    logic       [C_SOD_WIDTH-1:0]                       sod                 ;   // Sum of newly dispatch entry index
+    logic       [C_RS_IDX_WIDTH-1:0]                    cod                 ;   
+    logic       [C_RS_ENTRY_NUM-1:0]                    is_ready            ;
+    logic       [C_RS_ENTRY_NUM-1:0]                    is_ready_cod        ;
+    logic       [C_IS_NUM-1:0][C_RS_ENTRY_NUM-1:0]      is_pe_bit           ;   // The input to each level of Priority Encoder for Dispatch
+    logic       [C_IS_NUM-2:0][C_RS_ENTRY_NUM-1:0]      is_pe_mask          ;   // The mask from each level of Priority Encoder for Dispatch
+    logic       [C_IS_NUM-1:0][C_RS_IDX_WIDTH-1:0]      is_entry_idx        ;
+    logic       [C_IS_NUM-1:0][C_RS_IDX_WIDTH-1:0]      is_entry_idx_cod    ;
+    logic       [C_IS_NUM-1:0]                          is_entry_idx_valid  ;
+    logic       [C_RS_ENTRY_NUM-1:0]                    is_sel              ;
 
 // ====================================================================
 // Signal Declarations End
-// ====================================================================
-
-// ====================================================================
-// Module Instantiations Start
-// ====================================================================
-// --------------------------------------------------------------------
-// Module name  :   dp_pe
-// Description  :   Priority Encoder with multiple outputs
-//                  to select the entries allocated for dispatch.
-// --------------------------------------------------------------------
-    pe_mult #(
-        .C_IN_WIDTH (C_RS_ENTRY_NUM     ),
-        .C_OUT_NUM  (C_DP_NUM           )
-    ) dp_pe (
-        .bit_i      (entry_empty_concat ),
-        .enc_o      (dp_entry_idx       ),
-        .valid_o    (dp_pe_valid        )
-    );
-// --------------------------------------------------------------------
-
-// --------------------------------------------------------------------
-// Module name  :   is_pe
-// Description  :   Priority Encoder with multiple outputs
-//                  to select the entries allocated for issue.
-// --------------------------------------------------------------------
-    pe_mult #(
-        .C_IN_WIDTH (C_RS_ENTRY_NUM     ),
-        .C_OUT_NUM  (C_IS_NUM           )
-    ) is_pe (
-        .bit_i      (is_ready_cod       ),
-        .enc_o      (is_entry_idx_cod   ),
-        .valid_o    (is_pe_valid        )
-    );
-// --------------------------------------------------------------------
-
-// --------------------------------------------------------------------
-// Module name  :   COD
-// Description  :   Calculate the Center Of Dispatched RS index.
-// --------------------------------------------------------------------
-    COD #(
-        .C_DP_NUM       (C_DP_NUM       ),
-        .C_RS_ENTRY_NUM (C_RS_ENTRY_NUM )
-    ) COD_inst (
-        .clk_i          (clk_i          ),
-        .rs_idx_i       (dp_entry_idx   ),
-        .valid_i        (dp_valid       ),
-        .cod_o          (cod            )
-        // .cod_o          (             )
-    );
-// --------------------------------------------------------------------
-
-// ====================================================================
-// Module Instantiations End
 // ====================================================================
 
 // ====================================================================
@@ -222,19 +180,54 @@ module RS #(
     end
 
 // --------------------------------------------------------------------
+// Select a number of entries for newly Dispatched instructions
+// --------------------------------------------------------------------
+    // Priority Encoder with multiple outputs
+    genvar  dp_pe_idx;
+    generate
+        for (dp_pe_idx = 0; dp_pe_idx < C_DP_NUM; dp_pe_idx++) begin
+            // Generate the input to each Priority Encoder
+            // The bits with higher priority should be masked
+            if (dp_pe_idx == 0) begin
+                assign  dp_pe_bit[dp_pe_idx] =   entry_empty_concat ;
+            end else begin
+                assign  dp_pe_bit[dp_pe_idx] =   dp_pe_bit[dp_pe_idx-1] & (~dp_pe_mask[dp_pe_idx-1]);
+            end
+
+            // Priority Encoders for each output
+            always_comb begin
+                dp_entry_idx[dp_pe_idx]   =   0;
+                for (int unsigned entry_idx = C_RS_ENTRY_NUM - 1; entry_idx >= 0 ; entry_idx--) begin
+                    if (dp_pe_bit[dp_pe_idx][entry_idx]) begin
+                        dp_entry_idx[dp_pe_idx] =   entry_idx;
+                    end
+                end
+                dp_entry_idx_valid[dp_pe_idx]   =   dp_pe_bit[dp_pe_idx] ? 1'b1 : 1'b0;
+            end
+
+            // Generate masks
+            if (dp_pe_idx < C_DP_NUM-1) begin
+                assign  dp_pe_mask[dp_pe_idx]   =   dp_entry_idx_valid[dp_pe_idx] 
+                                                ?   {{(C_RS_ENTRY_NUM-1){1'b0}},1'b1} << dp_entry_idx[dp_pe_idx]
+                                                :   {C_RS_ENTRY_NUM{1'b0}};
+            end
+        end
+    endgenerate
+
+// --------------------------------------------------------------------
 // Dispatch Switch
 // --------------------------------------------------------------------
     // dp_sel is a per-entry signal to notify the entry to receive newly
     // dispatched instruction.
     // dp_switch is the output of a router logic, to route the newly
     // dispatched instruction to the selected entry.
-    // dp_valid is the indicator of 
+    // dp_valid is the indicator of the validity of Dispatch channels
     always_comb begin
         dp_sel      =   'b0;
         dp_switch   =   'b0;
         dp_valid    =   'b0;
         for (int unsigned dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
-            if ((dp_pe_valid[dp_idx] == 1'b1) && (dp_idx < dp_rs_i.dp_num)) begin
+            if ((dp_entry_idx_valid[dp_idx] == 1'b1) && (dp_idx < dp_rs_i.dp_num)) begin
                 dp_valid[dp_idx]    =   1'b1;
             end
         end
@@ -324,9 +317,31 @@ module RS #(
     end
 
 // --------------------------------------------------------------------
-// Center-Of-Dispatch and set priority mode
+// Center-Of-Dispatch and set priority for Issue
 // --------------------------------------------------------------------
     always_comb begin
+        // Calculate Sum-Of-Dispatch
+        sod =   0;
+        for (int unsigned add_idx = 0; add_idx < C_ADDER_IN_NUM; add_idx++) begin
+            // Add the actual dispatched RS entry indexes
+            if (add_idx < C_DP_NUM) begin
+                // Add the dp_entry_idx input if it is valid
+                if (dp_valid[add_idx]) begin
+                    sod =   sod + dp_entry_idx[add_idx];
+                // Else add the center index of RS
+                // Note that with right shift, the center is
+                // biased to the lower half, so the LSB of add_idx is
+                // added to balance.
+                end else begin
+                    sod =   sod + (C_RS_ENTRY_NUM >> 1);
+                end
+            // Add the center index of RS
+            end else begin
+                sod =   sod + (C_RS_ENTRY_NUM >> 1);
+            end
+        end
+
+        // Set the priorities of entries according to COD
         for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             // If the COD is at the higher half, lowest index is of highest priority
             if (cod >= (C_RS_ENTRY_NUM >> 1)) begin
@@ -337,6 +352,7 @@ module RS #(
             end
         end
 
+        // Get the selected entry_idx to issue
         for (int unsigned is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
             if (cod >= (C_RS_ENTRY_NUM >> 1)) begin
                 is_entry_idx[is_idx]    =   is_entry_idx_cod[is_idx];
@@ -345,6 +361,46 @@ module RS #(
             end
         end
     end
+
+    always_ff @(posedge clk_i) begin
+        // Calculate the COD with right shift.
+        cod <=  `SD sod >> C_DP_IDX_WIDTH;
+    end
+
+// --------------------------------------------------------------------
+// Select a number of entries for newly Issued instructions
+// --------------------------------------------------------------------
+    // Priority Encoder with multiple outputs
+    genvar  is_pe_idx;
+    generate
+        for (is_pe_idx = 0; is_pe_idx < C_IS_NUM; is_pe_idx++) begin
+            // Generate the input to each Priority Encoder
+            // The bits with higher priority should be masked
+            if (is_pe_idx == 0) begin
+                assign  is_pe_bit[is_pe_idx] =   is_ready_cod;
+            end else begin
+                assign  is_pe_bit[is_pe_idx] =   is_pe_bit[is_pe_idx-1] & (~is_pe_mask[is_pe_idx-1]);
+            end
+
+            // Priority Encoders for each output
+            always_comb begin
+                is_entry_idx_cod[is_pe_idx]   =   0;
+                for (int unsigned entry_idx = C_RS_ENTRY_NUM - 1; entry_idx >= 0 ; entry_idx--) begin
+                    if (is_pe_bit[is_pe_idx][entry_idx]) begin
+                        is_entry_idx_cod[is_pe_idx] =   entry_idx;
+                    end
+                end
+                is_entry_idx_valid[is_pe_idx]   =   is_pe_bit[is_pe_idx] ? 1'b1 : 1'b0;
+            end
+
+            // Generate masks
+            if (is_pe_idx < C_IS_NUM-1) begin
+                assign  is_pe_mask[is_pe_idx]   =   is_entry_idx_valid[is_pe_idx] 
+                                                ?   {{(C_RS_ENTRY_NUM-1){1'b0}},1'b1} << is_entry_idx_cod[is_pe_idx]
+                                                :   {C_RS_ENTRY_NUM{1'b0}};
+            end
+        end
+    endgenerate
 
 // --------------------------------------------------------------------
 // Issue Switch
@@ -356,7 +412,7 @@ module RS #(
         rs_prf_o    =   'b0;
         for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             for (int unsigned is_idx = 0; is_idx < C_IS_NUM; is_idx++) begin
-                if ((is_entry_idx[is_idx] == entry_idx) && (is_pe_valid[is_idx] == 1'b1)) begin
+                if ((is_entry_idx[is_idx] == entry_idx) && (is_entry_idx_valid[is_idx] == 1'b1)) begin
                     is_sel[entry_idx]                   =   1'b1                                    ;
                     rs_prf_o[is_idx].rd_addr1           =   rs_array[entry_idx].dec_inst.tag1       ;
                     rs_prf_o[is_idx].rd_addr2           =   rs_array[entry_idx].dec_inst.tag2       ;
