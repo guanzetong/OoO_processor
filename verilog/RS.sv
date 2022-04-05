@@ -197,8 +197,8 @@ module RS #(
             // Priority Encoders for each output
             always_comb begin
                 dp_entry_idx[dp_pe_idx]   =   0;
-                for (int unsigned entry_idx = C_RS_ENTRY_NUM - 1; entry_idx >= 0 ; entry_idx--) begin
-                    if (dp_pe_bit[dp_pe_idx][entry_idx]) begin
+                for (int unsigned entry_idx = C_RS_ENTRY_NUM; entry_idx > 0 ; entry_idx--) begin
+                    if (dp_pe_bit[dp_pe_idx][entry_idx-1]) begin
                         dp_entry_idx[dp_pe_idx] =   entry_idx;
                     end
                 end
@@ -286,8 +286,11 @@ module RS #(
         is_ready    =   'b0;
         for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
             // If both source register are ready in PRF
-            if (rs_array[entry_idx].dec_inst.tag1_ready && rs_array[entry_idx].dec_inst.tag2_ready &&
-                rs_array[entry_idx].valid) begin
+            // and not the instruction is not squahsed
+            if (rs_array[entry_idx].dec_inst.tag1_ready && 
+                rs_array[entry_idx].dec_inst.tag2_ready &&
+                rs_array[entry_idx].valid &&
+                (br_mis_i.valid[rs_array[entry_idx].dec_inst.thread_idx] == 1'b0)) begin
                 // Check FU availibility
                 //  LOAD
                 if (rs_array[entry_idx].dec_inst.rd_mem && ib_rs_i.LOAD_ready) begin
@@ -385,8 +388,8 @@ module RS #(
             // Priority Encoders for each output
             always_comb begin
                 is_entry_idx_cod[is_pe_idx]   =   0;
-                for (int unsigned entry_idx = C_RS_ENTRY_NUM - 1; entry_idx >= 0 ; entry_idx--) begin
-                    if (is_pe_bit[is_pe_idx][entry_idx]) begin
+                for (int unsigned entry_idx = C_RS_ENTRY_NUM; entry_idx > 0 ; entry_idx--) begin
+                    if (is_pe_bit[is_pe_idx][entry_idx-1]) begin
                         is_entry_idx_cod[is_pe_idx] =   entry_idx;
                     end
                 end

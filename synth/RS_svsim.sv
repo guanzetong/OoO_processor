@@ -12,19 +12,20 @@ module RS_svsim #(
     parameter   C_DP_NUM        =   4         ,
     parameter   C_IS_NUM        =   4         ,
     parameter   C_CDB_NUM       =   4        ,
-    parameter   C_THREAD_NUM    =   2     
+    parameter   C_THREAD_NUM    =   2     ,
+    localparam  C_RS_IDX_WIDTH  =   $clog2(C_RS_ENTRY_NUM)
 ) (
-        output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o,
-    output [$clog2(16)-1:0]          rs_cod_mon_o,
-        input   logic                       clk_i           ,       input   logic                       rst_i           ,       output  RS_DP                       rs_dp_o         ,
-    input   DP_RS                       dp_rs_i         ,
-    input   CDB     [C_CDB_NUM-1:0]     cdb_i           ,
-    output  RS_IB   [C_IS_NUM-1:0]      rs_ib_o         ,
-    input   IB_RS                       ib_rs_i         ,
-    output  RS_PRF  [C_IS_NUM-1:0]      rs_prf_o        ,
-    input   PRF_RS  [C_IS_NUM-1:0]      prf_rs_i        ,
-    input   BR_MIS                      br_mis_i        ,
-    input   logic                       exception_i     
+        output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o        ,
+    output  logic       [C_RS_IDX_WIDTH-1:0]    rs_cod_mon_o    ,
+        input   logic                               clk_i           ,       input   logic                               rst_i           ,       output  RS_DP                               rs_dp_o         ,
+    input   DP_RS                               dp_rs_i         ,
+    input   CDB         [C_CDB_NUM-1:0]         cdb_i           ,
+    output  RS_IB       [C_IS_NUM-1:0]          rs_ib_o         ,
+    input   IB_RS                               ib_rs_i         ,
+    output  RS_PRF      [C_IS_NUM-1:0]          rs_prf_o        ,
+    input   PRF_RS      [C_IS_NUM-1:0]          prf_rs_i        ,
+    input   BR_MIS                              br_mis_i        ,
+    input   logic                               exception_i     
 
 
 );
