@@ -74,26 +74,13 @@ module IB #(
 // ====================================================================
 
 // ====================================================================
-// Signal Declarations Start
-// ====================================================================
-
-// ====================================================================
-// Signal Declarations End
-// ====================================================================
-
-// ====================================================================
 // Module Instantiations Start
 // ====================================================================
 // --------------------------------------------------------------------
-// Module name  :   ALU_queue
-// Description  :   Queue to store the ALU operations
+// Module name  :   IB_ALU
+// Description  :   Issue Buffer to ALU
 // --------------------------------------------------------------------
-    IB_channel #(
-        .C_SIZE         (C_ALU_Q_SIZE   ),
-        .C_IN_NUM       (C_IS_NUM       ),
-        .C_OUT_NUM      (C_ALU_NUM      ),
-        .C_FU_TYPE      ("ALU"          )
-    ) ALU_channel (
+    IB_ALU IB_ALU_inst (
         .clk_i          (clk_i                                      ),
         .rst_i          (rst_i                                      ),
         .rs_ib_i        (rs_ib_i                                    ),
@@ -110,15 +97,10 @@ module IB #(
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   MULT_queue
-// Description  :   Queue to store the MULT operations
+// Module name  :   IB_MULT
+// Description  :   Issue Buffer to MULT
 // --------------------------------------------------------------------
-    IB_channel #(
-        .C_SIZE         (C_MULT_Q_SIZE  ),
-        .C_IN_NUM       (C_IS_NUM       ),
-        .C_OUT_NUM      (C_MULT_NUM     ),
-        .C_FU_TYPE      ("MULT"         )
-    ) MULT_channel (
+    IB_MULT IB_MULT_inst (
         .clk_i          (clk_i                                          ),
         .rst_i          (rst_i                                          ),
         .rs_ib_i        (rs_ib_i                                        ),
@@ -135,15 +117,10 @@ module IB #(
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   BR_queue
-// Description  :   Queue to store the BR operations
+// Module name  :   IB_BR
+// Description  :   Issue Buffer to BR
 // --------------------------------------------------------------------
-    IB_channel #(
-        .C_SIZE         (C_BR_Q_SIZE    ),
-        .C_IN_NUM       (C_IS_NUM       ),
-        .C_OUT_NUM      (C_BR_NUM       ),
-        .C_FU_TYPE      ("BR"           )
-    ) BR_channel (
+    IB_BR BR_channel (
         .clk_i          (clk_i                                      ),
         .rst_i          (rst_i                                      ),
         .rs_ib_i        (rs_ib_i                                    ),
@@ -160,15 +137,10 @@ module IB #(
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   LOAD_queue
-// Description  :   Queue to store the LOAD operations
+// Module name  :   IB_LOAD
+// Description  :   Issue Buffer to LOAD
 // --------------------------------------------------------------------
-    IB_channel #(
-        .C_SIZE         (C_LOAD_Q_SIZE  ),
-        .C_IN_NUM       (C_IS_NUM       ),
-        .C_OUT_NUM      (C_LOAD_NUM     ),
-        .C_FU_TYPE      ("LOAD"         )
-    ) LOAD_channel (
+    IB_LOAD IB_LOAD_inst (
         .clk_i          (clk_i                                          ),
         .rst_i          (rst_i                                          ),
         .rs_ib_i        (rs_ib_i                                        ),
@@ -185,15 +157,10 @@ module IB #(
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   STORE_queue
-// Description  :   Queue to store the STORE operations
+// Module name  :   IB_STORE
+// Description  :   Issue Buffer to STORE
 // --------------------------------------------------------------------
-    IB_channel #(
-        .C_SIZE         (C_STORE_Q_SIZE ),
-        .C_IN_NUM       (C_IS_NUM       ),
-        .C_OUT_NUM      (C_STORE_NUM    ),
-        .C_FU_TYPE      ("STORE"        )
-    ) STORE_channel (
+    IB_STORE IB_STORE_inst (
         .clk_i          (clk_i                                              ),
         .rst_i          (rst_i                                              ),
         .rs_ib_i        (rs_ib_i                                            ),
@@ -211,15 +178,6 @@ module IB #(
 
 // ====================================================================
 // Module Instantiations End
-// ====================================================================
-
-// ====================================================================
-// RTL Logic Start
-// ====================================================================
-
-
-// ====================================================================
-// RTL Logic End
 // ====================================================================
 
 
