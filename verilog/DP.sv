@@ -70,9 +70,11 @@ module DP # (
         for(dec_idx=0; dec_idx < C_DP_NUM; dec_idx++) begin 
             // Connect instructions into Decoders
             assign inst[dec_idx]   =   fiq_dp_i.inst[dec_idx];
-            decoder#(
-                .C_DEC_IDX  (dec_idx                                )
-            )decoder_inst(
+            // decoder#(
+            //     .C_DEC_IDX  (dec_idx                                )
+            // )decoder_inst(
+            decoder decoder_inst (
+                .dec_idx    (dec_idx[C_DP_NUM_WIDTH-1:0]            ),
                 .inst       (inst[dec_idx]                          ),
                 .dp_num     (dp_num                                 ),
                 // inputs
@@ -229,7 +231,7 @@ endmodule
 // This is a *combinational* module (basically a PLA).
 
 module decoder#(
-    parameter   C_DEC_IDX               =   0               ,
+    // parameter   C_DEC_IDX               =   0               ,
     parameter   C_DP_NUM_WIDTH          =   `DP_NUM_WIDTH   ,
     parameter   C_ARCH_REG_IDX_WIDTH    =   `ARCH_REG_IDX_WIDTH
 )(
@@ -239,11 +241,11 @@ module decoder#(
     //ignore inst when low, outputs will
     //reflect noop (except valid_inst)
     //see sys_defs.svh for definition
-
-    input   INST                                inst        ,
-    input   logic    [C_DP_NUM_WIDTH-1:0]       dp_num      ,
-    output  ALU_OPA_SELECT                      opa_select  ,
-    output  ALU_OPB_SELECT                      opb_select  ,
+    input   logic           [C_DP_NUM_WIDTH-1:0]    dec_idx     ,
+    input   INST                                    inst        ,
+    input   logic           [C_DP_NUM_WIDTH-1:0]    dp_num      ,
+    output  ALU_OPA_SELECT                          opa_select  ,
+    output  ALU_OPB_SELECT                          opb_select  ,
 
     // mux selects
     output  ALU_FUNC                            alu_func    ,
@@ -282,7 +284,7 @@ module decoder#(
 // Select available channels
 // --------------------------------------------------------------------
     always_comb begin
-        if(dp_num > C_DEC_IDX)begin
+        if(dp_num > dec_idx)begin
             valid_inst_in   =   `TRUE   ;        
         end else begin
             valid_inst_in   =   `FALSE  ;

@@ -50,19 +50,11 @@ typedef union packed {
 // 
 //////////////////////////////////////////////
 `define FETCH_NUM       8   // The number of fetch channels.
-<<<<<<< HEAD
 `define IF_NUM          16  // The number of instructions buffered.
-`define DP_NUM          5   // The number of Dispatch channels.
-`define IS_NUM          5   // The number of Issue channels.
-`define CDB_NUM         5   // The number of CDB/Complete channels.
-`define RT_NUM          5   // The number of Retire channels.
-=======
-`define IF_NUM          4   // The number of instructions buffered.
-`define DP_NUM          4   // The number of Dispatch channels.
-`define IS_NUM          4   // The number of Issue channels.
-`define CDB_NUM         4   // The number of CDB/Complete channels.
-`define RT_NUM          4   // The number of Retire channels.
->>>>>>> IB
+`define DP_NUM          2   // The number of Dispatch channels.
+`define IS_NUM          2   // The number of Issue channels.
+`define CDB_NUM         2   // The number of CDB/Complete channels.
+`define RT_NUM          2   // The number of Retire channels.
 `define ROB_ENTRY_NUM   32  // The number of ROB entries.
 `define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
@@ -87,11 +79,7 @@ typedef union packed {
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
 
-`define ALU_IDX_WIDTH   $clog2(`ALU_Q_SIZE  )
-`define MULT_IDX_WIDTH  $clog2(`MULT_Q_SIZE )
-`define BR_IDX_WIDTH    $clog2(`BR_Q_SIZE   )
-`define LOAD_IDX_WIDTH  $clog2(`LOAD_Q_SIZE )
-`define STORE_IDX_WIDTH $clog2(`STORE_Q_SIZE)
+
 
 //////////////////////////////////////////////
 // 
@@ -99,16 +87,23 @@ typedef union packed {
 // 
 //////////////////////////////////////////////
 `define IF_IDX_WIDTH        $clog2(`IF_NUM)
+
+`define IF_NUM_WIDTH        $clog2(`IF_NUM+1)
+`define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
+`define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
+
 `define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
 `define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
 `define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
 `define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
 `define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
 `define FL_IDX_WIDTH        $clog2(`FL_ENTRY_NUM)
-`define IF_NUM_WIDTH        $clog2(`IF_NUM+1)
-`define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
-`define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
 
+`define ALU_IDX_WIDTH       $clog2(`ALU_Q_SIZE  )
+`define MULT_IDX_WIDTH      $clog2(`MULT_Q_SIZE )
+`define BR_IDX_WIDTH        $clog2(`BR_Q_SIZE   )
+`define LOAD_IDX_WIDTH      $clog2(`LOAD_Q_SIZE )
+`define STORE_IDX_WIDTH     $clog2(`STORE_Q_SIZE)
 
 //////////////////////////////////////////////
 // Exception codes

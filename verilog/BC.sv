@@ -241,10 +241,7 @@ module bc_pe_mult #(
                 assign  pe_bit_i[i] =   pe_bit_i[i-1] & (~mask[i-1]);
             end
             // Instantiate Priority Encoders for each output
-            pe #(
-                .C_IN_WIDTH     (C_IN_WIDTH     ),
-                .C_OUT_WIDTH    (C_OUT_WIDTH    )
-            ) pe_inst (
+            pe pe_inst (
                 .bit_i          (pe_bit_i[i]    ),
                 .enc_o          (enc_o[i]       ),
                 .valid_o        (valid_o[i]     )
@@ -252,10 +249,7 @@ module bc_pe_mult #(
 
             // Instantiate binary_decoders for masks generation
             if (i < C_OUT_NUM-1) begin : gen_mask
-                binary_decoder #(
-                    .C_OUT_WIDTH    (C_IN_WIDTH     ),
-                    .C_IN_WIDTH     (C_OUT_WIDTH    )
-                ) binary_decoder_inst (
+                binary_decoder binary_decoder_inst (
                     .enc_i          (enc_o[i]       ),
                     .valid_i        (valid_o[i]     ),
                     .bit_o          (mask[i]        )
@@ -269,6 +263,79 @@ module bc_pe_mult #(
 
 endmodule
 
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  pe.sv                                               //
+//                                                                     //
+//  Description :  pe                                                  // 
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
+
+module pe #(
+    parameter   C_IN_WIDTH  =   `FU_NUM             ,
+    parameter   C_OUT_WIDTH =   $clog2(C_IN_WIDTH)
+)(
+    input   logic   [C_IN_WIDTH-1:0]    bit_i   ,
+    output  logic   [C_OUT_WIDTH-1:0]   enc_o   ,
+    output  logic                       valid_o 
+);
+
+// ====================================================================
+// RTL Logic Start
+// ====================================================================
+
+// --------------------------------------------------------------------
+// Encoding
+// --------------------------------------------------------------------
+    always_comb begin
+        enc_o   =   0;
+        for (int i = C_IN_WIDTH-1; i >=0 ; i--) begin
+            if (bit_i[i]) begin
+                enc_o   =   i;
+            end
+        end
+    end
+
+// --------------------------------------------------------------------
+// Valid
+// --------------------------------------------------------------------
+    assign  valid_o =   bit_i ? 1'b1 : 1'b0;
+
+// ====================================================================
+// RTL Logic End
+// ====================================================================
 
 
+endmodule
+
+
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  binary_decoder.sv                                   //
+//                                                                     //
+//  Description :  binary_decoder                                      // 
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
+
+module binary_decoder #(
+    parameter   C_OUT_WIDTH =   `FU_NUM             ,
+    parameter   C_IN_WIDTH  =   $clog2(C_OUT_WIDTH)
+)(
+    input   logic   [C_IN_WIDTH-1:0]    enc_i   ,
+    input   logic                       valid_i ,
+    output  logic   [C_OUT_WIDTH-1:0]   bit_o   
+);
+
+// ====================================================================
+// RTL Logic Start
+// ====================================================================
+
+    assign  bit_o   =   valid_i ? {{(C_OUT_WIDTH-1){1'b0}},1'b1} << enc_i
+                                : {C_OUT_WIDTH{1'b0}};
+
+// ====================================================================
+// RTL Logic End
+// ====================================================================
+
+endmodule
 
