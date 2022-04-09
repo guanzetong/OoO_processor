@@ -79,10 +79,10 @@ typedef union packed {
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
 
-`define CACHE_SIZE          256
-`define CACHE_BLOCK_SIZE    8
-`define CACHE_SET_ASS       2
-`define MSHR_ENTRY_NUM      16
+`define CACHE_SIZE          256     // The capacity of cache in bytes.
+`define CACHE_BLOCK_SIZE    8       // The number of bytes in a block
+`define CACHE_SASS          2       // Set associativity.
+`define MSHR_ENTRY_NUM      16      // The number of entries in the MSHR.
 
 //////////////////////////////////////////////
 // 
