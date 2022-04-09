@@ -514,6 +514,7 @@ typedef struct packed {
 
 typedef struct packed {
     logic   [`DP_NUM_WIDTH-1:0]                     dp_num      ;
+	//logic	[`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
 } DP_FL; // Combined
 
 typedef struct packed {
@@ -624,6 +625,12 @@ typedef enum logic [1:0] {
 typedef struct packed {
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
 } FL_ENTRY;
+
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+	logic											valid		;
+	logic	[`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
+} FL_smt_ENTRY;
 
 typedef struct packed {
     logic                                           wr_en       ;
