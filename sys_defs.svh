@@ -79,7 +79,10 @@ typedef union packed {
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
 
-
+`define CACHE_SIZE          256
+`define CACHE_BLOCK_SIZE    8
+`define CACHE_SET_ASS       2
+`define MSHR_ENTRY_NUM      16
 
 //////////////////////////////////////////////
 // 
@@ -104,6 +107,11 @@ typedef union packed {
 `define BR_IDX_WIDTH        $clog2(`BR_Q_SIZE   )
 `define LOAD_IDX_WIDTH      $clog2(`LOAD_Q_SIZE )
 `define STORE_IDX_WIDTH     $clog2(`STORE_Q_SIZE)
+
+`define CACHE_OFFSET_WIDTH  $clog2(`CACHE_BLOCK_SIZE)
+`define CACHE_IDX_WIDTH     $clog2(`CACHE_SIZE / `CACHE_BLOCK_SIZE / `CACHE_SET_ASS)
+`define CACHE_TAG_WIDTH     (`XLEN - `CACHE_IDX_WIDTH - `CACHE_OFFSET_WIDTH)
+`define MSHR_IDX_WIDTH      $clog2(`MSHR_ENTRY_NUM)
 
 //////////////////////////////////////////////
 // Exception codes
@@ -324,6 +332,13 @@ typedef enum logic [1:0] {
 	RS2_USED  = 2'h0,
 	RS2_NONE  = 2'h1
 } RS2_SEL;
+
+typedef enum logic [1:0] {
+    REQ_NONE    =   2'h0    ,   // Do nothing
+    REQ_LOAD    =   2'h1    ,   // Load request from processor
+    REQ_STORE   =   2'h2    ,   // Store request from processor
+    REQ_MISS    =   2'h3        // Update request from miss handling
+} CACHE_REQ_CMD;
 
 //////////////////////////////////////////////
 // 
@@ -598,6 +613,36 @@ typedef struct packed {
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
     logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;
 } ROB_VFL;  // Per-Channel
+
+typedef struct packed {
+    logic   [`XLEN-1:0]                             addr        ;
+    logic   [64-1:0]                                data        ;
+    MEM_SIZE                                        size        ;
+    BUS_COMMAND                                     command     ;
+} MEM_IN;
+
+typedef struct packed {
+    logic   [4-1:0]                                 response    ;
+    logic   [64-1:0]                                data        ;
+    logic   [4-1:0]                                 tag         ;
+} MEM_OUT;
+
+typedef struct packed {
+    // Request Interface
+    CACHE_REQ_CMD                                   req_cmd     ;   // Requested command.
+    logic   [`XLEN-1:0]                             req_addr    ;   // Requested address.
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]               req_data_in ;
+} CACHE_CTRL_MEM;
+
+typedef struct packed {
+    // Request Interface
+    logic                                           req_hit     ;
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]               req_data_out;
+    // Evict Interface
+    logic                                           evict_dirty ;
+    logic   [`XLEN-1:0]                             evict_addr  ;
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]               evict_data  ;
+} CACHE_MEM_CTRL;
 
 // Interface End
 
