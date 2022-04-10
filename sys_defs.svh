@@ -82,7 +82,7 @@ typedef union packed {
 `define CACHE_SIZE          256     // The capacity of cache in bytes.
 `define CACHE_BLOCK_SIZE    8       // The number of bytes in a block
 `define CACHE_SASS          2       // Set associativity.
-`define MSHR_ENTRY_NUM      16      // The number of entries in the MSHR.
+`define C_MSHR_ENTRY_NUM    16      // The number of entries in the MSHR.
 
 //////////////////////////////////////////////
 // 
@@ -340,6 +340,15 @@ typedef enum logic [1:0] {
     REQ_MISS    =   2'h3        // Update request from miss handling
 } CACHE_REQ_CMD;
 
+typedef enum logic [2:0] {
+    ST_IDLE     =   3'h0    ,
+    ST_DEPEND   =   3'h1    ,
+    ST_RD_MEM   =   3'h2    ,
+    ST_WAIT_MEM =   3'h3    ,
+    ST_UPDATE   =   3'h4    ,
+    ST_EVICT    =   3'h5    
+} MSHR_STATE;
+
 //////////////////////////////////////////////
 // 
 // Entry contents struct
@@ -439,6 +448,18 @@ typedef struct packed {
 typedef struct packed {
     logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
 } FL_ENTRY;
+
+typedef struct packed {
+    MSHR_STATE                          state       ;
+    BUS_COMMAND                         cmd         ;
+    logic   [`XLEN-1:0]                 req_addr    ;
+    MEM_SIZE                            req_size    ;
+    logic   [`XLEN-1:0]                 evict_addr  ;
+    logic   [`C_CACHE_BLOCK_SIZE*8-1:0] data        ;   // Request or Evict data according to state
+    logic   [`MSHR_IDX_WIDTH-1:0]       link_idx    ;
+    logic                               linked      ;
+    logic   [4-1:0]                     mem_tag     ;
+} MSHR_ENTRY;
 
 // Array Entry Contents End
 
