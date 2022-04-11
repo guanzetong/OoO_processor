@@ -341,12 +341,14 @@ typedef enum logic [1:0] {
 } CACHE_REQ_CMD;
 
 typedef enum logic [2:0] {
-    ST_IDLE     =   3'h0    ,
-    ST_DEPEND   =   3'h1    ,
-    ST_RD_MEM   =   3'h2    ,
-    ST_WAIT_MEM =   3'h3    ,
-    ST_UPDATE   =   3'h4    ,
-    ST_EVICT    =   3'h5    
+    ST_IDLE         =   3'h0    ,
+    ST_DEPEND       =   3'h1    ,
+    ST_WAIT_EVICT   =   3'h2    ,
+    ST_RD_MEM       =   3'h3    ,
+    ST_WAIT_MEM     =   3'h4    ,
+    ST_UPDATE       =   3'h5    ,
+    ST_OUTPUT       =   3'h6    ,
+    ST_EVICT        =   3'h7    
 } MSHR_STATE;
 
 //////////////////////////////////////////////
@@ -453,9 +455,11 @@ typedef struct packed {
     MSHR_STATE                          state       ;
     BUS_COMMAND                         cmd         ;
     logic   [`XLEN-1:0]                 req_addr    ;
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]   req_data    ;
     MEM_SIZE                            req_size    ;
     logic   [`XLEN-1:0]                 evict_addr  ;
-    logic   [`C_CACHE_BLOCK_SIZE*8-1:0] data        ;   // Request or Evict data according to state
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]   evict_data  ;
+    logic                               evict_dirty ;
     logic   [`MSHR_IDX_WIDTH-1:0]       link_idx    ;
     logic                               linked      ;
     logic   [4-1:0]                     mem_tag     ;

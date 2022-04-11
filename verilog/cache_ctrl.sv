@@ -41,24 +41,34 @@ module cache_ctrl #(
 // Signal Declarations Start
 // ====================================================================
     // MSHR array
-    MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]      mshr_array              ;
-    MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]      next_mshr_array         ;
-    logic           [C_MSHR_ENTRY_NUM-1:0]      dp_sel                  ;
-    logic                                       dp_idx_valid            ;
-    logic           [C_MSHR_IDX_WIDTH-1:0]      dp_idx                  ;
-    logic           [C_MSHR_ENTRY_NUM-1:0]      cp_sel                  ;
-    MEM_OUT         [C_MSHR_ENTRY_NUM-1:0]      mem_out                 ;
-    MEM_IN          [C_MSHR_ENTRY_NUM-1:0]      mem_in                  ;
-    logic                                       mshr_hit                ;
-    logic           [C_MSHR_IDX_WIDTH-1:0]      mshr_hit_idx            ;
+    MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]                              mshr_array              ;
+    MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]                              next_mshr_array         ;
+
+    // Dispatch
+    logic           [C_MSHR_ENTRY_NUM-1:0]                              dp_sel                  ;
+    logic                                                               dp_idx_valid            ;
+    logic           [C_MSHR_IDX_WIDTH-1:0]                              dp_idx                  ;
+    
+    // Complete
+    logic           [C_MSHR_ENTRY_NUM-1:0]                              cp_flag                 ;
+    logic           [C_MSHR_ENTRY_NUM-1:0][C_CACHE_BLOCK_SIZE*8-1:0]    cp_data                 ;
+    // Dependency Detection
+    logic                                                               mshr_hit                ;
+    logic           [C_MSHR_IDX_WIDTH-1:0]                              mshr_hit_idx            ;
+    logic                                                               evict_hit               ;
+    logic           [C_MSHR_IDX_WIDTH-1:0]                              evict_hit_idx           ;
+
+    // Processor Interface Arbitration
+    MEM_OUT         [C_MSHR_ENTRY_NUM-1:0]                              mshr_proc               ;
+    logic           [C_MSHR_ENTRY_NUM-1:0]                              proc_grant              ;
 
     // Memory Interface Arbitration
-    MEM_IN          [C_MSHR_ENTRY_NUM-1:0]      mshr_memory             ;
-    logic           [C_MSHR_ENTRY_NUM-1:0]      memory_grant            ;
+    MEM_IN          [C_MSHR_ENTRY_NUM-1:0]                              mshr_memory             ;
+    logic           [C_MSHR_ENTRY_NUM-1:0]                              memory_grant            ;
 
-    // CACHE_CTRL_MEM Interface Arbitration
-    CACHE_CTRL_MEM  [C_MSHR_ENTRY_NUM-1:0]      mshr_cache_mem          ;
-    logic           [C_MSHR_ENTRY_NUM-1:0]      cache_mem_grant         ;
+    // cache_mem Interface Arbitration
+    CACHE_CTRL_MEM  [C_MSHR_ENTRY_NUM-1:0]                              mshr_cache_mem          ;
+    logic           [C_MSHR_ENTRY_NUM-1:0]                              cache_mem_grant         ;
 
 // ====================================================================
 // Signal Declarations End
@@ -71,26 +81,86 @@ module cache_ctrl #(
 // Module name  :   mshr_fsm
 // Description  :   FSM for each entry
 // --------------------------------------------------------------------
-    genvar  i   ;
+    genvar  entry_idx   ;
     generate
-        for (i = 0; i < C_MSHR_ENTRY_NUM; i++) begin
-            mshr_fsm mshr_fsm_inst (
-                .cstate_i           (mshr_array[i].state            ),
-                .nstate_o           (next_mshr_array[i].state       ),
-                .bus_cmd_i          (proc_i.command                 ),
-                .cache_mem_grant_i  (cache_mem_grant[i]             ),
-                .memory_grant_i     (memory_grant[i]                ),
-                .cache_mem_hit_i    (cache_mem_ctrl_i.req_hit       ),
-                .mshr_hit_i         (mshr_hit                       ),
-                .dp_sel_i           (dp_sel[i]                      ),
-                .cp_sel_i           (cp_sel[mshr_array[i].link_idx] ),
-                .mem_response_i     (mem_i.response                 ),
-                .mem_tag_i          (mem_i.tag                      ),
-                .entry_tag_i        (mshr_array[i].tag              ),
-                .evict_dirty_i      (cache_mem_ctrl_i.evict_dirty   )
+        for (entry_idx = 1; entry_idx < C_MSHR_ENTRY_NUM; entry_idx++) begin
+            mshr_entry_ctrl mshr_entry_ctrl_inst (
+                .clk_i              (clk_i                      ),
+                .rst_i              (rst_i                      ),
+                .mshr_entry_idx_i   (entry_idx                  ),
+                .mshr_entry_o       (mshr_array[entry_idx]      ),
+                .proc_grant_i       (proc_grant                 ),
+                .proc_i             (proc_i                     ),
+                .mshr_proc_o        (mshr_proc                  ),
+                .cache_mem_grant_i  (cache_mem_grant[entry_idx] ),
+                .cache_mem_ctrl_i   (cache_mem_ctrl_i           ),
+                .mshr_cache_mem_o   (mshr_cache_mem             ),
+                .memory_grant_i     (memory_grant[entry_idx]    ),
+                .mem_i              (mem_i                      ),
+                .mshr_memory_o      (mshr_memory                ),
+                .mshr_hit_i         (mshr_hit                   ),
+                .mshr_hit_idx_i     (mshr_hit_idx               ),
+                .evict_hit_i        (evict_hit                  ),
+                .evict_hit_idx_i    (evict_hit_idx              ),
+                .dp_sel_i           (dp_sel[entry_idx]          ),
+                .mshr_cp_flag_o     (cp_flag[entry_idx]         ),
+                .mshr_cp_data_o     (cp_data[entry_idx]         ),
+                .cp_flag_i          (cp_flag                    ),
+                .cp_data_i          (cp_data                    )
             );
         end
     endgenerate
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   mshr_dispatch_selector
+// Description  :   Select a empty MSHR entry for the new request
+//                  from processor
+// --------------------------------------------------------------------
+    mshr_dispatch_selector mshr_dispatch_selector_inst (
+        .mshr_array_i   (mshr_array ),
+        .dp_sel_o       (dp_sel     )
+    );
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   mshr_hit_detector
+// Description  :   Compare the address from pocessor with the req_addr
+//                  of the valid MSHR entries.
+// --------------------------------------------------------------------
+    mshr_hit_detector mshr_hit_detector_inst (
+        .proc_i             (proc_i         ),
+        .mshr_array_i       (mshr_array     ),
+        .mshr_hit_o         (mshr_hit       ),
+        .mshr_hit_idx_o     (mshr_hit_idx   )
+    );
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   evict_hit_detector
+// Description  :   Compare the address from pocessor with the req_addr
+//                  of the valid MSHR entries.
+// --------------------------------------------------------------------
+    evict_hit_detector evict_hit_detector_inst (
+        .proc_i             (proc_i         ),
+        .mshr_array_i       (mshr_array     ),
+        .evict_hit_o        (evict_hit      ),
+        .evict_hit_idx_o    (evict_hit_idx  )
+    );
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   mshr_proc_switch
+// Description  :   Schedule the access of MSHR entries to 
+//                  Processor Interface.
+// --------------------------------------------------------------------
+    mshr_proc_switch mshr_proc_switch_inst (
+        .clk_i          (clk_i          ),
+        .rst_i          (rst_i          ),
+        .mshr_proc_i    (mshr_proc      ),
+        .proc_grant_o   (proc_grant     ),
+        .proc_o         (proc_o         )
+    );
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
@@ -128,86 +198,6 @@ module cache_ctrl #(
 // ====================================================================
 // RTL Logic Start
 // ====================================================================
-
-// --------------------------------------------------------------------
-// MSHR State update
-// --------------------------------------------------------------------
-    always_ff @(posedge clk_i) begin
-        for (int unsigned entry_idx = 0; entry_idx < C_MSHR_ENTRY_NUM; entry_idx++) begin
-            if (rst_i) begin
-                mshr_array[i].state <=  `SD ST_IDLE;
-            end else begin
-                mshr_array[i].state <=  `SD next_mshr_array[i].state;
-            end
-        end
-    end
-
-// --------------------------------------------------------------------
-// MSHR hit detection
-// --------------------------------------------------------------------
-    always_comb begin
-        mshr_hit        =   1'b0;
-        mshr_hit_idx    =   'd0;
-        if (proc_i.command != BUS_NONE) begin
-            for (int unsigned entry_idx = 0; entry_idx < C_MSHR_ENTRY_NUM; entry_idx++) begin
-                // IF   the entry content is valid
-                // AND  the address from processor matches the address of current entry
-                // AND  current entry is the least older miss to this address
-                // ->   MSHR hit is detected
-                if ((mshr_array[entry_idx].cmd != BUS_NONE)
-                &&  (mshr_array[entry_idx].req_addr[C_XLEN-1:C_CACHE_OFFSET_WIDTH] == proc_i.addr[C_XLEN-1:C_CACHE_OFFSET_WIDTH])
-                &&  (mshr_array[entry_idx].linked == 1'b0)) begin
-                    mshr_hit        =   1'b1;
-                    mshr_hit_idx    =   entry_idx;
-                end
-            end
-        end
-    end
-
-// --------------------------------------------------------------------
-// MSHR dispatch select
-// --------------------------------------------------------------------
-    always_comb begin
-        // Scan through the empty entry, and select the one with smallest index
-        dp_idx          =   'd0;
-        dp_idx_valid    =   1'b0;
-        for (int unsigned entry_idx = C_MSHR_ENTRY_NUM - 1; entry_idx > 0; entry_idx--) begin
-            if (mshr_array[entry_idx].cmd == BUS_NONE) begin
-                dp_idx          =   entry_idx;
-                dp_idx_valid    =   1'b1;
-            end
-        end
-
-        // Generate per-entry dp_sel
-        dp_sel  =   'b0;
-        if (dp_idx_valid) begin
-            dp_sel  =   {{(C_MSHR_ENTRY_NUM-1){1'b0}}, 1'b1} << dp_idx;
-        end
-    end
-
-// --------------------------------------------------------------------
-// MSHR complete select
-// --------------------------------------------------------------------
-    always_comb begin
-        cp_sel  =   'b0;
-        for (int unsigned entry_idx = 0; entry_idx < C_MSHR_ENTRY_NUM; entry_idx++) begin
-            // Assert when the miss handling is completed
-            // by observing the FSM transition.
-            if ((mshr_array[entry_idx].state != ST_IDLE)
-            &&  (next_mshr_array[entry_idx].state == ST_IDLE)) begin
-                cp_sel[entry_idx]   =   1'b1;
-            end
-        end
-    end
-
-// --------------------------------------------------------------------
-// MSHR entry update
-// --------------------------------------------------------------------
-    always_comb begin
-
-
-    end
-
 
 // ====================================================================
 // RTL Logic End

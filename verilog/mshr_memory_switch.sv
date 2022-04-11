@@ -63,7 +63,7 @@ module mshr_memory_switch #(
     always_comb begin
         // Pick the MSHR entries with valid Memory requests
         arbiter_req =   'b0;
-        for (int unsigned entry_idx = 0; entry_idx < C_MSHR_ENTRY_NUM; entry_idx++) begin
+        for (int unsigned entry_idx = 1; entry_idx < C_MSHR_ENTRY_NUM; entry_idx++) begin
             if ((mshr_memory_i[entry_idx].command == BUS_LOAD)
             || (mshr_memory_i[entry_idx].command == BUS_STORE)) begin
                 arbiter_req[entry_idx]  =   1'b1;
@@ -77,13 +77,13 @@ module mshr_memory_switch #(
         end
 
         // Route the granted request to the Memory Interface
-        mem_o   =   'b0;
-        if (grant_valid) begin
-            mem_o   =   mshr_memory_i[grant_idx]    ;
-        end
-
         // Output grant signals to the MSHR entries
-        memory_grant_o  =   {{(C_MSHR_ENTRY_NUM-1){1'b0}}, 1'b1} << grant_idx;
+        mem_o           =   'b0 ;
+        memory_grant_o  =   'b0 ;
+        if (grant_valid) begin
+            mem_o           =   mshr_memory_i[grant_idx]    ;
+            memory_grant_o  =   {{(C_MSHR_ENTRY_NUM-1){1'b0}}, 1'b1} << grant_idx;
+        end
     end
 // ====================================================================
 // RTL Logic End
