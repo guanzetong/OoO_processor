@@ -81,7 +81,7 @@ typedef union packed {
 
 `define CACHE_SIZE          256     // The capacity of cache in bytes.
 `define CACHE_BLOCK_SIZE    8       // The number of bytes in a block
-`define CACHE_SASS          2       // Set associativity.
+`define CACHE_SET_ASS       2       // Set associativity.
 `define MSHR_ENTRY_NUM      16      // The number of entries in the MSHR.
 
 //////////////////////////////////////////////
@@ -617,7 +617,7 @@ typedef struct packed {
 typedef struct packed {
     logic   [`XLEN-1:0]                             addr        ;
     logic   [64-1:0]                                data        ;
-    MEM_SIZE                                        size        ;
+    //MEM_SIZE                                        size        ;
     BUS_COMMAND                                     command     ;
 } MEM_IN;
 
@@ -643,6 +643,15 @@ typedef struct packed {
     logic   [`XLEN-1:0]                             evict_addr  ;
     logic   [`CACHE_BLOCK_SIZE*8-1:0]               evict_data  ;
 } CACHE_MEM_CTRL;
+
+
+typedef struct packed {
+    logic valid;
+    logic dirty;
+    logic lru;
+    logic [`CACHE_TAG_WIDTH-1:0] tag;
+    logic [8*`CACHE_BLOCK_SIZE-1:0] data; // N-way data
+} CACHE_MEM_ARRAY; // for each set
 
 // Interface End
 
