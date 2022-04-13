@@ -12,9 +12,9 @@ module mshr_proc_switch #(
 ) (
     input   logic                               clk_i           ,   //  Clock
     input   logic                               rst_i           ,   //  Reset
-    input   MEM_IN  [C_MSHR_ENTRY_NUM-1:0]      mshr_proc_i     ,   //  Processor request from each MSHR entry
+    input   MEM_OUT [C_MSHR_ENTRY_NUM-1:0]      mshr_proc_i     ,   //  Processor request from each MSHR entry
     output  logic   [C_MSHR_ENTRY_NUM-1:0]      proc_grant_o    ,   //  One-hot grant
-    output  MEM_IN                              proc_o              //  Shared Processor Interface
+    output  MEM_OUT                             cache2proc_o        //  Shared Processor Interface
 );
 
 // ====================================================================
@@ -88,11 +88,11 @@ module mshr_proc_switch #(
 
         // Route the granted request to the proc Interface
         // Output grant signals to the MSHR entries
-        proc_o          =   'b0 ;
+        cache2proc_o    =   'b0 ;
         proc_grant_o    =   'b0 ;
         if (grant_valid) begin
-            proc_o  =   mshr_proc_i[grant_idx]    ;
-            proc_grant_o  =   {{(C_MSHR_ENTRY_NUM-1){1'b0}}, 1'b1} << grant_idx;
+            cache2proc_o    =   mshr_proc_i[grant_idx]    ;
+            proc_grant_o    =   {{(C_MSHR_ENTRY_NUM-1){1'b0}}, 1'b1} << grant_idx;
         end
     end
 // ====================================================================

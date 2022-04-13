@@ -81,7 +81,6 @@ typedef union packed {
 
 `define CACHE_SIZE          256     // The capacity of cache in bytes.
 `define CACHE_BLOCK_SIZE    8       // The number of bytes in a block
-
 `define CACHE_SASS          2       // Set associativity.
 `define MSHR_ENTRY_NUM      16      // The number of entries in the MSHR.
 
@@ -110,7 +109,7 @@ typedef union packed {
 `define STORE_IDX_WIDTH     $clog2(`STORE_Q_SIZE)
 
 `define CACHE_OFFSET_WIDTH  $clog2(`CACHE_BLOCK_SIZE)
-`define CACHE_IDX_WIDTH     $clog2(`CACHE_SIZE / `CACHE_BLOCK_SIZE / `CACHE_SET_ASS)
+`define CACHE_IDX_WIDTH     $clog2(`CACHE_SIZE / `CACHE_BLOCK_SIZE / `CACHE_SASS)
 `define CACHE_TAG_WIDTH     (`XLEN - `CACHE_IDX_WIDTH - `CACHE_OFFSET_WIDTH)
 `define MSHR_IDX_WIDTH      $clog2(`MSHR_ENTRY_NUM)
 
@@ -223,14 +222,14 @@ typedef enum logic [1:0] {
     BUS_STORE    = 2'h2
 } BUS_COMMAND;
 
-`ifndef CACHE_MODE
+// `ifndef CACHE_MODE
 typedef enum logic [1:0] {
     BYTE = 2'h0,
     HALF = 2'h1,
     WORD = 2'h2,
     DOUBLE = 2'h3
 } MEM_SIZE;
-`endif
+// `endif
 //
 // useful boolean single-bit definitions
 //
@@ -334,16 +333,17 @@ typedef enum logic [1:0] {
 	RS2_NONE  = 2'h1
 } RS2_SEL;
 
-typedef enum logic [1:0] {
-    REQ_NONE    =   2'h0    ,   // Do nothing
-    REQ_LOAD    =   2'h1    ,   // Load request from processor
-    REQ_STORE   =   2'h2    ,   // Store request from processor
-    REQ_MISS    =   2'h3        // Update request from miss handling
+typedef enum logic [2:0] {
+    REQ_NONE        =   3'h0    ,   // Do nothing
+    REQ_LOAD        =   3'h1    ,   // Load request from processor
+    REQ_STORE       =   3'h2    ,   // Store request from processor
+    REQ_LOAD_MISS   =   3'h3    ,   // Miss handling request from LOAD miss
+    REQ_STORE_MISS  =   3'h4        // Miss handling request from LOAD miss
 } CACHE_REQ_CMD;
 
 typedef enum logic [2:0] {
     ST_IDLE         =   3'h0    ,
-    ST_DEPEND       =   3'h1    ,
+    ST_WAIT_DEPEND  =   3'h1    ,
     ST_WAIT_EVICT   =   3'h2    ,
     ST_RD_MEM       =   3'h3    ,
     ST_WAIT_MEM     =   3'h4    ,
@@ -465,6 +465,14 @@ typedef struct packed {
     logic                               linked      ;
     logic   [4-1:0]                     mem_tag     ;
 } MSHR_ENTRY;
+
+typedef struct packed {
+    logic                               valid       ;
+    logic                               dirty       ;
+    logic                               lru         ;
+    logic   [`CACHE_TAG_WIDTH-1:0]      tag         ;
+    logic   [8*`CACHE_BLOCK_SIZE-1:0]   data        ;
+} CACHE_MEM_ENTRY;  // for each block
 
 // Array Entry Contents End
 
@@ -643,7 +651,7 @@ typedef struct packed {
 typedef struct packed {
     logic   [`XLEN-1:0]                             addr        ;
     logic   [64-1:0]                                data        ;
-    //MEM_SIZE                                        size        ;
+    MEM_SIZE                                        size        ;
     BUS_COMMAND                                     command     ;
 } MEM_IN;
 
@@ -671,13 +679,7 @@ typedef struct packed {
 } CACHE_MEM_CTRL;
 
 
-typedef struct packed {
-    logic valid;
-    logic dirty;
-    logic lru;
-    logic [`CACHE_TAG_WIDTH-1:0] tag;
-    logic [8*`CACHE_BLOCK_SIZE-1:0] data; // N-way data
-} CACHE_MEM_ARRAY; // for each set
+
 
 // Interface End
 

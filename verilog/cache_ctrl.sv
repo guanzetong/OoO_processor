@@ -16,11 +16,11 @@ module cache_ctrl #(
     input   logic               clk_i               ,   //  Clock
     input   logic               rst_i               ,   //  Reset
     // Processor Interface
-    input   MEM_IN              proc_i              ,
-    output  MEM_OUT             proc_o              ,
+    input   MEM_IN              proc2cache_i        ,
+    output  MEM_OUT             cache2proc_o        ,
     // Memory Interface
-    output  MEM_IN              mem_o               ,
-    input   MEM_OUT             mem_i               ,
+    output  MEM_IN              cache2mem_o         ,
+    input   MEM_OUT             mem2cache_i         ,
     // Cache-memory Interface
     output  CACHE_CTRL_MEM      cache_ctrl_mem_o    ,  
     input   CACHE_MEM_CTRL      cache_mem_ctrl_i    
@@ -42,12 +42,9 @@ module cache_ctrl #(
 // ====================================================================
     // MSHR array
     MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]                              mshr_array              ;
-    MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]                              next_mshr_array         ;
 
     // Dispatch
     logic           [C_MSHR_ENTRY_NUM-1:0]                              dp_sel                  ;
-    logic                                                               dp_idx_valid            ;
-    logic           [C_MSHR_IDX_WIDTH-1:0]                              dp_idx                  ;
     
     // Complete
     logic           [C_MSHR_ENTRY_NUM-1:0]                              cp_flag                 ;
@@ -85,28 +82,28 @@ module cache_ctrl #(
     generate
         for (entry_idx = 1; entry_idx < C_MSHR_ENTRY_NUM; entry_idx++) begin
             mshr_entry_ctrl mshr_entry_ctrl_inst (
-                .clk_i              (clk_i                      ),
-                .rst_i              (rst_i                      ),
-                .mshr_entry_idx_i   (entry_idx                  ),
-                .mshr_entry_o       (mshr_array[entry_idx]      ),
-                .proc_grant_i       (proc_grant                 ),
-                .proc_i             (proc_i                     ),
-                .mshr_proc_o        (mshr_proc                  ),
-                .cache_mem_grant_i  (cache_mem_grant[entry_idx] ),
-                .cache_mem_ctrl_i   (cache_mem_ctrl_i           ),
-                .mshr_cache_mem_o   (mshr_cache_mem             ),
-                .memory_grant_i     (memory_grant[entry_idx]    ),
-                .mem_i              (mem_i                      ),
-                .mshr_memory_o      (mshr_memory                ),
-                .mshr_hit_i         (mshr_hit                   ),
-                .mshr_hit_idx_i     (mshr_hit_idx               ),
-                .evict_hit_i        (evict_hit                  ),
-                .evict_hit_idx_i    (evict_hit_idx              ),
-                .dp_sel_i           (dp_sel[entry_idx]          ),
-                .mshr_cp_flag_o     (cp_flag[entry_idx]         ),
-                .mshr_cp_data_o     (cp_data[entry_idx]         ),
-                .cp_flag_i          (cp_flag                    ),
-                .cp_data_i          (cp_data                    )
+                .clk_i              (clk_i                              ),
+                .rst_i              (rst_i                              ),
+                .mshr_entry_idx_i   (entry_idx[C_MSHR_IDX_WIDTH-1:0]    ),
+                .mshr_entry_o       (mshr_array[entry_idx]              ),
+                .proc_grant_i       (proc_grant[entry_idx]              ),
+                .proc2cache_i       (proc2cache_i                       ),
+                .mshr_proc_o        (mshr_proc[entry_idx]               ),
+                .cache_mem_grant_i  (cache_mem_grant[entry_idx]         ),
+                .cache_mem_ctrl_i   (cache_mem_ctrl_i                   ),
+                .mshr_cache_mem_o   (mshr_cache_mem[entry_idx]          ),
+                .memory_grant_i     (memory_grant[entry_idx]            ),
+                .mem2cache_i        (mem2cache_i                        ),
+                .mshr_memory_o      (mshr_memory[entry_idx]             ),
+                .mshr_hit_i         (mshr_hit                           ),
+                .mshr_hit_idx_i     (mshr_hit_idx                       ),
+                .evict_hit_i        (evict_hit                          ),
+                .evict_hit_idx_i    (evict_hit_idx                      ),
+                .dp_sel_i           (dp_sel[entry_idx]                  ),
+                .mshr_cp_flag_o     (cp_flag[entry_idx]                 ),
+                .mshr_cp_data_o     (cp_data[entry_idx]                 ),
+                .cp_flag_i          (cp_flag                            ),
+                .cp_data_i          (cp_data                            )
             );
         end
     endgenerate
@@ -129,7 +126,7 @@ module cache_ctrl #(
 //                  of the valid MSHR entries.
 // --------------------------------------------------------------------
     mshr_hit_detector mshr_hit_detector_inst (
-        .proc_i             (proc_i         ),
+        .proc2cache_i       (proc2cache_i   ),
         .mshr_array_i       (mshr_array     ),
         .mshr_hit_o         (mshr_hit       ),
         .mshr_hit_idx_o     (mshr_hit_idx   )
@@ -142,7 +139,7 @@ module cache_ctrl #(
 //                  of the valid MSHR entries.
 // --------------------------------------------------------------------
     evict_hit_detector evict_hit_detector_inst (
-        .proc_i             (proc_i         ),
+        .proc2cache_i       (proc2cache_i   ),
         .mshr_array_i       (mshr_array     ),
         .evict_hit_o        (evict_hit      ),
         .evict_hit_idx_o    (evict_hit_idx  )
@@ -159,7 +156,7 @@ module cache_ctrl #(
         .rst_i          (rst_i          ),
         .mshr_proc_i    (mshr_proc      ),
         .proc_grant_o   (proc_grant     ),
-        .proc_o         (proc_o         )
+        .cache2proc_o   (cache2proc_o   )
     );
 // --------------------------------------------------------------------
 
@@ -172,8 +169,9 @@ module cache_ctrl #(
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
         .mshr_memory_i  (mshr_memory    ),
+        .mem2cache_i    (mem2cache_i    ),
         .memory_grant_o (memory_grant   ),
-        .mem_o          (mem_o          )
+        .cache2mem_o    (cache2mem_o    )
     );
 // --------------------------------------------------------------------
 
@@ -198,6 +196,14 @@ module cache_ctrl #(
 // ====================================================================
 // RTL Logic Start
 // ====================================================================
+    always_comb begin
+        mshr_array[0]       =   'd0 ;
+        mshr_memory[0]      =   'd0 ;
+        mshr_proc[0]        =   'd0 ;
+        mshr_cache_mem[0]   =   'd0 ;
+        cp_data[0]          =   'b0 ;
+        cp_flag[0]          =   1'b0;
+    end
 
 // ====================================================================
 // RTL Logic End

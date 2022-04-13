@@ -13,8 +13,9 @@ module mshr_memory_switch #(
     input   logic                               clk_i           ,   //  Clock
     input   logic                               rst_i           ,   //  Reset
     input   MEM_IN  [C_MSHR_ENTRY_NUM-1:0]      mshr_memory_i   ,   //  Memory request from each MSHR entry
+    input   MEM_OUT                             mem2cache_i     ,
     output  logic   [C_MSHR_ENTRY_NUM-1:0]      memory_grant_o  ,   //  One-hot grant
-    output  MEM_IN                              mem_o               //  Shared Memory Interface
+    output  MEM_IN                              cache2mem_o         //  Shared Memory Interface
 );
 
 // ====================================================================
@@ -72,16 +73,16 @@ module mshr_memory_switch #(
 
         // Generate acknowledge signal for arbiter to switch priority
         arbiter_ack     =   1'b0;
-        if ((grant_valid == 1'b1) && (mem_i.response != 'd0)) begin
+        if ((grant_valid == 1'b1) && (mem2cache_i.response != 'd0)) begin
             arbiter_ack     =   1'b1;
         end
 
         // Route the granted request to the Memory Interface
         // Output grant signals to the MSHR entries
-        mem_o           =   'b0 ;
+        cache2mem_o     =   'b0 ;
         memory_grant_o  =   'b0 ;
         if (grant_valid) begin
-            mem_o           =   mshr_memory_i[grant_idx]    ;
+            cache2mem_o     =   mshr_memory_i[grant_idx]    ;
             memory_grant_o  =   {{(C_MSHR_ENTRY_NUM-1){1'b0}}, 1'b1} << grant_idx;
         end
     end

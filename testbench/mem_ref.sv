@@ -12,16 +12,14 @@
 `ifndef __MEM_V__
 `define __MEM_V__
 
-// `timescale 1ns/100ps
+`timescale 1ns/100ps
 
-module mem (
+module mem_ref (
 	input         clk,              // Memory clock
 	input  [`XLEN-1:0] proc2mem_addr,    // address for current command
 	//support for memory model with byte level addressing
 	input  [63:0] proc2mem_data,    // address for current command
-`ifndef CACHE_MODE
 	input  MEM_SIZE proc2mem_size, //BYTE, HALF, WORD or DOUBLE
-`endif
 	input  [1:0]   proc2mem_command, // `BUS_NONE `BUS_LOAD or `BUS_STORE
 	
 	output logic  [3:0] mem2proc_response,// 0 = can't accept, other=tag of transaction
@@ -43,7 +41,6 @@ module mem (
 	
 
 // Implement the Memory function
-`ifdef CACHE_MODE
 	wire valid_address = (proc2mem_addr[2:0]==3'b0) &
 	                     (proc2mem_addr<`MEM_SIZE_IN_BYTES);
 
@@ -169,7 +166,6 @@ module mem (
 		mem2proc_data     <= `SD next_mem2proc_data;
 		mem2proc_tag      <= `SD next_mem2proc_tag;
 	end
-`endif //CACHE_MODE
 	// Initialise the entire memory
 	initial begin
 		for(int i=0; i<`MEM_64BIT_LINES; i=i+1) begin

@@ -7,27 +7,27 @@
 /////////////////////////////////////////////////////////////////////////
 
 module cache_mem #(
-    parameter   C_CACHE_SIZE           =   `CACHE_SIZE   ,
-    parameter   C_CACHE_BLOCK_SIZE     =   `CACHE_BLOCK_SIZE,
-    parameter   C_CACHE_SET_ASS        =   `CACHE_SET_ASS,
-    parameter   C_CACHE_OFFSET_WIDTH   =   `CACHE_OFFSET_WIDTH,
-    parameter   C_CACHE_IDX_WIDTH      =   `CACHE_IDX_WIDTH,
-    parameter   C_CACHE_TAG_WIDTH      =   `CACHE_TAG_WIDTH,
-    parameter   C_CACHE_SET_NUM        =   (`CACHE_SIZE / `CACHE_BLOCK_SIZE / `CACHE_SET_ASS),
-    parameter   C_CACHE_WAY_NUM        =   `CACHE_SET_ASS,
-    parameter   C_LRU_ARRAY_WIDTH      =   ((`CACHE_SET_ASS * (`CACHE_SET_ASS - 1)) >> 1)
+    parameter   C_XLEN                  =   `XLEN               ,
+    parameter   C_CACHE_SIZE            =   `CACHE_SIZE         ,
+    parameter   C_CACHE_BLOCK_SIZE      =   `CACHE_BLOCK_SIZE   ,
+    parameter   C_CACHE_SASS            =   `CACHE_SASS         ,
+    parameter   C_CACHE_OFFSET_WIDTH    =   `CACHE_OFFSET_WIDTH ,
+    parameter   C_CACHE_IDX_WIDTH       =   `CACHE_IDX_WIDTH    ,
+    parameter   C_CACHE_TAG_WIDTH       =   `CACHE_TAG_WIDTH
 ) (
     
-    input   logic               clk_i           ,   //  Clock
-    input   logic               rst_i           ,   //  Reset
-    input   CACHE_CTRL_MEM      ctrl_mem_i      ,   //  cache control signal
-    output  CACHE_MEM_CTRL      mem_ctrl_o          //  cache mem signal
+    input   logic               clk_i               ,   //  Clock
+    input   logic               rst_i               ,   //  Reset
+    input   CACHE_CTRL_MEM      cache_ctrl_mem_i    ,   //  cache control signal
+    output  CACHE_MEM_CTRL      cache_mem_ctrl_o        //  cache mem signal
 );
 
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-
+    localparam  C_CACHE_SET_NUM     =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_CACHE_SASS);
+    localparam  C_USE_HISTORY_WIDTH =   ((C_CACHE_SASS * (C_CACHE_SASS - 1)) >> 1);
+    localparam  C_WAY_IDX_WIDTH     =   $clog2(C_CACHE_SASS);
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -35,275 +35,242 @@ module cache_mem #(
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-CACHE_MEM_ARRAY [C_CACHE_SET_NUM-1:0][C_CACHE_SET_ASS-1:0]   cache_array ;      // data array and control array
-CACHE_MEM_ARRAY [C_CACHE_SET_NUM-1:0][C_CACHE_SET_ASS-1:0]   next_cache_array ; // next state data array and control array
+    // Cache memory array
+    CACHE_MEM_ENTRY [C_CACHE_SET_NUM-1:0][C_CACHE_SASS-1:0] cache_array         ;   // data array and control array
+    CACHE_MEM_ENTRY [C_CACHE_SET_NUM-1:0][C_CACHE_SASS-1:0] next_cache_array    ;   // next state data array and control array
 
-logic [C_CACHE_SET_NUM-1:0][C_LRU_ARRAY_WIDTH -1 : 0]        curr_history;      // current LRU matrix
-logic [C_CACHE_SET_NUM-1:0][C_LRU_ARRAY_WIDTH -1 : 0]        next_history;      // updated LRU matrix
+    logic   [C_CACHE_OFFSET_WIDTH-1:0]                      mem_blk_offset      ;
+    logic   [C_CACHE_IDX_WIDTH   -1:0]                      mem_idx             ;
+    logic   [C_CACHE_TAG_WIDTH   -1:0]                      mem_tag             ;
 
-logic [C_CACHE_SET_NUM-1:0][C_CACHE_WAY_NUM -1 : 0]          LRU;               // one-hot LRU signal within a set
-logic [C_CACHE_SET_NUM-1:0][C_CACHE_WAY_NUM -1 : 0]          access;            // access specific way in a set
+    // Least-Recently-Used
+    logic   [C_CACHE_SET_NUM-1:0][C_USE_HISTORY_WIDTH-1:0]  use_history         ;   // Current LRU matrix
+    logic   [C_CACHE_SET_NUM-1:0][C_USE_HISTORY_WIDTH-1:0]  next_use_history    ;   // Next LRU matrix
+    logic   [C_CACHE_SET_NUM-1:0][C_CACHE_SASS-1:0]         next_lru            ;   // Next one-hot LRU signal within a set
+    logic   [C_CACHE_SET_NUM-1:0][C_CACHE_SASS-1:0]         access              ;   // access specific way in a set
 
-logic                                                        full;              // determine the fullness of set
-logic [C_CACHE_SET_ASS-1 : 0]                                miss_empty_idx;    // idx of empty entry in a set
+    // Empty way selector
+    logic   [C_CACHE_SET_NUM-1:0]                           empty_way_valid     ;   // Indicate whether there is a empty way in a set
+    logic   [C_CACHE_SET_NUM-1:0][C_WAY_IDX_WIDTH-1:0]      empty_way_idx       ;   // The way index of one of the empty ways in a set
 // ====================================================================
 // Signal Declarations End
 // ====================================================================
 
 // ====================================================================
-// Check for empty entry in cache_mem
-// ====================================================================
-function automatic logic set_full;
-    input CACHE_MEM_ARRAY [C_CACHE_SET_NUM-1:0][C_CACHE_SET_ASS-1:0]    cache_array;
-    input logic [C_CACHE_IDX_WIDTH-1:0]                                 set_idx;
-    begin 
-        set_full = 1'b1;
-        for (int array_idx = 0; array_idx < C_CACHE_SET_ASS; array_idx++) begin 
-            set_full = cache_array[set_idx][array_idx].valid & set_full;
-        end
-    end 
-endfunction 
-// ====================================================================
-// select the empty entry idx in cache_mem
-// ====================================================================
-function automatic logic [C_CACHE_SET_ASS-1:0] empty_idx;
-    input CACHE_MEM_ARRAY [C_CACHE_SET_NUM-1:0][C_CACHE_SET_ASS-1:0]    cache_array;
-    input logic [C_CACHE_IDX_WIDTH-1:0]                                 set_idx;
-    logic empty = 1'b1;
-    begin 
-        for (int array_idx = 0; array_idx < C_CACHE_SET_ASS; array_idx++) begin 
-            empty = cache_array[set_idx][array_idx].valid & empty;
-            if (empty == 1'b0) begin 
-                empty_idx = array_idx;
-                break;
-            end
-        end
-    end 
-endfunction 
-// ====================================================================
-// LRU update logic
-// ====================================================================
-
-// ====================================================================
 // Module Instantiations Start
 // ====================================================================
+
 // --------------------------------------------------------------------
 // Module name  :   LRU update
 // Description  :   update LRU one-hot signal through a 
 //                  transitional matrix
 // --------------------------------------------------------------------
-genvar i;
-generate
-    for (i = 0; i < C_CACHE_SET_NUM; i++) begin 
-        LRU_update LRU(
-            .curr_history(curr_history[i]),
-            .access(access[i]),
-            .update_array(next_history[i]),
-            .LRU_new(LRU[i])
-        );
-    end
-endgenerate
-
-always_ff @(posedge clk_i) begin  
-    if (rst_i) begin 
-        curr_history <= `SD 'd0;
-    end else begin 
-        curr_history <= `SD next_history;
-    end
-end
+    genvar i;
+    generate
+        for (i = 0; i < C_CACHE_SET_NUM; i++) begin 
+            LRU_update LRU_update_inst(
+                .use_history        (use_history[i]         ),
+                .access             (access[i]              ),
+                .next_use_history   (next_use_history[i]    ),
+                .next_lru           (next_lru[i]            )
+            );
+        end
+    endgenerate
 // --------------------------------------------------------------------
-
 
 // ====================================================================
 // Module Instantiations End
 // ====================================================================
 
 // ====================================================================
+// RTL Logic Start
+// ====================================================================
+
+// --------------------------------------------------------------------
 // Extract address tag/block offset/set_idx
-// ====================================================================
-assign mem_tag          =   ctrl_mem_i.req_addr[`XLEN-1 : C_CACHE_IDX_WIDTH + C_CACHE_OFFSET_WIDTH];
-assign mem_idx          =   ctrl_mem_i.req_addr[C_CACHE_IDX_WIDTH+C_CACHE_OFFSET_WIDTH-1 : C_CACHE_OFFSET_WIDTH];
-assign mem_blk_offset   =   ctrl_mem_i.req_addr[C_CACHE_OFFSET_WIDTH-1 : 0];
+// --------------------------------------------------------------------
+    assign  mem_tag         =   cache_ctrl_mem_i.req_addr[(C_XLEN-1):(C_CACHE_IDX_WIDTH+C_CACHE_OFFSET_WIDTH)];
+    assign  mem_idx         =   cache_ctrl_mem_i.req_addr[(C_CACHE_IDX_WIDTH+C_CACHE_OFFSET_WIDTH-1):C_CACHE_OFFSET_WIDTH];
+    assign  mem_blk_offset  =   cache_ctrl_mem_i.req_addr[C_CACHE_OFFSET_WIDTH-1:0];
 
-// ====================================================================
+// --------------------------------------------------------------------
+// Find an empty entry in set
+// --------------------------------------------------------------------
+    always_comb begin
+        empty_way_valid =   1'b0    ;
+        empty_way_idx   =   'd0     ;
+        for (int unsigned set_idx = 0; set_idx < C_CACHE_SET_NUM; set_idx++) begin
+            for (int unsigned way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin
+                if (cache_array[set_idx][way_idx].valid == 1'b0) begin
+                    empty_way_valid[set_idx]    =   1'b1    ;
+                    empty_way_idx[set_idx]      =   way_idx ;
+                end
+            end
+        end
+    end
+
+// --------------------------------------------------------------------
 // Request Interface logic
-// ====================================================================
-always_comb begin 
-    next_cache_array    =   cache_array;
-    mem_ctrl_o.req_hit  =   1'b0;
-    access              =   'b0;
-    case(ctrl_mem_i.req_cmd)
-        REQ_NONE: begin     // if request nothing, the request interface idle.
-            mem_ctrl_o = 'd0;
-        end
-
-        REQ_LOAD: begin     // if request a load, check for hit and update LRU bits, request interface output data in the data array.
-            for (int way_idx = 0; way_idx < C_CACHE_SET_ASS; way_idx++) begin 
-                if (cache_array[mem_idx][way_idx].tag == mem_tag) begin 
-                    mem_ctrl_o.req_hit      = 1'b1;
-                    mem_ctrl_o.req_data_out = cache_array[mem_idx][way_idx].data;
-                    access[mem_idx][way_idx]         = 1'b1;
-
-                    for (int lru_idx = 0; lru_idx < C_CACHE_SET_ASS; lru_idx++) begin 
-                        if (LRU[mem_idx][lru_idx] == 1'b1) begin 
-                            next_cache_array[mem_idx][lru_idx].lru = 1'b1;
-                        end 
-                    end   
-                end
-            end
-        end
-
-        REQ_STORE: begin     // if request a store, check for hit and update LRU/dirty bits, request interface output data in the data array.
-            for (int way_idx = 0; way_idx < C_CACHE_SET_ASS; way_idx++) begin 
-                if (cache_array[mem_idx][way_idx].tag == mem_tag) begin 
-                    mem_ctrl_o.req_hit          = 1'b1;
-                    mem_ctrl_o.req_data_out     = cache_array[mem_idx][way_idx].data;
-                    next_cache_array[mem_idx][way_idx].dirty = 1'b1;
-                    access[mem_idx][way_idx]             = 1'b1;
-
-                    for (int lru_idx = 0; lru_idx < C_CACHE_SET_ASS; lru_idx++) begin 
-                        if (LRU[mem_idx][lru_idx] == 1'b1) begin 
-                            next_cache_array[mem_idx][lru_idx].lru = 1'b1;
-                        end 
-                    end   
-
-                end
-            end
-        end
-
-        REQ_MISS: begin     // if request a miss, check for hit and update LRU/dirty bits, request interface output data in the data array.
-            for (int way_idx = 0; way_idx < C_CACHE_SET_ASS; way_idx++) begin 
-                if (cache_array[mem_idx][way_idx].tag == mem_tag) begin 
-                    mem_ctrl_o.req_hit      = 1'b1;
-                    mem_ctrl_o.req_data_out = cache_array[mem_idx][way_idx].data;
-                    next_cache_array[mem_idx][way_idx].dirty = 1'b1;
-                    access[mem_idx][way_idx]         = 1'b1;
-
-                    for (int lru_idx = 0; lru_idx < C_CACHE_SET_ASS; lru_idx++) begin 
-                        if (LRU[mem_idx][lru_idx] == 1'b1) begin 
-                            next_cache_array[mem_idx][lru_idx].lru = 1'b1;
-                        end 
-                    end
-                end 
-            end
-            full = set_full(next_cache_array, mem_idx); // if there is a miss, check the full status of array, then load the data and tag into the data array.
-            miss_empty_idx = empty_idx(next_cache_array, mem_idx);  
-            if (!full) begin
-                next_cache_array[mem_idx][miss_empty_idx].valid = 1'b1;
-                next_cache_array[mem_idx][miss_empty_idx].data  = ctrl_mem_i.req_data_in;
-                next_cache_array[mem_idx][miss_empty_idx].tag   = mem_tag;
-                next_cache_array[mem_idx][miss_empty_idx].dirty = 1'b1;
-                access[mem_idx][miss_empty_idx] = 1'b1;
-                for (int lru_idx = 0; lru_idx < C_CACHE_SET_ASS; lru_idx++) begin 
-                    if (LRU[mem_idx][lru_idx] == 1'b1) begin 
-                        next_cache_array[mem_idx][lru_idx].lru = 1'b1;
-                    end 
-                end
-            end else begin   // if the entries are full, update the eviction status to controler. 
-                for (int way_idx = 0; way_idx < C_CACHE_SET_ASS; way_idx++) begin 
-                    if (cache_array[mem_idx][way_idx].lru == 1'b1) begin
-                        mem_ctrl_o.evict_dirty  = 1'b1;
-                        mem_ctrl_o.evict_data   = cache_array[mem_idx][way_idx].data;
-                        mem_ctrl_o.evict_addr   = {next_cache_array[mem_idx][way_idx].tag, mem_idx, mem_blk_offset};
+// --------------------------------------------------------------------
+    always_comb begin 
+        next_cache_array    =   cache_array ;
+        cache_mem_ctrl_o    =   'd0         ;
+        access              =   'b0         ;
+        case(cache_ctrl_mem_i.req_cmd)
+            // IF   cach_ctrl requests a load
+            REQ_LOAD: begin
+                // IF   the tag of the cache block in mapped set matches the requested tag
+                // ->   a load hit is confirmed, output the block data and update LRU bits
+                for (int way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin 
+                    if (cache_array[mem_idx][way_idx].valid ==  1'b1 
+                    && cache_array[mem_idx][way_idx].tag == mem_tag) begin 
+                        cache_mem_ctrl_o.req_hit        =   1'b1                                ;
+                        cache_mem_ctrl_o.req_data_out   =   cache_array[mem_idx][way_idx].data  ;
+                        access[mem_idx][way_idx]        =   1'b1                                ; 
                     end
                 end
             end
+            // IF   cach_ctrl request a store, check for hit and update LRU/dirty bits, request interface output data in the data array.
+            REQ_STORE: begin
+                // IF   the tag of the cache block in mapped set matches the requested tag
+                // ->   a store hit is confirmed, output the current block data, update LRU bits, 
+                //      write the new data and asserts the dirty bit.
+                for (int way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin 
+                    if (cache_array[mem_idx][way_idx].valid ==  1'b1 
+                    && cache_array[mem_idx][way_idx].tag == mem_tag) begin 
+                        cache_mem_ctrl_o.req_hit                    =   1'b1                                ;
+                        cache_mem_ctrl_o.req_data_out               =   cache_array[mem_idx][way_idx].data  ;
+                        next_cache_array[mem_idx][way_idx].data     =   cache_ctrl_mem_i.req_data_in        ;
+                        next_cache_array[mem_idx][way_idx].dirty    =   1'b1                                ;
+                        access[mem_idx][way_idx]                    =   1'b1                                ;
+                    end
+                end
+            end
+            // IF   cach_ctrl requests a miss handling for load miss
+            REQ_LOAD_MISS: begin
+                // IF   the tag of the cache block in mapped set matches the requested tag
+                //      (meaning there is a previous miss handling that place the block in cache)
+                // ->   output the data in the hit block, update the LRU bits
+                for (int way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin 
+                    if (cache_array[mem_idx][way_idx].valid ==  1'b1 
+                    && cache_array[mem_idx][way_idx].tag == mem_tag) begin 
+                        cache_mem_ctrl_o.req_hit        =   1'b1                                ;
+                        cache_mem_ctrl_o.req_data_out   =   cache_array[mem_idx][way_idx].data  ;
+                        access[mem_idx][way_idx]        =   1'b1                                ;
+                    end
+                end
+
+                // IF   the block is still a miss
+                //      Meaning there is no previous miss handling to this address
+                if (cache_mem_ctrl_o.req_hit == 1'b0) begin
+                    // IF   there is a empty way in the mapped set
+                    // ->   Write the data into the way
+                    if (empty_way_valid[mem_idx] == 1'b1) begin
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].valid =   1'b1;
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].data  =   cache_ctrl_mem_i.req_data_in;
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].tag   =   mem_tag;
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].dirty =   1'b1;
+                        access[mem_idx][empty_way_idx[mem_idx]]                 =   1'b1;
+                    // ELSE there is no empty way in the mapped set
+                    end else begin
+                        for (int way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin 
+                            // Pick the Least-Recently-Used way to evict
+                            if (cache_array[mem_idx][way_idx].lru == 1'b1) begin
+                                // Output its current data to the cache_ctrl
+                                cache_mem_ctrl_o.evict_dirty                =   1'b1;
+                                cache_mem_ctrl_o.evict_data                 =   cache_array[mem_idx][way_idx].data;
+                                cache_mem_ctrl_o.evict_addr                 =   {cache_array[mem_idx][way_idx].tag, mem_idx, {C_CACHE_OFFSET_WIDTH{1'b0}}};
+                                // Write the new data from cache_ctrl into the way
+                                next_cache_array[mem_idx][way_idx].valid    =   1'b1;
+                                next_cache_array[mem_idx][way_idx].data     =   cache_ctrl_mem_i.req_data_in;
+                                next_cache_array[mem_idx][way_idx].tag      =   mem_tag;
+                                next_cache_array[mem_idx][way_idx].dirty    =   1'b0;
+                            end
+                        end
+                    end
+                end
+            end
+            // IF   cach_ctrl requests a miss handling for store miss
+            REQ_STORE_MISS: begin     
+                // IF   the tag of the cache block in mapped set matches the requested tag
+                //      (meaning there is a previous miss handling that place the block in cache)
+                // ->   output the data in the hit block, update the LRU bits
+                for (int way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin 
+                    if (cache_array[mem_idx][way_idx].valid ==  1'b1 
+                    && cache_array[mem_idx][way_idx].tag == mem_tag) begin  
+                        cache_mem_ctrl_o.req_hit                =   1'b1                                ;
+                        cache_mem_ctrl_o.req_data_out           =   cache_array[mem_idx][way_idx].data  ;
+                        next_cache_array[mem_idx][way_idx].data =   cache_ctrl_mem_i.req_data_in        ;
+                        access[mem_idx][way_idx]                =   1'b1                                ;
+                    end
+                end
+
+                // IF   the block is still a miss
+                //      Meaning there is no previous miss handling to this address
+                if (cache_mem_ctrl_o.req_hit == 1'b0) begin
+                    // IF   there is a empty way in the mapped set
+                    // ->   Write the data into the way
+                    if (empty_way_valid[mem_idx] == 1'b1) begin
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].valid =   1'b1;
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].data  =   cache_ctrl_mem_i.req_data_in;
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].tag   =   mem_tag;
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].dirty =   1'b1;
+                        access[mem_idx][empty_way_idx[mem_idx]]                 =   1'b1;
+                    // ELSE there is no empty way in the mapped set
+                    end else begin
+                        for (int way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin 
+                            // Pick the Least-Recently-Used way to evict
+                            if (cache_array[mem_idx][way_idx].lru == 1'b1) begin
+                                // Output its current data to the cache_ctrl
+                                cache_mem_ctrl_o.evict_dirty                =   1'b1;
+                                cache_mem_ctrl_o.evict_data                 =   cache_array[mem_idx][way_idx].data;
+                                cache_mem_ctrl_o.evict_addr                 =   {cache_array[mem_idx][way_idx].tag, mem_idx, {C_CACHE_OFFSET_WIDTH{1'b0}}};
+                                // Write the new data from cache_ctrl into the way
+                                next_cache_array[mem_idx][way_idx].valid    =   1'b1;
+                                next_cache_array[mem_idx][way_idx].data     =   cache_ctrl_mem_i.req_data_in;
+                                next_cache_array[mem_idx][way_idx].tag      =   mem_tag;
+                                next_cache_array[mem_idx][way_idx].dirty    =   1'b0;
+                            end
+                        end
+                    end
+                end
+            end
+        endcase
+
+        // Next LRU bits
+        for (int unsigned set_idx = 0; set_idx < C_CACHE_SET_NUM; set_idx++) begin
+            for (int unsigned way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin
+                next_cache_array[set_idx][way_idx].lru  =   next_lru[set_idx][way_idx];
+            end
         end
+    end
 
-    endcase
-
-end
-
-
-always_ff @(posedge clk_i) begin    // initialize the data array and control array.  
-    if (rst_i) begin 
-        cache_array <= `SD 'b0;
-    end else begin 
-        cache_array <= `SD next_cache_array;
-    end 
-end
-// ====================================================================
-// RTL Logic Start
-// ====================================================================
-
-// ====================================================================
-// RTL Logic Start
-// ====================================================================
+    // Update the cache memory
+    always_ff @(posedge clk_i) begin    // initialize the data array and control array.  
+        if (rst_i) begin 
+            cache_array <= `SD 'b0;
+        end else begin 
+            cache_array <= `SD next_cache_array;
+        end 
+    end
 
 // --------------------------------------------------------------------
-// Logic Divider
+// Use history updates
 // --------------------------------------------------------------------
+    always_ff @(posedge clk_i) begin
+        // Reset
+        // The timelapse from the most recent use
+        // 0 < 1 < ... < (C_CACHE_SASS-1) (LRU)
+        if (rst_i) begin 
+            use_history <=  `SD 'b0;
+        // Update use history
+        end else begin 
+            use_history <=  `SD next_use_history;
+        end
+    end
 
 // ====================================================================
 // RTL Logic End
 // ====================================================================
 
-endmodule
-
-// ====================================================================
-//  LRU update logic
-// ====================================================================
-
-module LRU_update #(
-    parameter C_CACHE_WAY_NUM           =   `CACHE_SET_ASS,
-    parameter C_LRU_ARRAY_WIDTH = ((`CACHE_SET_ASS * (`CACHE_SET_ASS - 1)) >> 1)
-) (
-    input logic [C_LRU_ARRAY_WIDTH -1 :0] curr_history,
-    input logic [C_CACHE_WAY_NUM - 1 : 0] access,
-    output logic [C_LRU_ARRAY_WIDTH -1 :0] update_array,
-    // output logic [C_CACHE_WAY_NUM - 1 : 0] LRU_curr;
-    output logic [C_CACHE_WAY_NUM - 1 : 0] LRU_new
-);
-    logic [C_CACHE_WAY_NUM-1:0]         expand      [0:C_CACHE_WAY_NUM-1];
-    logic [C_CACHE_WAY_NUM - 1 : 0]     LRU_curr;
-    always_comb begin : LRU_update
-        logic offset = 0;
-        integer i,j;
-
-        for (int i = 0; i < C_CACHE_WAY_NUM; i = i + 1) begin
-            expand[i][i] = 1'b1;
-
-            for (j = i + 1; j < C_CACHE_WAY_NUM; j = j + 1) begin
-                expand[i][j] = curr_history[offset+j-i-1];
-            end
-            for (j = 0; j < i; j = j + 1) begin
-                expand[i][j] = !expand[j][i];
-            end
-
-            offset = offset + C_CACHE_WAY_NUM - i - 1;
-        end 
-
-
-        for (i = 0; i < C_CACHE_WAY_NUM; i = i + 1) begin
-            LRU_curr[i] = &expand[i];
-        end
-
-        for (i = 0; i < C_CACHE_WAY_NUM; i = i + 1) begin
-            if (access[i]) begin
-                for (j = 0; j < C_CACHE_WAY_NUM; j = j + 1) begin
-                    if (i != j) begin
-                        expand[i][j] = 1'b0;
-                    end
-                end
-
-                for (j = 0; j < C_CACHE_WAY_NUM; j = j + 1) begin
-                    if (i != j) begin
-                        expand[j][i] = 1'b1;
-                    end
-                end
-            end
-        end
-        offset = 0;
-        for (i = 0; i < C_CACHE_WAY_NUM; i = i + 1) begin
-            for (j = i + 1; j < C_CACHE_WAY_NUM; j = j + 1) begin
-                update_array[offset+j-i-1] = expand[i][j];
-            end
-            offset = offset + C_CACHE_WAY_NUM - i - 1;
-        end
-
-        for (i = 0; i < C_CACHE_WAY_NUM; i = i + 1) begin
-            LRU_new[i] = &expand[i];
-        end
-    end
-    
 endmodule

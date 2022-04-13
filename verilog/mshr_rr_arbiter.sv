@@ -62,16 +62,17 @@ module mshr_rr_arbiter #(
     always_comb begin
         // Rank the requests according to priority
         // LSB of req_rank is of top priority
-        if (top_idx > 0) begin
-            req_rank    =   {req_i[(top_idx-1):0], req_i[(C_REQ_NUM-1):top_idx]};
-        end else begin
-            req_rank    =   req_i;
-        end
+        // if (top_idx > 0) begin
+        //     req_rank    =   {req_i[(top_idx-1):0], req_i[(C_REQ_NUM-1):top_idx]};
+        // end else begin
+        //     req_rank    =   req_i;
+        // end
+        req_rank    =   (req_i >> top_idx) | (req_i << (C_REQ_NUM-top_idx));
 
         // The grant index with respect to req_rank
         grant_rank  =   0;
         for (int unsigned req_idx = C_REQ_NUM; req_idx > 0; req_idx--) begin
-            if (req_rank[i]) begin
+            if (req_rank[req_idx-1]) begin
                 grant_rank  =   (req_idx - 1);
             end
         end

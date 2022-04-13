@@ -39,7 +39,7 @@ module mshr_dispatch_selector #(
         dp_idx          =   'd0;
         dp_idx_valid    =   1'b0;
         for (int unsigned entry_idx = C_MSHR_ENTRY_NUM - 1; entry_idx > 0; entry_idx--) begin
-            if (mshr_array[entry_idx].cmd == BUS_NONE) begin
+            if (mshr_array_i[entry_idx].cmd == BUS_NONE) begin
                 dp_idx          =   entry_idx;
                 dp_idx_valid    =   1'b1;
             end
