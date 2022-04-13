@@ -43,7 +43,7 @@ module mem_switch #(
 // Module name  :   mem_fixed_priority_arbiter
 // Description  :   Fixed Priority abitration on memory interface
 // --------------------------------------------------------------------
-    mem_fixed_priority_arbiter (
+    mem_fixed_priority_arbiter mem_fixed_priority_arbiter_inst (
         .clk_i      (clk_i          ),
         .rst_i      (rst_i          ),
         .req_i      (arbiter_req    ),
