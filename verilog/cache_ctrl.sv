@@ -2,15 +2,13 @@
 //                                                                     //
 //  Modulename  :  cache_ctrl.sv                                       //
 //                                                                     //
-//  Description :  cache_ctrl                                          // 
+//  Description :  Non-blocking cache controller                       // 
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
 module cache_ctrl #(
     parameter   C_XLEN              =   `XLEN               ,
-    parameter   C_CACHE_SIZE        =   `CACHE_SIZE         ,
     parameter   C_CACHE_BLOCK_SIZE  =   `CACHE_BLOCK_SIZE   ,
-    parameter   C_CACHE_SASS        =   `CACHE_SASS         ,
     parameter   C_MSHR_ENTRY_NUM    =   `MSHR_ENTRY_NUM     
 ) (
     // For Testing
@@ -33,9 +31,6 @@ module cache_ctrl #(
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_CACHE_OFFSET_WIDTH    =   $clog2(C_CACHE_BLOCK_SIZE);
-    localparam  C_CACHE_IDX_WIDTH       =   $clog2(C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_CACHE_SASS);
-    localparam  C_CACHE_TAG_WIDTH       =   C_XLEN - C_CACHE_IDX_WIDTH - C_CACHE_OFFSET_WIDTH;
     localparam  C_MSHR_IDX_WIDTH        =   $clog2(C_MSHR_ENTRY_NUM);
 // ====================================================================
 // Local Parameters Declarations End

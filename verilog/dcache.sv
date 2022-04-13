@@ -1,16 +1,16 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//  Modulename  :  cache.sv                                            //
+//  Modulename  :  dcache.sv                                           //
 //                                                                     //
-//  Description :  Non-blocking N-way set associative cache.           // 
+//  Description :  Non-blocking N-way set associative data cache.      // 
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module cache #(
+module dcache #(
     parameter   C_CACHE_SIZE            =   `CACHE_SIZE         ,
     parameter   C_CACHE_BLOCK_SIZE      =   `CACHE_BLOCK_SIZE   ,
-    parameter   C_CACHE_SASS            =   `CACHE_SASS         ,
-    parameter   C_CACHE_SET_NUM         =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_CACHE_SASS),
+    parameter   C_CACHE_SASS            =   `DCACHE_SASS        ,
+    parameter   C_CACHE_SET_NUM         =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_DCACHE_SASS),
     parameter   C_MSHR_ENTRY_NUM        =   `MSHR_ENTRY_NUM
 ) (
     // For Testing
@@ -62,7 +62,7 @@ module cache #(
 // Module name  :   cache_mem
 // Description  :   Cache memory
 // --------------------------------------------------------------------
-    cache_mem cache_mem_inst (
+    dcache_mem dcache_mem_inst (
         .cache_array_mon_o  (cache_array_mon_o  ),
         .clk_i              (clk_i              ),
         .rst_i              (rst_i              ),

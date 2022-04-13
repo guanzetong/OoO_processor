@@ -79,11 +79,20 @@ typedef union packed {
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
 
+// General Cache
 `define CACHE_SIZE          256     // The capacity of cache in bytes.
 `define CACHE_BLOCK_SIZE    8       // The number of bytes in a block
 `define CACHE_SASS          4       // Set associativity.
 `define CACHE_SET_NUM       (`CACHE_SIZE / `CACHE_BLOCK_SIZE / `CACHE_SASS)
 `define MSHR_ENTRY_NUM      16      // The number of entries in the MSHR.
+
+// ICache
+`define ICACHE_SASS         2       // Set associativity.
+`define ICACHE_SET_NUM      (`CACHE_SIZE / `CACHE_BLOCK_SIZE / `ICACHE_SASS)
+
+// DCache
+`define DCACHE_SASS         4       // Set associativity.
+`define DCACHE_SET_NUM      (`CACHE_SIZE / `CACHE_BLOCK_SIZE / `DCACHE_SASS)
 
 //////////////////////////////////////////////
 // 
@@ -109,10 +118,19 @@ typedef union packed {
 `define LOAD_IDX_WIDTH      $clog2(`LOAD_Q_SIZE )
 `define STORE_IDX_WIDTH     $clog2(`STORE_Q_SIZE)
 
+// General Cache
 `define CACHE_OFFSET_WIDTH  $clog2(`CACHE_BLOCK_SIZE)
 `define CACHE_IDX_WIDTH     $clog2(`CACHE_SET_NUM)
 `define CACHE_TAG_WIDTH     (`XLEN - `CACHE_IDX_WIDTH - `CACHE_OFFSET_WIDTH)
 `define MSHR_IDX_WIDTH      $clog2(`MSHR_ENTRY_NUM)
+
+// ICache
+`define ICACHE_IDX_WIDTH    $clog2(`ICACHE_SET_NUM)
+`define ICACHE_TAG_WIDTH    (`XLEN - `ICACHE_IDX_WIDTH - `CACHE_OFFSET_WIDTH)
+
+// DCache
+`define DCACHE_IDX_WIDTH     $clog2(`DCACHE_SET_NUM)
+`define DCACHE_TAG_WIDTH     (`XLEN - `DCACHE_IDX_WIDTH - `CACHE_OFFSET_WIDTH)
 
 //////////////////////////////////////////////
 // Exception codes

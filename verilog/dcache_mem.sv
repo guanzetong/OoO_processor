@@ -1,16 +1,16 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//  Modulename  :  cache_mem.sv                                        //
+//  Modulename  :  dcache_mem.sv                                       //
 //                                                                     //
 //  Description :  cache memory array manipulation                     // 
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module cache_mem #(
+module dcache_mem #(
     parameter   C_XLEN                  =   `XLEN                       ,
     parameter   C_CACHE_SIZE            =   `CACHE_SIZE                 ,
     parameter   C_CACHE_BLOCK_SIZE      =   `CACHE_BLOCK_SIZE           ,
-    parameter   C_CACHE_SASS            =   `CACHE_SASS                 ,
+    parameter   C_CACHE_SASS            =   `DCACHE_SASS                ,
     parameter   C_CACHE_OFFSET_WIDTH    =   $clog2(C_CACHE_BLOCK_SIZE)  ,
     parameter   C_CACHE_SET_NUM         =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_CACHE_SASS),
     parameter   C_CACHE_IDX_WIDTH       =   $clog2(C_CACHE_SET_NUM)     ,
@@ -70,7 +70,7 @@ module cache_mem #(
     genvar i;
     generate
         for (i = 0; i < C_CACHE_SET_NUM; i++) begin 
-            LRU_update LRU_update_inst(
+            dcache_LRU_update LRU_update_inst(
                 .use_history        (use_history[i]         ),
                 .access             (access[i]              ),
                 .next_use_history   (next_use_history[i]    ),
