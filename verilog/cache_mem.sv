@@ -13,9 +13,12 @@ module cache_mem #(
     parameter   C_CACHE_SASS            =   `CACHE_SASS         ,
     parameter   C_CACHE_OFFSET_WIDTH    =   `CACHE_OFFSET_WIDTH ,
     parameter   C_CACHE_IDX_WIDTH       =   `CACHE_IDX_WIDTH    ,
-    parameter   C_CACHE_TAG_WIDTH       =   `CACHE_TAG_WIDTH
+    parameter   C_CACHE_TAG_WIDTH       =   `CACHE_TAG_WIDTH    ,
+    parameter   C_CACHE_SET_NUM         =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_CACHE_SASS)
 ) (
-    
+    // For Testing
+    output  CACHE_MEM_ENTRY [C_CACHE_SET_NUM-1:0][C_CACHE_SASS-1:0] cache_array_mon_o   ,
+
     input   logic               clk_i               ,   //  Clock
     input   logic               rst_i               ,   //  Reset
     input   CACHE_CTRL_MEM      cache_ctrl_mem_i    ,   //  cache control signal
@@ -25,7 +28,6 @@ module cache_mem #(
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_CACHE_SET_NUM     =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_CACHE_SASS);
     localparam  C_USE_HISTORY_WIDTH =   ((C_CACHE_SASS * (C_CACHE_SASS - 1)) >> 1);
     localparam  C_WAY_IDX_WIDTH     =   $clog2(C_CACHE_SASS);
 // ====================================================================
@@ -268,6 +270,8 @@ module cache_mem #(
             use_history <=  `SD next_use_history;
         end
     end
+
+    assign  cache_array_mon_o   =   cache_array ;
 
 // ====================================================================
 // RTL Logic End

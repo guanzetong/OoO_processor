@@ -40,6 +40,7 @@ module evict_hit_detector #(
                 // AND  current entry is the least older miss to this address
                 // ->   MSHR hit is detected
                 if ((mshr_array_i[entry_idx].cmd != BUS_NONE)
+                &&  (mshr_array_i[entry_idx].evict_dirty == 1'b1)
                 &&  (mshr_array_i[entry_idx].evict_addr[C_XLEN-1:C_CACHE_OFFSET_WIDTH] 
                 == proc2cache_i.addr[C_XLEN-1:C_CACHE_OFFSET_WIDTH])) begin
                     evict_hit_o      =   1'b1;

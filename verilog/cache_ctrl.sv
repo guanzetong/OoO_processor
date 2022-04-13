@@ -13,6 +13,9 @@ module cache_ctrl #(
     parameter   C_CACHE_SASS        =   `CACHE_SASS         ,
     parameter   C_MSHR_ENTRY_NUM    =   `MSHR_ENTRY_NUM     
 ) (
+    // For Testing
+    output  MSHR_ENTRY  [C_MSHR_ENTRY_NUM-1:0]  mshr_array_mon_o    ,
+
     input   logic               clk_i               ,   //  Clock
     input   logic               rst_i               ,   //  Reset
     // Processor Interface
@@ -204,6 +207,8 @@ module cache_ctrl #(
         cp_data[0]          =   'b0 ;
         cp_flag[0]          =   1'b0;
     end
+
+    assign  mshr_array_mon_o    =   mshr_array  ;
 
 // ====================================================================
 // RTL Logic End

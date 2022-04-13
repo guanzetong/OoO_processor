@@ -87,11 +87,21 @@ export PIPEFILES
 # export PIPELINE_NAME = binary_encoder
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
-export PIPELINE_NAME = pipeline_dp
+export PIPELINE_NAME = cache
 
+# PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
+# SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
-PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
-SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
+CACHEFILES	= verilog/cache_mem.sv verilog/cache_ctrl.sv verilog/cache.sv
+CACHEFILES	+= verilog/LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
+CACHEFILES	+= verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
+CACHEFILES	+= verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
+CACHE_NAME	=	cache
+export CACHEFILES
+export CACHE_NAME
+CACHE     = $(SYNTH_DIR)/$(CACHE_NAME).vg 
+SYNFILES  = $(CACHE) $(SYNTH_DIR)/$(CACHE)_svsim.sv
+
 
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
@@ -151,6 +161,11 @@ assembly: assemble disassemble hex
 $(PIPELINE): $(SIMFILES) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
 	cd $(SYNTH_DIR) && dc_shell-t -f ./$(PIPELINE_NAME).tcl | tee $(PIPELINE_NAME)_synth.out
 	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(PIPELINE)
+
+$(CACHE): $(SIMFILES) $(SYNTH_DIR)/$(CACHE_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(CACHE_NAME).tcl | tee $(CACHE_NAME)_synth.out
+	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(CACHE)
+
 
 syn:	syn_simv 
 	./syn_simv | tee syn_program.out

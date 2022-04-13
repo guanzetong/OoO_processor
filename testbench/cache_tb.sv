@@ -1,3 +1,42 @@
+function automatic string cmd_str_conv(input BUS_COMMAND cmd);
+    begin
+        case (cmd)
+            BUS_NONE    :   cmd_str_conv    =   "BUS_NONE " ;
+            BUS_LOAD    :   cmd_str_conv    =   "BUS_LOAD " ;
+            BUS_STORE   :   cmd_str_conv    =   "BUS_STORE" ;
+            default     :   cmd_str_conv    =   "ERROR    " ;
+        endcase
+    end
+endfunction
+
+function automatic string size_str_conv(input MEM_SIZE size);
+    begin
+        case (size)
+            BYTE    :   size_str_conv   =   "BYTE  "    ;
+            HALF    :   size_str_conv   =   "HALF  "    ;
+            WORD    :   size_str_conv   =   "WORD  "    ;
+            DOUBLE  :   size_str_conv   =   "DOUBLE"    ;
+            default :   size_str_conv   =   "ERROR "    ;
+        endcase
+    end
+endfunction
+
+function automatic string mshr_state_str_conv(input MSHR_STATE state);
+    begin
+        case (state)
+            ST_IDLE         :   mshr_state_str_conv =   "ST_IDLE       ";
+            ST_WAIT_DEPEND  :   mshr_state_str_conv =   "ST_WAIT_DEPEND";
+            ST_WAIT_EVICT   :   mshr_state_str_conv =   "ST_WAIT_EVICT ";
+            ST_RD_MEM       :   mshr_state_str_conv =   "ST_RD_MEM     ";
+            ST_WAIT_MEM     :   mshr_state_str_conv =   "ST_WAIT_MEM   ";
+            ST_UPDATE       :   mshr_state_str_conv =   "ST_UPDATE     ";
+            ST_OUTPUT       :   mshr_state_str_conv =   "ST_OUTPUT     ";
+            ST_EVICT        :   mshr_state_str_conv =   "ST_EVICT      ";
+            default         :   mshr_state_str_conv =   "ERROR         ";
+        endcase
+    end
+endfunction
+
 // ====================================================================
 // Transaction Object Start
 // ====================================================================
@@ -9,50 +48,55 @@ class gen_item; // GEN -> DRV
     string                          size_str    ;
     string                          cmd_str     ;
 
-    constraint addr_range {addr < 'd64;}
+    constraint addr_range {addr < `MEM_SIZE_IN_BYTES;}
+    // constraint addr_range {addr < 64;}
 
     function void print (string msg_tag="");
-        case (cmd)
-            BUS_NONE    :   cmd_str =   "BUS_NONE"  ;
-            BUS_LOAD    :   cmd_str =   "BUS_LOAD"  ;
-            BUS_STORE   :   cmd_str =   "BUS_STORE" ;
-            default     :   cmd_str =   "BUS_NONE"  ;
-        endcase
-        case (size)
-            BYTE    :   size_str    =   "BYTE"      ;
-            HALF    :   size_str    =   "HALF"      ;
-            WORD    :   size_str    =   "WORD"      ;
-            DOUBLE  :   size_str    =   "DOUBLE"    ;
-            default :   size_str    =   "BYTE"      ;
-        endcase
-
-        $display("T=%0t %s Generator cmd=%s, size=%s, addr=%0d, data=%0h",
+        cmd_str     =   cmd_str_conv(cmd);
+        size_str    =   size_str_conv(size);
+        $display("T=%0t %s Generator cmd=%s, size=%s, addr=%8h, data=%16h",
                 $time, msg_tag, cmd_str, size_str, addr, data);
     endfunction // print
 endclass // gen_item
 
 class mon_item; // MON -> SCB
-    MEM_IN  proc2cache  ;
-    MEM_OUT cache2proc  ;
+    MEM_IN  mem_in  ;
+    MEM_OUT mem_out  ;
+    MEM_IN  cache2mem   ;
+    MEM_OUT mem2cache   ;
     string  feature     ;
 
     function void print (string msg_tag="");
+        string  size_str    ;
+        size_str    =   size_str_conv(mem_in.size);
         case (feature)
-            "OUTPUT": begin
-                $display("T=%0t %s Memory Data Output, data=%0h, tag=%0d",
-                $time, msg_tag, cache2proc.data, cache2proc.tag);
+            "CACHE_OUTPUT": begin
+                $display("T=%0t %s Cache Launch Data Output to Processor, data=%16h, tag=%0d",
+                $time, msg_tag, mem_out.data, mem_out.tag);
             end
-            "LOAD": begin
-                $display("T=%0t %s Memory Load Request, addr=%0d, size=%0d, response=%0d",
-                $time, msg_tag, proc2cache.addr, proc2cache.size, cache2proc.response);
+            "PROC_LOAD": begin
+                $display("T=%0t %s Processor Launch Load Request to Cache, addr=%8h, size=%s, response=%0d",
+                $time, msg_tag, mem_in.addr, size_str, mem_out.response);
             end
-            "STORE": begin
-                $display("T=%0t %s Memory Store Request, addr=%0d, size=%0d, data=%0h, response=%0d",
-                $time, msg_tag, proc2cache.addr, proc2cache.size, proc2cache.data, cache2proc.response);
+            "PROC_STORE": begin
+                $display("T=%0t %s Processor Launch Store Request to Cache, addr=%8h, size=%s, data=%16h, response=%0d",
+                $time, msg_tag, mem_in.addr, size_str, mem_in.data, mem_out.response);
+            end
+            "CACHE_LOAD": begin
+                $display("T=%0t %s Cache Launch Load Request to Memory, addr=%8h, size=%s, response=%0d",
+                $time, msg_tag, mem_in.addr, size_str, mem_out.response);
+            end
+            "CACHE_STORE": begin
+                $display("T=%0t %s Cache Launch Store Request to Memory, addr=%8h, size=%s, data=%16h, response=%0d",
+                $time, msg_tag, mem_in.addr, size_str, mem_in.data, mem_out.response);
+            end
+            "MEM_OUTPUT": begin
+                $display("T=%0t %s Memory Launch Data Output to Cache, data=%16h, tag=%0d",
+                $time, msg_tag, mem_out.data, mem_out.tag);
             end
             "ERROR": begin
-                $display("T=%0t %s ERROR!!, addr=%0d, size=%0d, data=%0h, response=%0d",
-                $time, msg_tag, proc2cache.addr, proc2cache.size, proc2cache.data, cache2proc.response);
+                $display("T=%0t %s ERROR!!, addr=%8h, size=%s, data=%16h, response=%0d",
+                $time, msg_tag, mem_in.addr, size_str, mem_in.data, mem_out.response);
             end
         endcase
     endfunction
@@ -69,6 +113,8 @@ class driver;
     virtual cache_if    vif             ;
     event               drv_done        ;
     mailbox             drv_mbx         ;
+    string              cmd_str         ;
+    string              size_str        ;
 
     task run();
         $display("T=%0t [Driver] starting ...", $time);
@@ -108,8 +154,10 @@ class driver;
                     end
                 endcase
             end
-            $display("T=%0t [Driver] Actrual drive: cmd=%0d, addr=%0d, data=%0h", 
-            $time, vif.proc2cache_i.command, vif.proc2cache_i.addr, vif.proc2cache_i.data);
+            cmd_str     =   cmd_str_conv(vif.proc2cache_i.command);
+            size_str    =   size_str_conv(vif.proc2cache_i.size);
+            $display("T=%0t [Driver] Actual drive: cmd=%s, size=%s, addr=%8h, data=%16h", 
+            $time, cmd_str, size_str, vif.proc2cache_i.addr, vif.proc2cache_i.data);
 
             // When transfer is over, raise the done event and reset the inputs
             @(negedge vif.clk_i);
@@ -138,7 +186,8 @@ class scoreboard;
     } SCB_LOAD_QUEUE;
 
     logic   [64-1:0]    ref_memory  [`MEM_64BIT_LINES-1:0]  ;
-    SCB_LOAD_QUEUE      load_queue  [$]                     ;
+    SCB_LOAD_QUEUE      proc2cache_load_queue   [$]         ;
+    SCB_LOAD_QUEUE      cache2mem_load_queue    [$]         ;
     SCB_LOAD_QUEUE      load_item                           ;
     logic               match_flag                          ;
     int                 match_idx                           ;
@@ -157,53 +206,80 @@ class scoreboard;
             item.print("[Scoreboard]");
 
             case (item.feature)
-                "OUTPUT"    :   begin
+                "CACHE_OUTPUT"    :   begin
                     match_flag  =   1'b0;
                     match_idx   =   0   ;
-                    for (int unsigned i = 0; i < load_queue.size; i++) begin
-                        if (load_queue[i].complete == 1'b0 
-                        &&  load_queue[i].tag == item.cache2proc.tag) begin
-                            load_queue[i].complete  =   1'b1                ;
-                            load_queue[i].real_data =   item.cache2proc.data;
+                    for (int unsigned i = 0; i < proc2cache_load_queue.size(); i++) begin
+                        if (proc2cache_load_queue[i].complete == 1'b0 
+                        &&  proc2cache_load_queue[i].tag == item.mem_out.tag) begin
+                            proc2cache_load_queue[i].complete  =   1'b1                ;
+                            proc2cache_load_queue[i].real_data =   item.mem_out.data;
                             match_flag              =   1'b1                ;
                             match_idx               =   i                   ;
                             break;
                         end
                     end
                     if (match_flag == 1'b0) begin
-                        $display("T=%0t [Scoreboard] Returned tag doesn't match any previous load, tag=%0d, data=%0h",
-                        $time, item.cache2proc.tag, item.cache2proc.data);
+                        $display("T=%0t [Scoreboard] Returned tag doesn't match any previous load, tag=%0d, data=%16h",
+                        $time, item.mem_out.tag, item.mem_out.data);
                         exit_on_error();
-                    end else if (load_queue[match_idx].ref_data != load_queue[match_idx].real_data) begin
-                        $display("T=%0t [Scoreboard] Returned data doesn't match with reference, addr=%0d, ref_data=%0h, real_data=%0d, tag=%0d",
-                        $time, load_queue[match_idx].addr, load_queue[match_idx].ref_data, load_queue[match_idx].real_data, load_queue[match_idx].tag);
+                    end else if (proc2cache_load_queue[match_idx].ref_data != proc2cache_load_queue[match_idx].real_data) begin
+                        $display("T=%0t [Scoreboard] Returned data doesn't match with reference, addr=%8h, ref_data=%16h, real_data=%16h, tag=%0d",
+                        $time, proc2cache_load_queue[match_idx].addr, proc2cache_load_queue[match_idx].ref_data, proc2cache_load_queue[match_idx].real_data, proc2cache_load_queue[match_idx].tag);
                         exit_on_error();
                     end else begin
-                        $display("T=%0t [Scoreboard] Load #%0d completed, addr=%0d, ref_data=%0h, real_data=%0d, tag=%0d",
-                        $time, match_idx, load_queue[match_idx].addr, load_queue[match_idx].ref_data, load_queue[match_idx].real_data, load_queue[match_idx].tag);
+                        $display("T=%0t [Scoreboard] PROC_LOAD #%0d completed, addr=%8h, ref_data=%16h, real_data=%0d, tag=%0d",
+                        $time, match_idx, proc2cache_load_queue[match_idx].addr, proc2cache_load_queue[match_idx].ref_data, proc2cache_load_queue[match_idx].real_data, proc2cache_load_queue[match_idx].tag);
                     end
                 end
-                "LOAD"      :   begin
-                    load_item.addr  =   item.proc2cache.addr;
-                    case (item.proc2cache.size)
+                "PROC_LOAD"      :   begin
+                    load_item.addr  =   item.mem_in.addr;
+                    case (item.mem_in.size)
                         BYTE    :   load_item.ref_data  =   {56'b0, ref_memory[load_item.addr[`XLEN-1:3]][load_item.addr[2:0]+: 8]};
                         HALF    :   load_item.ref_data  =   {48'b0, ref_memory[load_item.addr[`XLEN-1:3]][load_item.addr[2:0]+:16]};
                         WORD    :   load_item.ref_data  =   {32'b0, ref_memory[load_item.addr[`XLEN-1:3]][load_item.addr[2:0]+:32]};
                         DOUBLE  :   load_item.ref_data  =   ref_memory[load_item.addr[`XLEN-1:3]];
                     endcase
                     load_item.real_data =   'b0                     ;
-                    load_item.tag       =   item.cache2proc.response;
+                    load_item.tag       =   item.mem_out.response;
                     load_item.complete  =   1'b0                    ;
-                    load_queue.push_back(load_item)                 ;
-                    $display("T=%0t [Scoreboard] ref_data=%0h", $time, load_item.ref_data);
+                    proc2cache_load_queue.push_back(load_item)                 ;
+                    $display("T=%0t [Scoreboard] PROC_LOAD ref_data=%16h", $time, load_item.ref_data);
                 end
-                "STORE"     :   begin
-                    case (item.proc2cache.size)
-                        BYTE    :   ref_memory[item.proc2cache.addr[`XLEN-1:3]][item.proc2cache.addr[2:0]+: 8]  =   item.proc2cache.data[ 8-1:0];
-                        HALF    :   ref_memory[item.proc2cache.addr[`XLEN-1:3]][item.proc2cache.addr[2:0]+:16]  =   item.proc2cache.data[16-1:0];
-                        WORD    :   ref_memory[item.proc2cache.addr[`XLEN-1:3]][item.proc2cache.addr[2:0]+:32]  =   item.proc2cache.data[32-1:0];
-                        DOUBLE  :   ref_memory[item.proc2cache.addr[`XLEN-1:3]]                                 =   item.proc2cache.data        ;
+                "PROC_STORE"     :   begin
+                    case (item.mem_in.size)
+                        BYTE    :   ref_memory[item.mem_in.addr[`XLEN-1:3]][item.mem_in.addr[2:0]+: 8]  =   item.mem_in.data[ 8-1:0];
+                        HALF    :   ref_memory[item.mem_in.addr[`XLEN-1:3]][item.mem_in.addr[2:0]+:16]  =   item.mem_in.data[16-1:0];
+                        WORD    :   ref_memory[item.mem_in.addr[`XLEN-1:3]][item.mem_in.addr[2:0]+:32]  =   item.mem_in.data[32-1:0];
+                        DOUBLE  :   ref_memory[item.mem_in.addr[`XLEN-1:3]]                                 =   item.mem_in.data        ;
                     endcase
+                end
+
+                "MEM_OUTPUT"    :   begin
+                    match_flag  =   1'b0;
+                    match_idx   =   0   ;
+                    for (int unsigned i = 0; i < cache2mem_load_queue.size(); i++) begin
+                        if (cache2mem_load_queue[i].complete == 1'b0 
+                        &&  cache2mem_load_queue[i].tag == item.mem_out.tag) begin
+                            cache2mem_load_queue[i].complete  =   1'b1                ;
+                            cache2mem_load_queue[i].real_data =   item.mem_out.data;
+                            match_flag              =   1'b1                ;
+                            match_idx               =   i                   ;
+                            break;
+                        end
+                    end
+                end
+                "CACHE_LOAD"      :   begin
+                    load_item.addr      =   item.mem_in.addr        ;
+                    load_item.ref_data  =   'b0                     ;
+                    load_item.real_data =   'b0                     ;
+                    load_item.tag       =   item.mem_out.response   ;
+                    load_item.complete  =   1'b0                    ;
+                    cache2mem_load_queue.push_back(load_item)       ;
+                    $display("T=%0t [Scoreboard] CACHE_LOAD", $time);
+                end
+                "CACHE_STORE"     :   begin
+
                 end
                 default     :   begin
                     $display("T=%0t [Scoreboard] Interface Error Detected",
@@ -227,8 +303,10 @@ endclass // scoreboard
 // Monitor Start
 // ====================================================================
 class monitor;
-    virtual cache_if    vif     ;
-    mailbox             scb_mbx ;
+    virtual cache_if    vif         ;
+    mailbox             scb_mbx     ;
+    string              cmd_str     ;
+    string              size_str    ;
 
     task run();
         $display("T=%0t [Monitor] starting ...", $time);
@@ -236,42 +314,118 @@ class monitor;
             @(posedge vif.clk_i);
             if (vif.cache2proc_o.response != 'd0) begin
                 mon_item    item    =   new;
-                item.proc2cache.addr        =   vif.proc2cache_i.addr       ;
-                item.proc2cache.data        =   vif.proc2cache_i.data       ;
-                item.proc2cache.size        =   vif.proc2cache_i.size       ;
-                item.proc2cache.command     =   vif.proc2cache_i.command    ;
-                item.cache2proc.response    =   vif.cache2proc_o.response   ;
-                item.cache2proc.data        =   vif.cache2proc_o.data       ;
-                item.cache2proc.tag         =   vif.cache2proc_o.tag        ;
+                item.mem_in.addr        =   vif.proc2cache_i.addr       ;
+                item.mem_in.data        =   vif.proc2cache_i.data       ;
+                item.mem_in.size        =   vif.proc2cache_i.size       ;
+                item.mem_in.command     =   vif.proc2cache_i.command    ;
+                item.mem_out.response    =   vif.cache2proc_o.response   ;
+                item.mem_out.data        =   vif.cache2proc_o.data       ;
+                item.mem_out.tag         =   vif.cache2proc_o.tag        ;
                 if (vif.proc2cache_i.command == BUS_LOAD) begin
-                    item.feature    =   "LOAD";
+                    item.feature    =   "PROC_LOAD";
                 end else if (vif.proc2cache_i.command == BUS_STORE) begin
-                    item.feature    =   "STORE";
+                    item.feature    =   "PROC_STORE";
                 end else begin
                     item.feature    =   "ERROR";
                 end
                 scb_mbx.put(item);
-                $display("T=%0t [Monitor] %s detected , addr=%0d, size=%0d, data=%0h, response=%0d",
-                $time, item.feature, item.proc2cache.addr, item.proc2cache.size, item.proc2cache.data, item.cache2proc.response);
+                size_str    =   size_str_conv(item.mem_in.size);
+                $display("T=%0t [Monitor] %s detected, size=%s, addr=%8h, data=%16h, response=%0d",
+                $time, item.feature, size_str, item.mem_in.addr, item.mem_in.data, item.mem_out.response);
             end
             
             if (vif.cache2proc_o.tag != 'd0) begin
                 mon_item    item    =   new;
-                item.proc2cache.addr        =   vif.proc2cache_i.addr       ;
-                item.proc2cache.data        =   vif.proc2cache_i.data       ;
-                item.proc2cache.size        =   vif.proc2cache_i.size       ;
-                item.proc2cache.command     =   vif.proc2cache_i.command    ;
-                item.cache2proc.response    =   vif.cache2proc_o.response   ;
-                item.cache2proc.data        =   vif.cache2proc_o.data       ;
-                item.cache2proc.tag         =   vif.cache2proc_o.tag        ;
-                item.feature                =   "OUTPUT"                    ;
+                item.mem_in.addr        =   vif.proc2cache_i.addr       ;
+                item.mem_in.data        =   vif.proc2cache_i.data       ;
+                item.mem_in.size        =   vif.proc2cache_i.size       ;
+                item.mem_in.command     =   vif.proc2cache_i.command    ;
+                item.mem_out.response   =   vif.cache2proc_o.response   ;
+                item.mem_out.data       =   vif.cache2proc_o.data       ;
+                item.mem_out.tag        =   vif.cache2proc_o.tag        ;
+                item.feature            =   "CACHE_OUTPUT"              ;
                 scb_mbx.put(item);
-                $display("T=%0t [Monitor] %s detected , data=%0h, tag=%0d",
-                $time, item.feature, item.cache2proc.data, item.cache2proc.tag);
+                $display("T=%0t [Monitor] %s detected , data=%16h, tag=%0d",
+                $time, item.feature, item.mem_out.data, item.mem_out.tag);
             end
+
+            if (vif.mem2cache_i.response != 'd0) begin
+                mon_item    item    =   new;
+                item.mem_in.addr        =   vif.cache2mem_o.addr       ;
+                item.mem_in.data        =   vif.cache2mem_o.data       ;
+                item.mem_in.size        =   vif.cache2mem_o.size       ;
+                item.mem_in.command     =   vif.cache2mem_o.command    ;
+                item.mem_out.response    =   vif.mem2cache_i.response   ;
+                item.mem_out.data        =   vif.mem2cache_i.data       ;
+                item.mem_out.tag         =   vif.mem2cache_i.tag        ;
+                if (vif.cache2mem_o.command == BUS_LOAD) begin
+                    item.feature    =   "CACHE_LOAD";
+                end else if (vif.cache2mem_o.command == BUS_STORE) begin
+                    item.feature    =   "CACHE_STORE";
+                end else begin
+                    item.feature    =   "ERROR";
+                end
+                scb_mbx.put(item);
+                size_str    =   size_str_conv(item.mem_in.size);
+                $display("T=%0t [Monitor] %s detected, size=%s, addr=%8h, data=%16h, response=%0d",
+                $time, item.feature, size_str, item.mem_in.addr, item.mem_in.data, item.mem_out.response);
+            end
+            
+            if (vif.mem2cache_i.tag != 'd0) begin
+                mon_item    item    =   new;
+                item.mem_in.addr        =   vif.cache2mem_o.addr       ;
+                item.mem_in.data        =   vif.cache2mem_o.data       ;
+                item.mem_in.size        =   vif.cache2mem_o.size       ;
+                item.mem_in.command     =   vif.cache2mem_o.command    ;
+                item.mem_out.response   =   vif.mem2cache_i.response   ;
+                item.mem_out.data       =   vif.mem2cache_i.data       ;
+                item.mem_out.tag        =   vif.mem2cache_i.tag        ;
+                item.feature            =   "MEM_OUTPUT"                ;
+                scb_mbx.put(item);
+                $display("T=%0t [Monitor] %s detected , data=%16h, tag=%0d",
+                $time, item.feature, item.mem_out.data, item.mem_out.tag);
+            end
+
+            print_mshr(vif.mshr_array_mon_o);
+            print_cache_mem(vif.cache_array_mon_o);
         end
     endtask
 
+    function void print_mshr(input MSHR_ENTRY [`MSHR_ENTRY_NUM-1:0] mshr_array_mon);
+        string  cmd_str     ;
+        string  size_str    ;
+        string  state_str   ;
+        begin
+            $display("T=%0t MSHR Contents", $time);
+            $display("index\t|state\t\t|cmd\t\t|req_addr\t|req_data\t\t|req_size\t|evict_addr\t|evict_data\t\t|evict_dirty\t|link_idx\t|linked\t|mem_tag");
+            for (int entry_idx = 0; entry_idx < `MSHR_ENTRY_NUM; entry_idx++) begin
+                state_str   =   mshr_state_str_conv(mshr_array_mon[entry_idx].state);
+                cmd_str     =   cmd_str_conv(mshr_array_mon[entry_idx].cmd);
+                size_str    =   size_str_conv(mshr_array_mon[entry_idx].req_size);
+                $display("%0d\t|%s\t|%s\t|%8h\t|%16h\t|%s\t\t|%8h\t|%16h\t|%0b\t\t|%0d\t\t|%0b\t|%0d",
+                entry_idx, state_str, cmd_str, mshr_array_mon[entry_idx].req_addr,
+                mshr_array_mon[entry_idx].req_data, size_str, mshr_array_mon[entry_idx].evict_addr,
+                mshr_array_mon[entry_idx].evict_data, mshr_array_mon[entry_idx].evict_dirty,
+                mshr_array_mon[entry_idx].link_idx, mshr_array_mon[entry_idx].linked, 
+                mshr_array_mon[entry_idx].mem_tag
+                );
+            end
+        end
+    endfunction
+
+    function void print_cache_mem(input CACHE_MEM_ENTRY [`CACHE_SET_NUM-1:0][`CACHE_SASS-1:0] cache_array_mon);
+        begin
+            $display("T=%0t Cache Mem Contents", $time);
+            $display("index\t|valid\t|dirty\t|lru\t|tag\t|data\t\t\t|\t\t|index\t|valid\t|dirty\t|lru\t|tag\t|data\t");
+            for (int set_idx = 0; set_idx < `CACHE_SET_NUM; set_idx++) begin
+                $display("%2h\t|%0b\t|%0b\t|%0b\t|%6h\t|%16h\t|\t\t|%2h\t|%0b\t|%0b\t|%0b\t|%6h\t|%16h\t",
+                set_idx, cache_array_mon[set_idx][0].valid, cache_array_mon[set_idx][0].dirty, cache_array_mon[set_idx][0].lru,
+                cache_array_mon[set_idx][0].tag, cache_array_mon[set_idx][0].data,
+                set_idx, cache_array_mon[set_idx][1].valid, cache_array_mon[set_idx][1].dirty, cache_array_mon[set_idx][1].lru,
+                cache_array_mon[set_idx][1].tag, cache_array_mon[set_idx][1].data);
+            end
+        end
+    endfunction
 
 endclass // monitor
 // ====================================================================
@@ -284,7 +438,7 @@ endclass // monitor
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   1000;
+    int     num     =   2000;
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -373,6 +527,9 @@ endclass // test
 // Interface Start
 // ====================================================================
 interface cache_if (input bit clk_i);
+    CACHE_MEM_ENTRY [`CACHE_SET_NUM-1:0][`CACHE_SASS-1:0]   cache_array_mon_o   ;
+    MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                   mshr_array_mon_o    ;
+
     logic       rst_i           ;
     MEM_IN      proc2cache_i    ;
     MEM_OUT     cache2proc_o    ;
@@ -417,12 +574,14 @@ module cache_tb;
 // DUT Instantiation
 // --------------------------------------------------------------------
     cache dut (
-        .clk_i          (    clk_i          ),
-        .rst_i          (_if.rst_i          ),
-        .proc2cache_i   (_if.proc2cache_i   ),
-        .cache2proc_o   (_if.cache2proc_o   ),
-        .cache2mem_o    (_if.cache2mem_o    ),
-        .mem2cache_i    (_if.mem2cache_i    )
+        .mshr_array_mon_o   (_if.mshr_array_mon_o   ),
+        .cache_array_mon_o  (_if.cache_array_mon_o  ),
+        .clk_i              (    clk_i              ),
+        .rst_i              (_if.rst_i              ),
+        .proc2cache_i       (_if.proc2cache_i       ),
+        .cache2proc_o       (_if.cache2proc_o       ),
+        .cache2mem_o        (_if.cache2mem_o        ),
+        .mem2cache_i        (_if.mem2cache_i        )
     );
 
     // Instantiate the Data Memory

@@ -114,30 +114,41 @@ module mshr_entry_ctrl #(
                 // AND  the cache_mem Interface is granted to this entry
                 // AND  it is a miss
                 // AND  the entry is selected to hold the new miss
-                if ((proc2cache_i.command != BUS_NONE) 
-                && (proc_grant_i == 1'b1) && (cache_mem_grant_i == 1'b1)
-                && (cache_mem_ctrl_i.req_hit == 1'b0) && (dp_sel_i == 1'b1)) begin
-                    // IF   there is an older transaction to the same addreess
+                if ((proc2cache_i.command != BUS_NONE) && (dp_sel_i == 1'b1)
+                && (proc_grant_i == 1'b1)) begin
+                    // IF   there is an older in-flight transaction to the same addreess
                     // ->   Wait for the completion of older miss to the same address
-                    if (mshr_hit_i && cp_flag_i[mshr_hit_idx_i] == 1'b0) begin
-                        next_mshr_entry.state       =   ST_WAIT_DEPEND  ;
-                        next_mshr_entry.link_idx    =   mshr_hit_idx_i  ;
-                    // IF   there is an older transaction that is in the middle of evicting the data block
+                    if (mshr_hit_i && (cp_flag_i[mshr_hit_idx_i] == 1'b0)) begin
+                        next_mshr_entry.state       =   ST_WAIT_DEPEND          ;
+                        next_mshr_entry.link_idx    =   mshr_hit_idx_i          ;
+                        next_mshr_entry.cmd         =   proc2cache_i.command    ;
+                        next_mshr_entry.req_addr    =   proc2cache_i.addr       ;
+                        next_mshr_entry.req_size    =   proc2cache_i.size       ;
+                        if (proc2cache_i.command == BUS_STORE) begin
+                            next_mshr_entry.req_data    =   proc2cache_i.data   ;
+                        end
+                    // IF   there is an older in-flight transaction that is in the middle of evicting the data block
                     // ->   Wait for the completion of write-back to memory
-                    end else if (evict_hit_i && cp_flag_i[evict_hit_idx_i] == 1'b0) begin
-                        next_mshr_entry.state       =   ST_WAIT_EVICT   ;
-                        next_mshr_entry.link_idx    =   evict_hit_idx_i ;
-                    // ELSE
-                    // ->   Read from Memory
-                    end else begin
-                        next_mshr_entry.state       =   ST_RD_MEM   ;
-                        next_mshr_entry.link_idx    =   'd0         ;
-                    end
-                    next_mshr_entry.cmd         =   proc2cache_i.command    ;
-                    next_mshr_entry.req_addr    =   proc2cache_i.addr       ;
-                    next_mshr_entry.req_size    =   proc2cache_i.size       ;
-                    if (proc2cache_i.command == BUS_LOAD) begin
-                        next_mshr_entry.req_data    =   proc2cache_i.data   ;
+                    end else if (evict_hit_i && (cp_flag_i[evict_hit_idx_i] == 1'b0)) begin
+                        next_mshr_entry.state       =   ST_WAIT_EVICT           ;
+                        next_mshr_entry.link_idx    =   evict_hit_idx_i         ;
+                        next_mshr_entry.cmd         =   proc2cache_i.command    ;
+                        next_mshr_entry.req_addr    =   proc2cache_i.addr       ;
+                        next_mshr_entry.req_size    =   proc2cache_i.size       ;
+                        if (proc2cache_i.command == BUS_STORE) begin
+                            next_mshr_entry.req_data    =   proc2cache_i.data   ;
+                        end
+                    // IF   it is a miss, and no dependency to older in-flight transactions.
+                    // ->   Start miss handling
+                    end else if ((cache_mem_ctrl_i.req_hit == 1'b0) && (cache_mem_grant_i == 1'b1)) begin
+                        next_mshr_entry.state       =   ST_RD_MEM               ;
+                        next_mshr_entry.link_idx    =   'd0                     ;
+                        next_mshr_entry.cmd         =   proc2cache_i.command    ;
+                        next_mshr_entry.req_addr    =   proc2cache_i.addr       ;
+                        next_mshr_entry.req_size    =   proc2cache_i.size       ;
+                        if (proc2cache_i.command == BUS_STORE) begin
+                            next_mshr_entry.req_data    =   proc2cache_i.data   ;
+                        end
                     end
                 end
                 next_mshr_cp_flag   =   1'b0    ;
@@ -309,23 +320,43 @@ module mshr_entry_ctrl #(
         case (mshr_entry.state)
             ST_IDLE     :   begin
                 // IF   the processor request is allocated to this entry
-                if ((proc2cache_i.command != BUS_NONE) && (cache_mem_grant_i == 1'b1)
-                && (dp_sel_i == 1'b1)) begin
-                    mshr_proc_o.response    =   mshr_entry_idx_i;
-                    mshr_proc_o.data        =   cache_mem_ctrl_i.req_data_out;
-                    if (cache_mem_ctrl_i.req_hit == 1'b1) begin
-                        mshr_proc_o.tag     =   mshr_entry_idx_i;
-                    end else begin
-                        mshr_proc_o.tag     =   'd0;
+                if ((proc2cache_i.command != BUS_NONE) && (dp_sel_i == 1'b1)) begin
+                    // IF   The Processor Interface is granted to this entry
+                    // AND  there is a dependency to older in-flight transaction
+                    // ->   Confirm the request
+                    if (((mshr_hit_i && (cp_flag_i[mshr_hit_idx_i] == 1'b0))
+                    || (evict_hit_i && (cp_flag_i[evict_hit_idx_i] == 1'b0)))) begin
+                        mshr_proc_o.response    =   mshr_entry_idx_i;
+                    // IF   The Processor Interface is granted to this entry
+                    // AND  The cache_mem Interface is granted to this entry
+                    // ->   Confirm the request 
+                    end else if (cache_mem_grant_i == 1'b1) begin
+                        mshr_proc_o.response    =   mshr_entry_idx_i;
+                        // IF   it is a load hit
+                        // ->   Output data and tag
+                        if (cache_mem_ctrl_i.req_hit == 1'b1 && proc2cache_i.command == BUS_LOAD) begin
+                            mshr_proc_o.tag     =   mshr_entry_idx_i;
+                            case (proc2cache_i.size)
+                                BYTE    :   mshr_proc_o.data    =   {56'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+: 8]};
+                                HALF    :   mshr_proc_o.data    =   {48'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+:16]};
+                                WORD    :   mshr_proc_o.data    =   {32'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+:32]};
+                                DOUBLE  :   mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
+                                default :   mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
+                            endcase
+                        end
                     end
                 end
             end
             ST_OUTPUT   :   begin
-                if (mshr_entry.cmd == BUS_LOAD) begin
-                    mshr_proc_o.response    =   'd0                 ;
-                    mshr_proc_o.data        =   mshr_entry.req_data ;
-                    mshr_proc_o.tag         =   mshr_entry_idx_i    ;
-                end
+                mshr_proc_o.response    =   'd0                 ;
+                mshr_proc_o.tag         =   mshr_entry_idx_i    ;
+                case (mshr_entry.req_size)
+                    BYTE    :   mshr_proc_o.data    =   {56'b0,mshr_entry.req_data[mshr_entry.req_addr[2:0]+: 8]};
+                    HALF    :   mshr_proc_o.data    =   {48'b0,mshr_entry.req_data[mshr_entry.req_addr[2:0]+:16]};
+                    WORD    :   mshr_proc_o.data    =   {32'b0,mshr_entry.req_data[mshr_entry.req_addr[2:0]+:32]};
+                    DOUBLE  :   mshr_proc_o.data    =   mshr_entry.req_data;
+                    default :   mshr_proc_o.data    =   mshr_entry.req_data;
+                endcase
             end
         endcase
     end

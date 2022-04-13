@@ -6,7 +6,17 @@
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module cache (
+module cache #(
+    parameter   C_CACHE_SIZE            =   `CACHE_SIZE         ,
+    parameter   C_CACHE_BLOCK_SIZE      =   `CACHE_BLOCK_SIZE   ,
+    parameter   C_CACHE_SASS            =   `CACHE_SASS         ,
+    parameter   C_CACHE_SET_NUM         =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_CACHE_SASS),
+    parameter   C_MSHR_ENTRY_NUM        =   `MSHR_ENTRY_NUM
+) (
+    // For Testing
+    output  MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]                  mshr_array_mon_o    ,
+    output  CACHE_MEM_ENTRY [C_CACHE_SET_NUM-1:0][C_CACHE_SASS-1:0] cache_array_mon_o   ,
+
     input   logic               clk_i               ,   //  Clock
     input   logic               rst_i               ,   //  Reset
     // Processor Interface
@@ -34,6 +44,7 @@ module cache (
 // Description  :   Non-blocking cache controller
 // --------------------------------------------------------------------
     cache_ctrl cache_ctrl_inst (
+        .mshr_array_mon_o   (mshr_array_mon_o   ),
         .clk_i              (clk_i              ),
         .rst_i              (rst_i              ),
         .proc2cache_i       (proc2cache_i       ),
@@ -50,6 +61,7 @@ module cache (
 // Description  :   Cache memory
 // --------------------------------------------------------------------
     cache_mem cache_mem_inst (
+        .cache_array_mon_o  (cache_array_mon_o  ),
         .clk_i              (clk_i              ),
         .rst_i              (rst_i              ),
         .cache_ctrl_mem_i   (cache_ctrl_mem     ),

@@ -81,7 +81,8 @@ typedef union packed {
 
 `define CACHE_SIZE          256     // The capacity of cache in bytes.
 `define CACHE_BLOCK_SIZE    8       // The number of bytes in a block
-`define CACHE_SASS          2       // Set associativity.
+`define CACHE_SASS          4       // Set associativity.
+`define CACHE_SET_NUM       (`CACHE_SIZE / `CACHE_BLOCK_SIZE / `CACHE_SASS)
 `define MSHR_ENTRY_NUM      16      // The number of entries in the MSHR.
 
 //////////////////////////////////////////////
@@ -109,7 +110,7 @@ typedef union packed {
 `define STORE_IDX_WIDTH     $clog2(`STORE_Q_SIZE)
 
 `define CACHE_OFFSET_WIDTH  $clog2(`CACHE_BLOCK_SIZE)
-`define CACHE_IDX_WIDTH     $clog2(`CACHE_SIZE / `CACHE_BLOCK_SIZE / `CACHE_SASS)
+`define CACHE_IDX_WIDTH     $clog2(`CACHE_SET_NUM)
 `define CACHE_TAG_WIDTH     (`XLEN - `CACHE_IDX_WIDTH - `CACHE_OFFSET_WIDTH)
 `define MSHR_IDX_WIDTH      $clog2(`MSHR_ENTRY_NUM)
 
