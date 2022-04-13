@@ -20,10 +20,11 @@ module cache #(
     input   logic               clk_i               ,   //  Clock
     input   logic               rst_i               ,   //  Reset
     // Processor Interface
-    input   MEM_IN              proc2cache_i              ,
-    output  MEM_OUT             cache2proc_o              ,
+    input   MEM_IN              proc2cache_i        ,
+    output  MEM_OUT             cache2proc_o        ,
     // Memory Interface
-    output  MEM_IN              cache2mem_o               ,
+    input   logic               memory_enable_i     ,   //  Arbitration at Memory interface
+    output  MEM_IN              cache2mem_o         ,
     input   MEM_OUT             mem2cache_i               
 );
 

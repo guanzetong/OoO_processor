@@ -22,6 +22,7 @@ module cache_ctrl #(
     input   MEM_IN              proc2cache_i        ,
     output  MEM_OUT             cache2proc_o        ,
     // Memory Interface
+    input   logic               memory_enable_i     ,   //  Arbitration at Memory interface
     output  MEM_IN              cache2mem_o         ,
     input   MEM_OUT             mem2cache_i         ,
     // Cache-memory Interface
@@ -171,6 +172,7 @@ module cache_ctrl #(
     mshr_memory_switch mshr_memory_switch_inst (
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
+        .enable_i       (memory_enable_i),
         .mshr_memory_i  (mshr_memory    ),
         .mem2cache_i    (mem2cache_i    ),
         .memory_grant_o (memory_grant   ),

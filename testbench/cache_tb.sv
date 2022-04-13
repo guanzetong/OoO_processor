@@ -533,6 +533,7 @@ interface cache_if (input bit clk_i);
     logic       rst_i           ;
     MEM_IN      proc2cache_i    ;
     MEM_OUT     cache2proc_o    ;
+    logic       memory_enable_i ;
     MEM_IN      cache2mem_o     ;
     MEM_OUT     mem2cache_i     ;
 endinterface // cache_if
@@ -580,6 +581,7 @@ module cache_tb;
         .rst_i              (_if.rst_i              ),
         .proc2cache_i       (_if.proc2cache_i       ),
         .cache2proc_o       (_if.cache2proc_o       ),
+        .memory_enable_i    (_if.memory_enable_i    ),
         .cache2mem_o        (_if.cache2mem_o        ),
         .mem2cache_i        (_if.mem2cache_i        )
     );
@@ -612,7 +614,7 @@ module cache_tb;
     initial begin
         _if.rst_i           =   'd1 ;
         _if.proc2cache_i    =   'd0 ;
-
+        _if.memory_enable_i =   1'b1;
         for (int unsigned double_addr = 0; double_addr < `MEM_64BIT_LINES; double_addr++) begin
             mem_inst.unified_memory[double_addr]    =   64'b0;
         end

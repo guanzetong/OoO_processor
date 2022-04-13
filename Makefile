@@ -100,13 +100,13 @@ CACHE_NAME	=	cache
 export CACHEFILES
 export CACHE_NAME
 CACHE     = $(SYNTH_DIR)/$(CACHE_NAME).vg 
-SYNFILES  = $(CACHE) $(SYNTH_DIR)/$(CACHE)_svsim.sv
+SYNFILES  = $(CACHE) $(SYNTH_DIR)/$(CACHE_NAME)_svsim.sv
 
 
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 10	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################
