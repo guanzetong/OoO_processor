@@ -24,7 +24,7 @@ module FL_smt #(
     output  FL_DP                               fl_dp_o     ,
     input   logic                               exception_i ,
     //test
-    output  FL_smt_ENTRY                        fl_mon_o
+    output  FL_ENTRY                        fl_mon_o
 );
 
 // ====================================================================
@@ -42,7 +42,7 @@ module FL_smt #(
 // Signal Declarations Start
 // ====================================================================
     // Freelist array
-    FL_smt_ENTRY    [C_FL_ENTRY_NUM-1:0]                fl_entry            ;   // Freelist entry
+    FL_ENTRY        [C_FL_ENTRY_NUM-1:0]                fl_entry            ;   // Freelist entry
     logic           [C_RT_NUM_WIDTH-1:0]                rt_num              ;
 
     // Dispatch entry select

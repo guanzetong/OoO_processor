@@ -360,19 +360,16 @@ class monitor;
         end
     endfunction
 
-    function void print_fl(FL_ENTRY [`THREAD_NUM-1:0][`FL_ENTRY_NUM-1:0] fl_mon);
-        for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-            $display("T=%0t FL Contents", $time);
-            $display("thread_idx=%0d", thread_idx);
-            $display("Index\t|Tag\t|Index\t|Tag\t|Index\t|Tag\t|Index\t|Tag\t");
-            // $display("%0d", `FL_ENTRY_NUM/4);
-            for (int fl_idx = 0; fl_idx < `FL_ENTRY_NUM/4; fl_idx++) begin
-                $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
-                fl_idx, fl_mon[thread_idx][fl_idx].tag, 
-                fl_idx+`FL_ENTRY_NUM/4, fl_mon[thread_idx][fl_idx+`FL_ENTRY_NUM/4].tag,
-                fl_idx+`FL_ENTRY_NUM/2, fl_mon[thread_idx][fl_idx+`FL_ENTRY_NUM/2].tag,
-                fl_idx+`FL_ENTRY_NUM*3/4, fl_mon[thread_idx][fl_idx+`FL_ENTRY_NUM*3/4].tag);
-            end
+    function void print_fl(FL_ENTRY [`FL_ENTRY_NUM-1:0] fl_mon);
+        $display("T=%0t FL Contents", $time);
+        $display("Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t");
+        // $display("%0d", `FL_ENTRY_NUM/4);
+        for (int fl_idx = 0; fl_idx < `FL_ENTRY_NUM/4; fl_idx++) begin
+            $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+            fl_idx, fl_mon[fl_idx].tag, fl_mon[fl_idx].thread_idx, fl_mon[fl_idx].valid,
+            fl_idx+`FL_ENTRY_NUM/4, fl_mon[fl_idx+`FL_ENTRY_NUM/4].tag, fl_mon[fl_idx+`FL_ENTRY_NUM/4].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM/4].valid,
+            fl_idx+`FL_ENTRY_NUM/2, fl_mon[fl_idx+`FL_ENTRY_NUM/2].tag, fl_mon[fl_idx+`FL_ENTRY_NUM/2].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM/2].valid,
+            fl_idx+`FL_ENTRY_NUM*3/4, fl_mon[fl_idx+`FL_ENTRY_NUM*3/4].tag, fl_mon[fl_idx+`FL_ENTRY_NUM*3/4].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM*3/4].valid);
         end
     endfunction
 
