@@ -353,9 +353,6 @@ typedef struct packed {
 `define LOAD_IDX_WIDTH  $clog2(`LOAD_Q_SIZE )
 `define STORE_IDX_WIDTH $clog2(`STORE_Q_SIZE)
 
-`define ALU_CYCLE       2
-`define MULT_CYCLE      2
-`define BR_CYCLE        2
 //////////////////////////////////////////////
 // 
 // Interfaces between modules
