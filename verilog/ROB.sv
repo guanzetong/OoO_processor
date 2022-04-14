@@ -26,6 +26,7 @@ module ROB # (
     input   CDB     [C_CDB_NUM-1:0]         cdb_i               ,   // From Complete stage - CDB
     output  ROB_AMT [C_RT_NUM-1:0]          rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
     output  ROB_FL                          rob_fl_o            ,   // To Free List - ROB_FL
+    output  ROB_LSQ                         rob_lsq_o           ,   // To Load/Store Queue - ROB_LSQ
     input   logic                           exception_i         ,   // From Exception Controller
     output  logic                           br_mis_o            
 );
@@ -341,6 +342,20 @@ module ROB # (
                 rob_amt_o[idx].arch_reg =   rob_array[head+idx].rd;
             end
             rob_amt_o[idx].wr_en    =   rt_valid[idx] && (!br_mis_o);
+        end
+    end
+
+// --------------------------------------------------------------------
+// Send retired entry index to Load/Store Queue
+// --------------------------------------------------------------------
+    always_comb begin
+        rob_lsq_o.rt_num    =   rt_num;
+        for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
+            if (head + idx >= C_ROB_ENTRY_NUM) begin
+                rob_lsq_o.rob_idx[idx]  =   head + idx - C_ROB_ENTRY_NUM;
+            end else begin
+                rob_lsq_o.rob_idx[idx]  =   head + idx;
+            end
         end
     end
 
