@@ -26,7 +26,7 @@ module ROB # (
     input   CDB     [C_CDB_NUM-1:0]         cdb_i               ,   // From Complete stage - CDB
     output  ROB_AMT [C_RT_NUM-1:0]          rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
     output  ROB_FL                          rob_fl_o            ,   // To Free List - ROB_FL
-    output  ROB_VFL [C_RT_NUM-1:0]          rob_vfl_o           ,   // To Victim Free List - ROB_VFL
+    //output  ROB_VFL [C_RT_NUM-1:0]          rob_vfl_o           ,   // To Victim Free List - ROB_VFL
     input   logic                           exception_i         ,   // From Exception Controller
     output  logic                           br_mis_valid_o      ,
     output  logic   [C_XLEN-1:0]            br_target_o         ,
@@ -360,18 +360,18 @@ module ROB # (
                 rob_fl_o.tag[idx]       =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag;
                 rob_amt_o[idx].phy_reg  =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag;
                 rob_amt_o[idx].arch_reg =   rob_array[head+idx-C_ROB_ENTRY_NUM].rd;
-                rob_vfl_o[idx].tag      =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag;
-                rob_vfl_o[idx].tag_old  =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag_old;
+                //rob_vfl_o[idx].tag      =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag;
+                //rob_vfl_o[idx].tag_old  =   rob_array[head+idx-C_ROB_ENTRY_NUM].tag_old;
             end else begin
                 rob_fl_o.tag_old[idx]   =   rob_array[head+idx].tag_old;
                 rob_fl_o.tag[idx]       =   rob_array[head+idx].tag;
                 rob_amt_o[idx].phy_reg  =   rob_array[head+idx].tag;
                 rob_amt_o[idx].arch_reg =   rob_array[head+idx].rd;
-                rob_vfl_o[idx].tag      =   rob_array[head+idx].tag;
-                rob_vfl_o[idx].tag_old  =   rob_array[head+idx].tag_old;
+                //rob_vfl_o[idx].tag      =   rob_array[head+idx].tag;
+                //rob_vfl_o[idx].tag_old  =   rob_array[head+idx].tag_old;
             end
             rob_amt_o[idx].wr_en    =   rt_valid[idx];
-            rob_vfl_o[idx].wr_en    =   rt_valid[idx];
+            //rob_vfl_o[idx].wr_en    =   rt_valid[idx];
         end
     end
 

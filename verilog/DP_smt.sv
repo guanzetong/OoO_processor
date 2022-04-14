@@ -44,13 +44,17 @@ module DP_smt # (
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-    logic   [C_DP_NUM_WIDTH-1:0]                comp_1      ;   // Dispatch number comparator output
-    logic   [C_DP_NUM_WIDTH-1:0]                comp_2      ;   // Dispatch number comparator output
-    logic   [C_DP_NUM_WIDTH-1:0]                dp_num      ;
-    logic   [C_DP_NUM_WIDTH-1:0]                legal_dp_num;
-    logic   [C_THREAD_IDX_WIDTH-1:0]            thread_sel  ;
-    logic   [C_DP_NUM-1:0][C_DP_NUM_WIDTH-1:0]  fl_route    ;
-    INST    [C_DP_NUM-1:0]                      inst        ;
+    logic   [C_DP_NUM_WIDTH-1:0]                        comp_1      ;   // Dispatch number comparator output
+    logic   [C_DP_NUM_WIDTH-1:0]                        comp_2      ;   // Dispatch number comparator output
+    logic   [C_DP_NUM_WIDTH-1:0]                        dp_num      ;
+    logic   [C_DP_NUM_WIDTH-1:0]                        legal_dp_num;
+    logic   [C_THREAD_IDX_WIDTH-1:0]                    thread_sel  ;
+    logic   [C_DP_NUM-1:0][C_DP_NUM_WIDTH-1:0]          fl_route    ;
+    INST    [C_DP_NUM-1:0]                              inst        ;
+
+    logic   [C_DP_NUM-1:0][C_ARCH_REG_IDX_WIDTH-1:0]    dec_rd      ;
+    logic   [C_DP_NUM-1:0][C_ARCH_REG_IDX_WIDTH-1:0]    dec_rs1     ;
+    logic   [C_DP_NUM-1:0][C_ARCH_REG_IDX_WIDTH-1:0]    dec_rs2     ;
 // ====================================================================
 // Signal Declarations End
 // ====================================================================
@@ -93,9 +97,9 @@ module DP_smt # (
                 .mult       (dp_rs_o.dec_inst[dec_idx].mult         ),
                 .alu        (dp_rs_o.dec_inst[dec_idx].alu          ),
 
-                .rd         (dp_mt_o[thread_sel][dec_idx].rd        ),
-                .rs1        (dp_mt_o[thread_sel][dec_idx].rs1       ),
-                .rs2        (dp_mt_o[thread_sel][dec_idx].rs2       )
+                .rd         (dec_rd [dec_idx]                       ),
+                .rs1        (dec_rs1[dec_idx]                       ),
+                .rs2        (dec_rs2[dec_idx]                       )
                 // outputs
             );
         end
@@ -137,7 +141,7 @@ module DP_smt # (
 // --------------------------------------------------------------------
     always_comb begin
 
-        thread_sel = fiq_dp_i[0].thread_idx;
+        thread_sel = fiq_dp_i.thread_idx[0];
 
         // calculates the actual minum number of dispatched entries.
         if (rob_dp_i[thread_sel].avail_num < fiq_dp_i.avail_num) begin 
@@ -158,6 +162,7 @@ module DP_smt # (
             dp_num  =   comp_2   ;
         end//if-else
 
+        // Exclude the illegal instructions
         legal_dp_num    =   dp_num;
         for (int dp_idx = 0 ; dp_idx < C_DP_NUM ; dp_idx++) begin
             if((dp_idx < dp_num) && dp_rs_o.dec_inst[dp_idx].illegal)begin
@@ -165,16 +170,6 @@ module DP_smt # (
             end
         end
 
-        dp_rob_o[thread_sel].dp_num  =   legal_dp_num   ;
-        dp_fiq_o.dp_num  =   legal_dp_num   ;
-        dp_rs_o.dp_num   =   legal_dp_num   ;
-        dp_fl_o.dp_num   =   legal_dp_num   ;
-
-        for (int idx = 0; idx < C_DP_NUM; idx++) begin
-            if((idx < legal_dp_num) && (dp_mt_o[thread_sel][idx].rd == `ZERO_REG))begin
-                dp_fl_o.dp_num-- ;
-            end//if    
-        end//for
     end//comb
 
 // --------------------------------------------------------------------
@@ -183,7 +178,25 @@ module DP_smt # (
 // --------------------------------------------------------------------  
     always_comb begin
         fl_route    =    route(dp_num);
-        for(int idx=0; idx < C_DP_NUM; idx++)begin
+
+        // Default
+        dp_fiq_o    =   'b0     ;
+        dp_mt_o     =   'b0     ;
+        dp_rob_o    =   'b0     ;
+
+        // Dispatch Number
+        dp_fiq_o.dp_num             =   legal_dp_num    ;
+        dp_rob_o[thread_sel].dp_num =   legal_dp_num    ;
+        dp_rs_o.dp_num              =   legal_dp_num    ;
+        dp_fl_o.dp_num              =   legal_dp_num    ;
+        for (int idx = 0; idx < C_DP_NUM; idx++) begin
+            if((idx < legal_dp_num) && (dp_mt_o[thread_sel][idx].rd == `ZERO_REG))begin
+                dp_fl_o.dp_num-- ;
+            end//if    
+        end//for
+
+        // Other interface
+        for(int idx = 0; idx < C_DP_NUM; idx++)begin
             // DP_RS
             //  The rest of the signals are directly assigned in Decoder
             dp_rs_o.dec_inst[idx].pc            =   fiq_dp_i.pc[idx]          ;
@@ -202,16 +215,19 @@ module DP_smt # (
                 dp_mt_o[thread_sel][idx].wr_en    =   1'b0;
             end
             dp_mt_o[thread_sel][idx].thread_idx   =   fiq_dp_i.thread_idx[idx]   ;
+            dp_mt_o[thread_sel][idx].rd           =   dec_rd    ;
+            dp_mt_o[thread_sel][idx].rs1          =   dec_rs1   ;
+            dp_mt_o[thread_sel][idx].rs2          =   dec_rs2   ;
             //mt doesn't really need thread_id.
 
             //DP_FL
-            dp_fl_o.thread_idx   =   fiq_dp_i[0].thread_idx   ;
+            dp_fl_o.thread_idx   =   fiq_dp_i.thread_idx[0]   ;
 
             // DP_ROB
-            dp_rob_o[thread_sel].tag_old[idx]           =   mt_dp_i[thread_sel][idx].tag_old        ;
-            dp_rob_o[thread_sel].br_predict[idx]        =   fiq_dp_i.br_predict[idx]    ;   
-            dp_rob_o[thread_sel].pc[idx]                =   fiq_dp_i.pc[idx]            ;
-            dp_rob_o[thread_sel].rd[idx]                =   dp_mt_o[thread_sel][idx].rd    ;
+            dp_rob_o[thread_sel].tag_old[idx]       =   mt_dp_i[thread_sel][idx].tag_old    ;
+            dp_rob_o[thread_sel].br_predict[idx]    =   fiq_dp_i.br_predict[idx]            ;   
+            dp_rob_o[thread_sel].pc[idx]            =   fiq_dp_i.pc[idx]                    ;
+            dp_rob_o[thread_sel].rd[idx]            =   dp_mt_o[thread_sel][idx].rd         ;
 
             // Free List routing
             if(dp_mt_o[thread_sel][idx].rd == `ZERO_REG)begin

@@ -511,7 +511,7 @@ typedef struct packed {
 
 typedef struct packed {
     logic   [`DP_NUM_WIDTH-1:0]                     dp_num      ;
-	//logic	[`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
+	logic	[`DP_NUM-1:0][`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
 } DP_FL; // Combined
 
 typedef struct packed {

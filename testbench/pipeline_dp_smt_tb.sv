@@ -360,7 +360,7 @@ class monitor;
         end
     endfunction
 
-    function void print_fl(FL_ENTRY [`THREAD_NUM-1:0][`FL_ENTRY_NUM-1:0]);
+    function void print_fl(FL_ENTRY [`THREAD_NUM-1:0][`FL_ENTRY_NUM-1:0] fl_mon);
         for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
             $display("T=%0t FL Contents", $time);
             $display("thread_idx=%0d", thread_idx);
@@ -433,8 +433,8 @@ class monitor;
     function void print_rt(
         logic   [`RT_NUM-1:0][`XLEN-1:0]        rt_pc           ,
         logic   [`RT_NUM-1:0]                   rt_valid        ,
-        ROB_AMT [`RT_NUM-1:0]                   rob_amt_mon     ,
-        ROB_FL                                  rob_fl_mon      ,
+        ROB_AMT [`THREAD_NUM-1:0][`RT_NUM-1:0]  rob_amt_mon     ,
+        ROB_FL  [`THREAD_NUM-1:0]               rob_fl_mon      ,
         logic   [`PHY_REG_NUM-1:0][`XLEN-1:0]   prf_mon         
     );
         for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
@@ -675,8 +675,8 @@ module pipeline_dp_tb;
         .mt_mon_o           (_if.mt_mon_o           ),
         .amt_mon_o          (_if.amt_mon_o          ),
         .fl_mon_o           (_if.fl_mon_o           ),
-        .fl_head_mon_o      (_if.fl_head_mon_o      ),
-        .fl_tail_mon_o      (_if.fl_tail_mon_o      ),
+        //.fl_head_mon_o      (_if.fl_head_mon_o      ),
+        //.fl_tail_mon_o      (_if.fl_tail_mon_o      ),
         //.vfl_fl_mon_o       (_if.vfl_fl_mon_o       ),
         .ALU_queue_mon_o    (_if.ALU_queue_mon_o    ),
         .MULT_queue_mon_o   (_if.MULT_queue_mon_o   ),

@@ -25,8 +25,8 @@ module pipeline_dp_smt (
     output  FU_BC                                               fu_bc_mon_o         ,   // From FU to BC
     output  CDB         [`CDB_NUM-1:0]                          cdb_mon_o           ,   // CDB
     //      Retire
-    output  logic       [`RT_NUM-1:0][`XLEN-1:0]                rt_pc_o             ,   // PC of retired instructions
-    output  logic       [`RT_NUM-1:0]                           rt_valid_o          ,   // Retire valid
+    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]   rt_pc_o             ,   // PC of retired instructions
+    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]              rt_valid_o          ,   // Retire valid
     output  ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]          rob_amt_mon_o       ,   // From ROB to AMT
     output  ROB_FL      [`THREAD_NUM-1:0]                       rob_fl_mon_o        ,   // From ROB to FL
     output  BR_MIS                                              br_mis_mon_o        ,   // Branch Misprediction
@@ -39,8 +39,8 @@ module pipeline_dp_smt (
     output  MT_ENTRY    [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]    mt_mon_o            ,   // Map Table contents monitor
     output  AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]    amt_mon_o           ,   // Arch Map Table contents monitor
     output  FL_ENTRY    [`THREAD_NUM-1:0][`FL_ENTRY_NUM-1:0]    fl_mon_o            ,   // Freelist monitor
-    output  logic       [`THREAD_NUM-1:0][`FL_IDX_WIDTH-1:0]    fl_head_mon_o       ,
-    output  logic       [`THREAD_NUM-1:0][`FL_IDX_WIDTH-1:0]    fl_tail_mon_o       ,
+    //output  logic       [`THREAD_NUM-1:0][`FL_IDX_WIDTH-1:0]    fl_head_mon_o       ,
+    //output  logic       [`THREAD_NUM-1:0][`FL_IDX_WIDTH-1:0]    fl_tail_mon_o       ,
     output  IS_INST     [`ALU_Q_SIZE  -1:0]                     ALU_queue_mon_o     ,   // IB queue monitor
     output  IS_INST     [`MULT_Q_SIZE -1:0]                     MULT_queue_mon_o    ,   // IB queue monitor
     output  IS_INST     [`BR_Q_SIZE   -1:0]                     BR_queue_mon_o      ,   // IB queue monitor
@@ -92,15 +92,15 @@ module pipeline_dp_smt (
     BR_MIS                                                   br_mis          ;
     ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]               rob_amt         ;
     ROB_FL      [`THREAD_NUM-1:0]                            rob_fl          ;
-    // ROB_VFL     [`RT_NUM-1:0]                             rob_vfl         ;
     FU_IB       [`FU_NUM-1:0]                                fu_ib           ;
     IB_FU       [`FU_NUM-1:0]                                ib_fu           ;
     BC_PRF      [`CDB_NUM-1:0]                               bc_prf          ;
-    // FL_ENTRY    [`FL_ENTRY_NUM-1:0]                       vfl_fl          ;
     AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]         amt             ;
     MT_DP       [`THREAD_NUM-1:0][`DP_NUM-1:0]               mt_dp           ;
     FU_BC       [`FU_NUM-1:0]                                fu_bc           ;
     BC_FU       [`FU_NUM-1:0]                                bc_fu           ;
+
+    genvar thread_idx;
 
 // ====================================================================
 // Signal Declarations End
@@ -110,54 +110,46 @@ module pipeline_dp_smt (
 // Module Instantiations Start
 // ====================================================================
 
-    genvar thread_idx;
+
 
 // --------------------------------------------------------------------
 // Module name  :   DP_smt
 // Description  :   Dispatcher
 // --------------------------------------------------------------------
-    generate
-        for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
-            DP_smt DP_smt_inst (
-                .rob_dp_i       (rob_dp[thread_idx] ),
-                .dp_rob_o       (dp_rob[thread_idx] ),
-                .mt_dp_i        (mt_dp [thread_idx] ),
-                .dp_mt_o        (dp_mt [thread_idx] ),
-                .fl_dp_i        (fl_dp              ),
-                .dp_fl_o        (dp_fl              ),
-                .fiq_dp_i       (fiq_dp             ),
-                .dp_fiq_o       (dp_fiq             ),
-                .rs_dp_i        (rs_dp              ),
-                .dp_rs_o        (dp_rs              )
-            );
-        end
-    endgenerate
+    DP_smt DP_smt_inst (
+        .rob_dp_i       (rob_dp             ),
+        .dp_rob_o       (dp_rob             ),
+        .mt_dp_i        (mt_dp              ),
+        .dp_mt_o        (dp_mt              ),
+        .fl_dp_i        (fl_dp              ),
+        .dp_fl_o        (dp_fl              ),
+        .fiq_dp_i       (fiq_dp             ),
+        .dp_fiq_o       (dp_fiq             ),
+        .rs_dp_i        (rs_dp              ),
+        .dp_rs_o        (dp_rs              )
+    );
 
 // --------------------------------------------------------------------
 // Module name  :   FL_smt
 // Description  :   Freelist
 // --------------------------------------------------------------------
-    generate
-        for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
-            FL_smt FL_smt_inst (
-                .clk_i          (clk_i                          ),
-                .rst_i          (rst_i                          ),
-                .br_mis_i       (exception_i || br_mis.valid[thread_idx] ),
-                .dp_fl_i        (dp_fl                          ),
-                .rob_fl_i       (rob_fl[thread_idx]             ),
-                .fl_dp_o        (fl_dp                          ),
-                .fl_mon_o       (fl_mon_o                       ),
-                //.fl_head_mon_o  (fl_head_mon_o                  ),
-                //.fl_tail_mon_o  (fl_tail_mon_o                  )
-            );
-        end// for threads
-    endgenerate
+    FL_smt FL_smt_inst (
+        .clk_i          (clk_i          ),
+        .rst_i          (rst_i          ),
+        .br_mis_i       (br_mis         ),
+        .dp_fl_i        (dp_fl          ),
+        .rob_fl_i       (rob_fl         ),
+        .fl_dp_o        (fl_dp          ),
+        .exception_i    (exception_i    ),
+        .fl_mon_o       (fl_mon_o       )
+    );
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
 // Module name  :   ROB_thread_0
 // Description  :   Reorder Buffer
 // --------------------------------------------------------------------
+    genvar thread_idx;
     generate
         for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
             ROB ROB_inst (
@@ -172,18 +164,18 @@ module pipeline_dp_smt (
                 .br_mis_valid_o     (br_mis.valid[thread_idx]       ),
                 .br_target_o        (br_mis.br_target[thread_idx]   ),
                 //ROB testing
-                .rob_mon_o          (rob_mon_o                      ),
-                .rob_head_mon_o     (rob_head_mon_o                 ),
-                .rob_tail_mon_o     (rob_tail_mon_o                 ),
-                .rt_pc_o            (rt_pc_o                        ),
-                .rt_valid_o         (rt_valid_o                     )
+                .rob_mon_o          (rob_mon_o[thread_idx]          ),
+                .rob_head_mon_o     (rob_head_mon_o[thread_idx]     ),
+                .rob_tail_mon_o     (rob_tail_mon_o[thread_idx]     ),
+                .rt_pc_o            (rt_pc_o[thread_idx]            ),
+                .rt_valid_o         (rt_valid_o[thread_idx]         )
             );
         end// for threads
     endgenerate
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   MT_thread_0
+// Module name  :   MT_SS
 // Description  :   Map Table
 // --------------------------------------------------------------------
     generate
@@ -191,7 +183,7 @@ module pipeline_dp_smt (
             MT_SS MT_inst (
                 .clk_i          (clk_i                                      ),
                 .rst_i          (rst_i                                      ),
-                .br_mis_i       (exception_i || br_mis.valid[thread_idx]    ),
+                .rollback_i     (exception_i || br_mis.valid[thread_idx]    ),
                 .cdb_i          (cdb                                        ),
                 .dp_mt_i        (dp_mt[thread_idx]                          ),
                 .amt_i          (amt[thread_idx]                            ),
@@ -212,7 +204,7 @@ module pipeline_dp_smt (
             AMT AMT_inst (
                 .clk_i          (clk_i                                      ),
                 .rst_i          (rst_i                                      ),
-                .br_mis_i       (exception_i || br_mis.valid[thread_idx]    ),
+                .rollback_i     (exception_i || br_mis.valid[thread_idx]    ),
                 .rob_amt_i      (rob_amt[thread_idx]                        ),
                 .amt_o          (amt[thread_idx]                            )
             );
@@ -352,9 +344,6 @@ module pipeline_dp_smt (
     end
 
     assign  br_mis_mon_o    =   br_mis      ;
-
-    assign  br_mis.valid[`THREAD_NUM-1:1]       =   'b0 ;
-    assign  br_mis.br_target[`THREAD_NUM-1:1]   =   'b0 ;
 
     //thread 
     always_comb begin

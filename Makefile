@@ -76,7 +76,7 @@ export PIPEFILES
 # export PIPELINE_NAME = binary_encoder
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
-export PIPELINE_NAME = pipeline_dp
+export PIPELINE_NAME = pipeline_dp_smt
 
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 

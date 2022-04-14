@@ -21,7 +21,10 @@ module FL_smt #(
     input   BR_MIS                              br_mis_i    ,  
     input   DP_FL                               dp_fl_i     ,
     input   ROB_FL      [C_THREAD_NUM-1:0]      rob_fl_i    ,
-    output  FL_DP                               fl_dp_o
+    output  FL_DP                               fl_dp_o     ,
+    input   logic                               exception_i ,
+    //test
+    output  FL_smt_ENTRY                        fl_mon_o
 );
 
 // ====================================================================
@@ -38,15 +41,37 @@ module FL_smt #(
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
+    // Freelist array
     FL_smt_ENTRY    [C_FL_ENTRY_NUM-1:0]                fl_entry            ;   // Freelist entry
+    logic           [C_RT_NUM_WIDTH-1:0]                rt_num              ;
 
-    logic                                               rt_check          ;
-    logic           [C_DP_NUM_WIDTH-1:0]                dp_num              ;   // actual dispatched num
-
+    // Dispatch entry select
     logic           [C_FL_ENTRY_NUM-1:0]                entry_valid_concat  ;
     logic           [C_DP_NUM-1:0][C_FL_IDX_WIDTH-1:0]  fl_dp_idx           ;
     logic           [C_DP_NUM-1:0]                      fl_dp_valid         ;
+    logic           [C_FL_ENTRY_NUM-1:0]                dp_sel              ;
+    logic           [C_DP_NUM-1:0]                      dp_valid            ;
+// ====================================================================
+// Signal Declarations End
+// ====================================================================
 
+// ====================================================================
+// Module Instantiations Start
+// ====================================================================
+// --------------------------------------------------------------------
+// Module name  :   pe_mult_fl
+// Description  :   Priority Encoder with multiple outputs
+// --------------------------------------------------------------------
+    pe_mult_fl pe_mult_fl_inst (
+        .bit_i      (entry_valid_concat ),
+        .enc_o      (fl_dp_idx          ),
+        .valid_o    (fl_dp_valid        )
+    );
+// --------------------------------------------------------------------
+
+// ====================================================================
+// Module Instantiations End
+// ====================================================================
 
 // ====================================================================
 // RTL Logic Start
@@ -57,134 +82,102 @@ module FL_smt #(
 // --------------------------------------------------------------------
     // Initialization
     always_ff @(posedge clk_i) begin
-        //RESET : default set as all tags are available;
-        if (rst_i) begin
-            for(int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++)begin
-                fl_entry[fl_idx].valid <=  `SD 'd1;
-                fl_entry[fl_idx].thread_idx <=  `SD 'd0;
-                fl_entry[fl_idx].tag   <=  `SD fl_idx + C_ARCH_REG_NUM; 
-            end//for
-        end//if
-
-        //ROLLBACK : set mispredicted thread's valid 'b1;
-        else if (br_mis_i.valid)begin
-            for(int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++)begin
-            //check the roolback status and set relevant tag in flight valid
-                for(int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++)begin
-                    //check each thread
-                    if(!br_mis_i.valid[thread_idx] && !fl_entry[fl_idx].valid)begin
-                        for(int unsigned rt_idx; rt_idx < C_RT_NUM; rt_idx++)begin
-                        //check each ROB_FL_I
-                            if((rt_idx < rob_fl_i[thread_idx].rt_num) && (fl_entry[fl_idx].thread == thread_idx) && (fl_entry[fl_idx].tag == rob_fl_i[thread_idx].tag[rt_idx]))begin
-                                fl_entry[fl_idx].tag    <=  `SD rob_fl_i[thread_idx].tag_old[rt_idx];
-                                fl_entry[fl_idx].valid  <=  `SD 'd1;
-                            end//if
-                            //RT available && Corresponding Thread & Tag
-                        end//for rt_idx
-                    end//if
-                    // RETIRE irrelevant threads' tags normally
-
-                    if(br_mis_i.valid[thread_idx] && !fl_entry[fl_idx].valid)begin
-                        for(int unsigned rt_idx; rt_idx < C_RT_NUM; rt_idx++)begin
-                        //check each ROB_FL_I
-                            if((rt_idx < rob_fl_i[thread_idx].rt_num - 1) && (fl_entry[fl_idx].thread == thread_idx) && (fl_entry[fl_idx].tag == rob_fl_i[thread_idx].tag[rt_idx]))begin
-                                fl_entry[fl_idx].tag    <=  `SD rob_fl_i[thread_idx].tag_old[rt_idx];
-                                fl_entry[fl_idx].valid  <=  `SD 'd1;
-                            end//if
-                            //RT available && Corresponding Thread & Tag
-                        end//for rt_idx
-                    end//if
-                    // RETIRE relevant threads' tags seperately
-
-                    for(int unsigned rt_idx; rt_idx < C_RT_NUM - 1; rt_idx++)begin
-                    //check each ROB_FL_I
-                        if((rt_idx < rob_fl_i[thread_idx].rt_num) && (fl_entry[fl_idx].thread == thread_idx) && (fl_entry[fl_idx].tag == rob_fl_i[thread_idx].tag[rt_idx]))begin
-                            fl_entry[fl_idx].tag    <=  `SD rob_fl_i[thread_idx].tag_old[rt_idx];
+        for(int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++)begin
+            //RESET : default set as all tags are available;
+            if (rst_i || exception_i) begin
+                    fl_entry[fl_idx].valid      <=  `SD 'd1;
+                    fl_entry[fl_idx].thread_idx <=  `SD 'd0;
+                    fl_entry[fl_idx].tag        <=  `SD fl_idx + C_ARCH_REG_NUM; 
+            end//if
+            // IF the entry is in-flight
+            else if (!fl_entry[fl_idx].valid) begin
+                // IF   the corresponding thread needs roll-back
+                // ->   Assert its valid bit
+                if (br_mis_i.valid[fl_entry[fl_idx].thread_idx]) begin
+                    fl_entry[fl_idx].valid  <=  `SD 'd1;
+                end
+                // ELSE the corresponding thread doesn't need roll-back
+                // ->   Check for retirement
+                else begin
+                    for(int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++)begin
+                        // The retirement matches this entry
+                        if((rt_idx < rob_fl_i[fl_entry[fl_idx].thread_idx].rt_num) 
+                        && (fl_entry[fl_idx].tag == rob_fl_i[fl_entry[fl_idx].thread_idx].tag[rt_idx]))begin
+                            fl_entry[fl_idx].valid      <=  `SD 'd1;
+                            fl_entry[fl_idx].thread_idx <=  `SD 'd0;
+                            fl_entry[fl_idx].tag        <=  `SD rob_fl_i[fl_entry[fl_idx].thread_idx].tag_old[rt_idx];
                         end//if
                     end//for rt_idx
-                end// for thread_idx
-                if(br_mis_i.valid[fl_entry[fl_idx].thread_idx] && !fl_entry[fl_idx].valid)begin
-                    fl_entry[fl_idx].valid <=  `SD 'd1; 
-                end//if
-                //set corresponding thread's valid to 1 when ROLLBACK happens
-            end//for fl_idx
-        end//else if for ROLLBACK
-
-        //RETIRE : get the used tags' from differnt thread's ROB valid set to 'b1;
-        else if(rt_check)begin
-            for(int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++)begin
-            //check each entry
-                if(!fl_entry[fl_idx].valid)begin
-                    for(int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++)begin
-                        //check each thread
-                        for(int unsigned rt_idx; rt_idx < C_RT_NUM; rt_idx++)begin
-                        //check each ROB_FL_I
-                            if((rt_idx < rob_fl_i[thread_idx].rt_num) && (fl_entry[fl_idx].thread == thread_idx) && (fl_entry[fl_idx].tag == rob_fl_i[thread_idx].tag[rt_idx]))begin
-                                fl_entry[fl_idx].tag    <=  `SD rob_fl_i[thread_idx].tag_old[rt_idx];
-                                fl_entry[fl_idx].valid  <=  `SD 'd1;
-                            end//if
-                            //RT available && Corresponding Thread & Tag
-                        end//for rt_idx
-                    end//for thread_idx
-                end//if
-            end//for fl_idx
-        end//esle if for RETIRE 
-
-        //DISPATCH : send the unused tags' to DP and set 'b0;
-        else(dp_fl_i.dp_num)begin
-            for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
-            //fl_dp_o.tag[dp_idx] = 'b0;
-            // Dispatch
-                if(fl_dp_valid[dp_idx] && (dp_idx < dp_num))begin
-                    fl_dp_o.tag[fl_dp_idx[dp_idx]]          <=  `SD fl_entry[fl_dp_idx[dp_idx]].tag;
-                    fl_entry[fl_dp_idx[dp_idx]].valid       <=  `SD 'd0;
-                    fl_entry[fl_dp_idx[dp_idx]].thread_idx  <=  `SD dp_fl_i.thread_idx;
-                end//if
-            end//for dp_idx
-        end//else for Dispatch
+                end
+            end
+            // IF   the entry is selected for dispatch
+            // ->   send the unused tags to DP and set 'b0;
+            else if (dp_sel[fl_idx]) begin
+                fl_entry[fl_idx].valid       <=  `SD 'd0;
+                fl_entry[fl_idx].thread_idx  <=  `SD dp_fl_i.thread_idx;
+            end//else for Dispatch
+        end//for fl_idx
     end//ff
 
     always_comb begin
-        dp_num = dp_fl_i.dp_num;
-        for (int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++) begin
-            entry_valid_concat[fl_idx]   =   fl_entry[fl_idx].valid;
-        end
-        rt_check = 'b0;
         rt_num = 'b0;
         for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
             rt_num = rob_fl_i[thread_idx].rt_num + rt_num;
-            if(rob_fl_i[thread_idx].rt_num)begin
-                rt_check = 'b1;
-            end
         end
     end
 
-    if (rt tag == entry tag)
-        entry tag <= rt tag_old
-        entry valid <= 1'b1
-    else if (br_mis.valid [entry.thread_idx] == 1)
-        entry tag<= entry tag
-        entry valid <= 1'b1
+    assign fl_mon_o = fl_entry;
 
+// --------------------------------------------------------------------
+// Dispatch Select
+// --------------------------------------------------------------------
+    // dp_sel is a per-entry signal to notify the entry for a newly
+    // dispatched instruction.
+    // dp_valid is the indicator of valid dispatch
+    always_comb begin
+        // Concatenate all the valid bits of entries for Priority Encoder
+        for (int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++) begin
+            entry_valid_concat[fl_idx]   =   fl_entry[fl_idx].valid;
+        end
+
+        // Assert dp_valid according to dp_num and Priority Encoder output
+        dp_valid    =   'b0;
+        for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
+            if ((fl_dp_valid[dp_idx] == 1'b1) && (dp_idx < dp_fl_i.dp_num)) begin
+                dp_valid[dp_idx]    =   1'b1;
+            end
+        end
+
+        // Assert Per-entry dp_sel
+        dp_sel      =   'b0;
+        for (int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++) begin
+            for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
+                if ((fl_dp_idx[dp_idx] == fl_idx) && dp_valid[dp_idx]) begin
+                    dp_sel[fl_idx]   =   1'b1    ;
+                end
+            end
+        end
+    end
+    
 // --------------------------------------------------------------------
 // Calculation of avail_num 
 // --------------------------------------------------------------------
     always_ff @(posedge clk_i) begin
-        if (rst_i) begin
+        if (rst_i || exception_i) begin
             fl_dp_o.avail_num   <=   `SD C_FL_ENTRY_NUM ;
         end//if
         else begin
-            fl_dp_o.avail_num   <=   `SD fl_dp_o.avail_num + rt_num - dp_num;
+            fl_dp_o.avail_num   <=   `SD fl_dp_o.avail_num + rt_num - dp_fl_i.dp_num;
         end  
     end//ff
     //available nums are the ones has vaild value to be dispatched
 
-    pe_mult_fl pe_mult_fl_inst (
-        .bit_i      (entry_valid_concat ),
-        .enc_o      (fl_dp_idx          ),
-        .valid_o    (fl_dp_valid        )
-    );
-
+// --------------------------------------------------------------------
+// Output dispatch tags
+// --------------------------------------------------------------------
+    always_comb begin
+        fl_dp_o.tag     =   fl_dp_idx;
+    end
 // ====================================================================
 // RTL Logic End
 // ====================================================================
