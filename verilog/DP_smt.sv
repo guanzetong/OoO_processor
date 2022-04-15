@@ -370,7 +370,8 @@ module decoder#(
         rd_select   =   RD_NONE     ;
         rs1_select  =   RS1_NONE    ;
         rs2_select  =   RS2_NONE    ;
- 
+
+        csr_op      =   `FALSE      ;
         rd_mem      =   `FALSE      ; // ALU=`TRUE
         wr_mem      =   `FALSE      ; // ALU=`TRUE
         cond_br     =   `FALSE      ; // ALU=`TRUE

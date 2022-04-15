@@ -13,6 +13,13 @@
 `ifndef __FU_MODULE_V__
 `define __FU_MODULE_V__
 
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  alu_comb                                            //
+//                                                                     //
+//  Description :  ALU Combinational Logic                             //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
 module alu_comb(
     input [`XLEN-1:0] opa,
     input [`XLEN-1:0] opb,
@@ -41,6 +48,13 @@ module alu_comb(
     end
 endmodule // alu_comb
 
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  alu                                                 //
+//                                                                     //
+//  Description :  ALU Unit                                            //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
 module alu #( 
     parameter   C_CYCLE         =   `ALU_CYCLE  ,
     parameter   C_THREAD_NUM    =   `THREAD_NUM 
@@ -171,9 +185,13 @@ module alu #(
 
 endmodule // alu
 
-
-
-
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  mult_comb                                           //
+//                                                                     //
+//  Description :  Multiplier Combinational Logic                      //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
 module mult_comb(
     input [`XLEN-1:0] opa,
     input [`XLEN-1:0] opb,
@@ -201,7 +219,13 @@ module mult_comb(
     end
 endmodule // mult_comb
 
-
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  mult                                                //
+//                                                                     //
+//  Description :  Multiplier Unit                                     //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
 module mult #( 
     parameter   C_CYCLE         =   `MULT_CYCLE ,
     parameter   C_THREAD_NUM    =   `THREAD_NUM 
@@ -335,15 +359,16 @@ module mult #(
 endmodule // mult
 
 
-//
-// BrCond module
-//
-// Given the instruction code, compute the proper condition for the
-// instruction; for branches this condition will indicate whether the
-// target is taken.
-//
-// This module is purely combinational
-//
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  branch_condition                                    //
+//                                                                     //
+//  Description :  Given the instruction code, compute the proper      //
+//                 condition for the instruction; for branches this    //
+//                 condition will indicate whether the target is taken.//
+//                 This module is purely combinational.                //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
 module branch_condition(// Inputs
     input [`XLEN-1:0] rs1,    // Value to check against condition
     input [`XLEN-1:0] rs2,
@@ -369,7 +394,13 @@ module branch_condition(// Inputs
     
 endmodule // branch_condition
 
-
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  branch                                              //
+//                                                                     //
+//  Description :  Branch Unit                                         //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
 module branch #( 
     parameter   C_CYCLE         =   `BR_CYCLE   ,
     parameter   C_THREAD_NUM    =   `THREAD_NUM 
@@ -518,234 +549,280 @@ module branch #(
     
 endmodule // branch
 
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  load                                                //
+//                                                                     //
+//  Description :  load Unit                                           //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
+module load #( 
+    parameter   C_CYCLE         =   `ALU_CYCLE  ,
+    parameter   C_THREAD_NUM    =   `THREAD_NUM 
+)(
+    input   logic       clk_i       ,
+    input   logic       rst_i       ,
+    input   IB_FU       ib_fu_i     ,
+    output  FU_IB       fu_ib_o     ,
+    output  FU_LSQ      fu_lsq_o    ,
+    input   BR_MIS      br_mis_i    ,
+    input   logic       exception_i 
+);
 
-// module load #( 
-//     parameter   C_CYCLE              =   `ALU_CYCLE              ,
-//     parameter   C_COUNTER_LEN        =   $clog2(C_CYCLE)    
-// )(
-//     input  logic             clk_i,
-//     input  logic             rst_i,
-//     input  IB_FU             ib_fu_i,
-//     output FU_IB             fu_ib_o,
-//     output FU_BC             fu_bc_o,
-//     input  BC_FU             bc_fu_i,
+    logic   [`XLEN-1:0]         load_addr       ;
+    IB_FU                       ib_fu           ;
+    logic   [C_CYCLE-1:0]       valid_sh        ;
+    logic                       ex_start        ;
+    logic                       ex_end          ;
+    logic                       squash          ;
 
-//     output logic [1:0]       proc2Dmem_command_o,
-//     output MEM_SIZE          proc2Dmem_size_o,
-//     output logic [`XLEN-1:0] proc2Dmem_addr_o,      // Address sent to data-memory
-//     output logic             proc2Dmem_request_o,
-//     input  logic             proc2Dmem_recieved_i,
-//     input  logic [`XLEN-1:0] Dmem2proc_data_i,
-//     input                    Dmem2proc_request_i,
-//     output                   Dmem2proc_recieved_o
+	logic   [`XLEN-1:0]         opa_mux_out, opb_mux_out;
 
-// );
-//     logic                       started;
-//     logic [C_COUNTER_LEN-1:0]  counter;
-//     logic [`XLEN-1:0]           rd_value;
-//     IB_FU                       ib_fu;
+    //
+    // Latch valid instruction
+    //
+    always_ff @(posedge clk_i) begin
+        if (ex_start) begin
+            ib_fu   <=  `SD ib_fu_i;
+        end else begin
+            ib_fu   <=  `SD ib_fu;
+        end
+    end
 
-//     // Determine the command that must be sent to mem
-//     assign proc2Dmem_command_o =
-//                             (ib_fu.is_inst.rd_mem & ib_fu.valid) ? BUS_LOAD :
-//                             BUS_NONE;
+    //
+    // ALU opA mux
+    //
+    always_comb begin
+        opa_mux_out = `XLEN'hdeadfbac;
+        case (ib_fu.is_inst.opa_select)
+            OPA_IS_RS1:  opa_mux_out = ib_fu.is_inst.rs1_value;
+            OPA_IS_NPC:  opa_mux_out = ib_fu.is_inst.npc;
+            OPA_IS_PC:   opa_mux_out = ib_fu.is_inst.pc;
+            OPA_IS_ZERO: opa_mux_out = 0;
+        endcase
+    end
 
-//     assign proc2Dmem_size_o = MEM_SIZE'(ib_fu.is_inst.mem_size[1:0]);	//only the 2 LSB to determine the size;
-//     //
-//     // ALU opA mux
-//     //
-//     always_comb begin
-//         opa_mux_out = `XLEN'hdeadfbac;
-//         case (ib_fu.is_inst.opa_select)
-//             OPA_IS_RS1:  opa_mux_out = ib_fu.is_inst.rs1_value;
-//             OPA_IS_NPC:  opa_mux_out = ib_fu.is_inst.npc;
-//             OPA_IS_PC:   opa_mux_out = ib_fu.is_inst.pc;
-//             OPA_IS_ZERO: opa_mux_out = 0;
-//         endcase
-//     end
-//      //
-//      // ALU opB mux
-//      //
-//     always_comb begin
-//         // Default value, Set only because the case isnt full.  If you see this
-//         // value on the output of the mux you have an invalid opb_select
-//         opb_mux_out = `XLEN'hfacefeed;
-//         case (ib_fu.is_inst.opb_select)
-//             OPB_IS_RS2:   opb_mux_out = ib_fu.is_inst.rs2_value;
-//             OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(ib_fu.is_inst.inst);
-//             OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(ib_fu.is_inst.inst);
-//             OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(ib_fu.is_inst.inst);
-//             OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(ib_fu.is_inst.inst);
-//             OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(ib_fu.is_inst.inst);
-//         endcase 
-//     end
+    //
+    // ALU opB mux
+    //
+    always_comb begin
+        // Default value, Set only because the case isnt full.  If you see this
+        // value on the output of the mux you have an invalid opb_select
+        opb_mux_out = `XLEN'hfacefeed;
+        case (ib_fu.is_inst.opb_select)
+            OPB_IS_RS2:   opb_mux_out = ib_fu.is_inst.rs2_value;
+            OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(ib_fu.is_inst.inst);
+            OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(ib_fu.is_inst.inst);
+            OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(ib_fu.is_inst.inst);
+            OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(ib_fu.is_inst.inst);
+            OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(ib_fu.is_inst.inst);
+        endcase 
+    end
 
-//     alu_comb alu_comb_module(
-//         .opa(opa_mux_out),
-//         .opb(opb_mux_out),
-//         .func(ib_fu.is_inst.alu_func),
-//         .result(proc2Dmem_addr_o)
-//     );
+    alu_comb alu_comb_module(
+        .opa(opa_mux_out),
+        .opb(opb_mux_out),
+        .func(ib_fu.is_inst.alu_func),
+        .result(load_addr)
+    );
 
-//     always_comb begin
-//         if (ib_fu.is_inst.rd_mem) begin
-//             if (~ib_fu.is_inst.mem_size[2]) begin //is this an signed/unsigned load?
-//                 if (ib_fu.is_inst.mem_size[1:0] == 2'b0)
-//                     rd_value = {{(`XLEN-8){Dmem2proc_data[7]}}, Dmem2proc_data[7:0]};
-//                 else if  (ib_fu.is_inst.mem_size[1:0] == 2'b01) 
-//                     rd_value = {{(`XLEN-16){Dmem2proc_data[15]}}, Dmem2proc_data[15:0]};
-//                 else rd_value = Dmem2proc_data;
-//             end else begin
-//                 if (ib_fu.is_inst.mem_size[1:0] == 2'b0)
-//                     rd_value = {{(`XLEN-8){1'b0}}, Dmem2proc_data[7:0]};
-//                 else if  (ib_fu.is_inst.mem_size[1:0] == 2'b01)
-//                     rd_value = {{(`XLEN-16){1'b0}}, Dmem2proc_data[15:0]};
-//                 else rd_value = Dmem2proc_data;
-//             end
-//         end
-//     end
-//     //if we are in 32 bit mode, then we should never load a double word sized data
-//     assert property (@(negedge clock) (`XLEN == 32) && ib_fu.is_inst.rd_mem |-> proc2Dmem_size != DOUBLE);
+    assign  ex_start    =   ib_fu_i.valid && fu_ib_o.ready;
+    assign  ex_end      =   valid_sh[C_CYCLE-1];
 
-//     always_ff @(posedge clk_i) begin
-//         if(rst_i | bc_fu_i.broadcasted) begin
-//             started <= 1'b0;
-//             fu_ib_o.ready <= 1'b1;
-//             fu_bc_o.valid <= 1'b0;
-//             proc2Dmem_request_o <= 1'b0;
-//             Dmem2proc_recieved_o <= 1'b0;
-//         end
-//         else begin
-//             if(fu_ib_o.ready & !started) begin
-//                 started <= 1'b1;
-//                 counter <= 0;
-//                 ib_fu <= ib_fu_i;
-//                 fu_ib_o.ready <= 1'b0;
-//             end
-//             if(started ) begin
-//                 counter <= counter + 1;
-//             end
-//             if(started & (counter == C_CYCLE)) begin
-//                 proc2Dmem_request_o <= 1'b1;
-//             end
-//             else if(started & proc2Dmem_recieved_i) begin
-//                 proc2Dmem_request_o <= 1'b0;
-//             end
-//             if(started & Dmem2proc_request_i) begin
-//                 fu_bc_o.valid <= 1'b1;
-//                 fu_bc_o.pc <= ib_fu.is_inst.pc;
-//                 fu_bc_o.write_reg <= 1'b1;
-//                 fu_bc_o.rd_value <= rd_value;
-//                 fu_bc_o.tag <= ib_fu.is_inst.tag;
-//                 fu_bc_o.br_inst <= 1'b0;
-//                 fu_bc_o.br_result <= 1'b0;
-//                 fu_bc_o.thread_idx <= ib_fu.is_inst.thread_idx;
-//                 fu_bc_o.rob_idx <= ib_fu.is_inst.rob_idx;
-//                 Dmem2proc_recieved_o <= 1'b1;
-//             end
-//         end
-//     end
-// endmodule // module load
+    // Output valid shift register
+    always_ff @(posedge clk_i) begin
+        // System reset
+        if (rst_i) begin
+            valid_sh    <=  `SD 'b0;
+        // Squash
+        end else if (exception_i) begin
+            valid_sh    <=  `SD 'b0;
+        // Shift
+        end else begin
+            if (C_CYCLE == 1) begin
+                valid_sh    <=  `SD ex_start;
+            end else if (squash) begin
+                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
+            end else begin
+                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            end
+        end
+    end
 
-// module store #( 
-//     parameter   C_CYCLE              =   `ALU_CYCLE              ,
-//     parameter   C_COUNTER_LEN        =   $clog2(C_CYCLE)    
-// )(
-//     input  logic             clk_i,
-//     input  logic             rst_i,
-//     input  IB_FU             ib_fu_i,
-//     output FU_IB             fu_ib_o,
-//     output FU_BC             fu_bc_o,
-//     input  BC_FU             bc_fu_i,
+    // Output to LSQ
+    always_comb begin
+        fu_lsq_o.valid      =   ex_end && (!squash)         ;
+        fu_lsq_o.addr       =   load_addr                   ;
+        fu_lsq_o.data       =   'd0                         ;
+        fu_lsq_o.rob_idx    =   ib_fu.is_inst.rob_idx       ;
+        fu_lsq_o.thread_idx =   ib_fu.is_inst.thread_idx    ;
+    end
 
-//     output logic [1:0]       proc2Dmem_command_o,
-//     output logic [`XLEN-1:0] proc2Dmem_data_o,      // Data sent to data-memory
-//     output MEM_SIZE          proc2Dmem_size_o,
-//     output logic [`XLEN-1:0] proc2Dmem_addr_o,      // Address sent to data-memory
-//     output logic             proc2Dmem_request_o,
-//     input  logic             proc2Dmem_recieved_i
-// );
-//     logic                       started;
-//     logic [C_COUNTER_LEN-1:0]  counter;
-//     IB_FU                       ib_fu;
-//     // Determine the command that must be sent to mem
-//     assign proc2Dmem_command =
-//                             (ib_fu.is_inst.wr_mem & ib_fu.valid) ? BUS_STORE :
-//                             BUS_NONE;
+    // Input ready
+    always_comb begin
+        fu_ib_o.ready   =   1'b0;
+        if (valid_sh == 'b0) begin
+            fu_ib_o.ready   =   1'b1;
+        end else if (ex_end) begin
+            fu_ib_o.ready   =   1'b1;
+        end
+    end
 
-//     assign proc2Dmem_size_o = MEM_SIZE'(ib_fu.is_inst.mem_size[1:0]);	//only the 2 LSB to determine the size;
-//     // The memory address is calculated by the ALU
-//     assign proc2Dmem_data_o = ib_fu.is_inst.rs2_value;
-//     //
-//     // ALU opA mux
-//     //
-//     always_comb begin
-//         opa_mux_out = `XLEN'hdeadfbac;
-//         case (ib_fu.is_inst.opa_select)
-//             OPA_IS_RS1:  opa_mux_out = ib_fu.is_inst.rs1_value;
-//             OPA_IS_NPC:  opa_mux_out = ib_fu.is_inst.npc;
-//             OPA_IS_PC:   opa_mux_out = ib_fu.is_inst.pc;
-//             OPA_IS_ZERO: opa_mux_out = 0;
-//         endcase
-//     end
-//      //
-//      // ALU opB mux
-//      //
-//     always_comb begin
-//         // Default value, Set only because the case isnt full.  If you see this
-//         // value on the output of the mux you have an invalid opb_select
-//         opb_mux_out = `XLEN'hfacefeed;
-//         case (ib_fu.is_inst.opb_select)
-//             OPB_IS_RS2:   opb_mux_out = ib_fu.is_inst.rs2_value;
-//             OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(ib_fu.is_inst.inst);
-//             OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(ib_fu.is_inst.inst);
-//             OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(ib_fu.is_inst.inst);
-//             OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(ib_fu.is_inst.inst);
-//             OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(ib_fu.is_inst.inst);
-//         endcase 
-//     end
+    always_comb begin
+        squash   =   1'b0;
+        if (br_mis_i.valid[ib_fu.is_inst.thread_idx] == 1'b1) begin
+            squash   =   1'b1; 
+        end
+    end
 
-//     alu_comb alu_comb_module(
-//         .opa(opa_mux_out),
-//         .opb(opb_mux_out),
-//         .func(ib_fu.is_inst.alu_func),
-//         .result(proc2Dmem_addr_o)
-//     );
+endmodule // alu
 
-//     always_ff @(posedge clk_i) begin
-//         if(rst_i | bc_fu_i.broadcasted) begin
-//             started <= 1'b0;
-//             fu_ib_o.ready <= 1'b1;
-//             fu_bc_o.valid <= 1'b0;
-//             proc2Dmem_request_o <= 1'b0;
-//         end
-//         else begin
-//             if(fu_ib_o.ready & !started) begin
-//                 started <= 1'b1;
-//                 counter <= 0;
-//                 ib_fu <= ib_fu_i;
-//                 fu_ib_o.ready <= 1'b0;
-//             end
-//             if(started ) begin
-//                 counter <= counter + 1;
-//             end
-//             if(started & (counter == C_CYCLE)) begin
-//                 proc2Dmem_request_o <= 1'b1;
-//             end
-//             else if(started & proc2Dmem_recieved_i) begin
-//                 fu_bc_o.valid <= 1'b1;
-//                 fu_bc_o.pc <= ib_fu.is_inst.pc;
-//                 fu_bc_o.write_reg <= 1'b0;
-//                 fu_bc_o.tag <= ib_fu.is_inst.tag;
-//                 fu_bc_o.br_inst <= 1'b0;
-//                 fu_bc_o.br_result <= 1'b0;
-//                 fu_bc_o.thread_idx <= ib_fu.is_inst.thread_idx;
-//                 fu_bc_o.rob_idx <= ib_fu.is_inst.rob_idx;
-//                 proc2Dmem_request_o <= 1'b0;
-//             end
-//         end
-//     end
-// endmodule // module store
+/////////////////////////////////////////////////////////////////////////
+//                                                                     //
+//  Modulename  :  store                                               //
+//                                                                     //
+//  Description :  Store Unit                                          //
+//                                                                     //
+/////////////////////////////////////////////////////////////////////////
+module store #( 
+    parameter   C_CYCLE         =   `ALU_CYCLE  ,
+    parameter   C_THREAD_NUM    =   `THREAD_NUM 
+)(
+    input   logic       clk_i       ,
+    input   logic       rst_i       ,
+    input   IB_FU       ib_fu_i     ,
+    output  FU_IB       fu_ib_o     ,
+    output  FU_BC       fu_bc_o     ,
+    input   BC_FU       bc_fu_i     ,
+    output  FU_LSQ      fu_lsq_o    ,
+    input   BR_MIS      br_mis_i    ,
+    input   logic       exception_i 
+);
+
+    logic   [`XLEN-1:0]         store_addr        ;
+    IB_FU                       ib_fu           ;
+    logic   [C_CYCLE-1:0]       valid_sh        ;
+    logic                       ex_start        ;
+    logic                       ex_end          ;
+    logic                       squash          ;
+
+	logic   [`XLEN-1:0]         opa_mux_out, opb_mux_out;
+
+    //
+    // Latch valid instruction
+    //
+    always_ff @(posedge clk_i) begin
+        if (ex_start) begin
+            ib_fu   <=  `SD ib_fu_i;
+        end else begin
+            ib_fu   <=  `SD ib_fu;
+        end
+    end
+
+    //
+    // ALU opA mux
+    //
+    always_comb begin
+        opa_mux_out = `XLEN'hdeadfbac;
+        case (ib_fu.is_inst.opa_select)
+            OPA_IS_RS1:  opa_mux_out = ib_fu.is_inst.rs1_value;
+            OPA_IS_NPC:  opa_mux_out = ib_fu.is_inst.npc;
+            OPA_IS_PC:   opa_mux_out = ib_fu.is_inst.pc;
+            OPA_IS_ZERO: opa_mux_out = 0;
+        endcase
+    end
+
+    //
+    // ALU opB mux
+    //
+    always_comb begin
+        // Default value, Set only because the case isnt full.  If you see this
+        // value on the output of the mux you have an invalid opb_select
+        opb_mux_out = `XLEN'hfacefeed;
+        case (ib_fu.is_inst.opb_select)
+            OPB_IS_RS2:   opb_mux_out = ib_fu.is_inst.rs2_value;
+            OPB_IS_I_IMM: opb_mux_out = `RV32_signext_Iimm(ib_fu.is_inst.inst);
+            OPB_IS_S_IMM: opb_mux_out = `RV32_signext_Simm(ib_fu.is_inst.inst);
+            OPB_IS_B_IMM: opb_mux_out = `RV32_signext_Bimm(ib_fu.is_inst.inst);
+            OPB_IS_U_IMM: opb_mux_out = `RV32_signext_Uimm(ib_fu.is_inst.inst);
+            OPB_IS_J_IMM: opb_mux_out = `RV32_signext_Jimm(ib_fu.is_inst.inst);
+        endcase 
+    end
+
+    alu_comb alu_comb_module(
+        .opa(opa_mux_out),
+        .opb(opb_mux_out),
+        .func(ib_fu.is_inst.alu_func),
+        .result(store_addr)
+    );
+
+    assign  ex_start    =   ib_fu_i.valid && fu_ib_o.ready;
+    assign  ex_end      =   fu_bc_o.valid && bc_fu_i.broadcasted;
+
+    // Output valid shift register
+    always_ff @(posedge clk_i) begin
+        // System reset
+        if (rst_i) begin
+            valid_sh    <=  `SD 'b0;
+        // Squash
+        end else if (exception_i) begin
+            valid_sh    <=  `SD 'b0;
+        // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
+        end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
+            valid_sh    <=  `SD valid_sh;
+        // Shift
+        end else begin
+            if (C_CYCLE == 1) begin
+                valid_sh    <=  `SD ex_start;
+            end else if (squash) begin
+                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
+            end else begin
+                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            end
+        end
+    end
+
+    // Input ready
+    always_comb begin
+        fu_ib_o.ready   =   1'b0;
+        if (valid_sh == 'b0) begin
+            fu_ib_o.ready   =   1'b1;
+        end else if (ex_end) begin
+            fu_ib_o.ready   =   1'b1;
+        end
+    end
+
+    // Output to Broadcaster
+    always_comb begin
+        fu_bc_o.valid       =   valid_sh[C_CYCLE-1] && (!squash);
+        fu_bc_o.pc          =   ib_fu.is_inst.pc                ;
+        fu_bc_o.write_reg   =   1'b1                            ;
+        fu_bc_o.rd_value    =   'b0                             ;
+        fu_bc_o.tag         =   ib_fu.is_inst.tag               ;
+        fu_bc_o.br_inst     =   1'b0                            ;
+        fu_bc_o.br_result   =   1'b0                            ;
+        fu_bc_o.br_target   =   'b0                             ;
+        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx        ;
+        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx           ;
+    end
+
+    // Output to LSQ
+    always_comb begin
+        fu_lsq_o.valid      =   fu_bc_o.valid               ;
+        fu_lsq_o.addr       =   store_addr                  ;
+        fu_lsq_o.data       =   ib_fu.is_inst.rs2_value     ;
+        fu_lsq_o.rob_idx    =   ib_fu.is_inst.rob_idx       ;
+        fu_lsq_o.thread_idx =   ib_fu.is_inst.thread_idx    ;
+    end
+
+    always_comb begin
+        squash   =   1'b0;
+        if (br_mis_i.valid[ib_fu.is_inst.thread_idx] == 1'b1) begin
+            squash   =   1'b1; 
+        end
+    end
+
+endmodule // alu
 
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
@@ -757,40 +834,39 @@ endmodule // branch
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 module FU #( 
-    parameter   C_FU_NUM             =   `FU_NUM                 ,
-    parameter   C_ALU_NUM            =   `ALU_NUM                ,
-    parameter   C_MULT_NUM           =   `MULT_NUM               ,
-    parameter   C_BR_NUM             =   `BR_NUM                 ,
-    parameter   C_LOAD_NUM           =   `LOAD_NUM               ,
-    parameter   C_STORE_NUM          =   `STORE_NUM              
+    parameter   C_ALU_NUM           =   `ALU_NUM                ,
+    parameter   C_MULT_NUM          =   `MULT_NUM               ,
+    parameter   C_BR_NUM            =   `BR_NUM                 ,
+    parameter   C_LOAD_NUM          =   `LOAD_NUM               ,
+    parameter   C_STORE_NUM         =   `STORE_NUM              ,
+    parameter   C_THREAD_NUM        =   `THREAD_NUM             ,
+    parameter   C_FU_NUM            =   C_ALU_NUM + C_MULT_NUM + C_BR_NUM + C_LOAD_NUM + C_STORE_NUM,
+    parameter   C_LSQ_IN_NUM        =   C_LOAD_NUM + C_STORE_NUM  ,
+    parameter   C_LSQ_OUT_NUM       =   C_THREAD_NUM * C_LOAD_NUM
 )(
-    input   logic                       clk_i               ,   // Clock
-    input   logic                       rst_i               ,   // Reset
-    input   IB_FU   [C_FU_NUM-1:0]      ib_fu_i             ,
-    output  FU_IB   [C_FU_NUM-1:0]      fu_ib_o             ,
-    output  FU_BC   [C_FU_NUM-1:0]      fu_bc_o             ,
-    input   BC_FU   [C_FU_NUM-1:0]      bc_fu_i             ,
-    input   BR_MIS                      br_mis_i            ,
-    input   logic                       exception_i         
-
-    // output logic [C_STORE_NUM+C_LOAD_NUM-1:0][1:0]       proc2Dmem_command_o,
-    // output logic [C_STORE_NUM-1:0][`XLEN-1:0]            proc2Dmem_data_o,      // Data sent to data-memory
-    // output MEM_SIZE [C_STORE_NUM+C_LOAD_NUM-1:0]         proc2Dmem_size_o,
-    // output logic [C_STORE_NUM+C_LOAD_NUM-1:0][`XLEN-1:0] proc2Dmem_addr_o,      // Address sent to data-memory
-    // output logic [C_STORE_NUM+C_LOAD_NUM-1:0]            proc2Dmem_request_o,
-    // input  logic [C_STORE_NUM+C_LOAD_NUM-1:0]            proc2Dmem_recieved_i,
-    // input  logic [C_LOAD_NUM-1:0][`XLEN-1:0]             Dmem2proc_data_i,
-    // input        [C_LOAD_NUM-1:0]                        Dmem2proc_request_i,
-    // output       [C_LOAD_NUM-1:0]                        Dmem2proc_recieved_o
+    input   logic                               clk_i           ,   // Clock
+    input   logic                               rst_i           ,   // Reset
+    input   IB_FU   [C_FU_NUM-1:0]              ib_fu_i         ,
+    output  FU_IB   [C_FU_NUM-1:0]              fu_ib_o         ,
+    output  FU_BC   [C_FU_NUM-1:0]              fu_bc_o         ,
+    input   BC_FU   [C_FU_NUM-1:0]              bc_fu_i         ,
+    output  FU_LSQ  [C_LSQ_IN_NUM-1:0]          fu_lsq_o        ,
+    input   FU_BC   [C_LSQ_OUT_NUM-1:0]         lsq_bc_i        ,
+    output  BC_FU   [C_LSQ_OUT_NUM-1:0]         bc_lsq_o        ,
+    input   BR_MIS                              br_mis_i        ,
+    input   logic                               exception_i     
 );
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_ALU_BASE      =   0                           ;
-    localparam  C_MULT_BASE     =   C_ALU_BASE + C_ALU_NUM      ;
-    localparam  C_BR_BASE       =   C_MULT_BASE + C_MULT_NUM    ;
-    localparam  C_LOAD_BASE     =   C_BR_BASE + C_BR_NUM        ;
-    localparam  C_STORE_BASE    =   C_LOAD_BASE + C_LOAD_NUM    ;
+    localparam  C_ALU_BASE          =   0                           ;
+    localparam  C_MULT_BASE         =   C_ALU_BASE + C_ALU_NUM      ;
+    localparam  C_BR_BASE           =   C_MULT_BASE + C_MULT_NUM    ;
+    localparam  C_STORE_BASE        =   C_BR_BASE + C_BR_NUM        ;
+    localparam  C_LOAD_BASE         =   C_STORE_BASE + C_STORE_NUM  ;
+
+    localparam  C_LSQ_STORE_BASE    =   0                               ;
+    localparam  C_LSQ_LOAD_BASE     =   C_LSQ_STORE_BASE + C_STORE_NUM  ;
 
     genvar  idx ;
 // ====================================================================
@@ -799,14 +875,14 @@ module FU #(
     generate
         for (idx = 0; idx < C_ALU_NUM; idx++) begin
             alu alu_unit (
-                .clk_i          (clk_i                                  ),
-                .rst_i          (rst_i                                  ),
-                .ib_fu_i        (ib_fu_i[C_ALU_BASE+idx:C_ALU_BASE+idx] ),
-                .fu_ib_o        (fu_ib_o[C_ALU_BASE+idx:C_ALU_BASE+idx] ),
-                .fu_bc_o        (fu_bc_o[C_ALU_BASE+idx:C_ALU_BASE+idx] ),
-                .bc_fu_i        (bc_fu_i[C_ALU_BASE+idx:C_ALU_BASE+idx] ),
-                .br_mis_i       (br_mis_i                               ),
-                .exception_i    (exception_i                            )
+                .clk_i          (clk_i                      ),
+                .rst_i          (rst_i                      ),
+                .ib_fu_i        (ib_fu_i[C_ALU_BASE+idx]    ),
+                .fu_ib_o        (fu_ib_o[C_ALU_BASE+idx]    ),
+                .fu_bc_o        (fu_bc_o[C_ALU_BASE+idx]    ),
+                .bc_fu_i        (bc_fu_i[C_ALU_BASE+idx]    ),
+                .br_mis_i       (br_mis_i                   ),
+                .exception_i    (exception_i                )
             );
         end
     endgenerate
@@ -814,14 +890,14 @@ module FU #(
     generate
         for (idx = 0; idx < C_MULT_NUM; idx++) begin
             mult mult_unit (
-                .clk_i          (clk_i                                      ),
-                .rst_i          (rst_i                                      ),
-                .ib_fu_i        (ib_fu_i[C_MULT_BASE+idx:C_MULT_BASE+idx]   ),
-                .fu_ib_o        (fu_ib_o[C_MULT_BASE+idx:C_MULT_BASE+idx]   ),
-                .fu_bc_o        (fu_bc_o[C_MULT_BASE+idx:C_MULT_BASE+idx]   ),
-                .bc_fu_i        (bc_fu_i[C_MULT_BASE+idx:C_MULT_BASE+idx]   ),
-                .br_mis_i       (br_mis_i                                   ),
-                .exception_i    (exception_i                                )
+                .clk_i          (clk_i                      ),
+                .rst_i          (rst_i                      ),
+                .ib_fu_i        (ib_fu_i[C_MULT_BASE+idx]   ),
+                .fu_ib_o        (fu_ib_o[C_MULT_BASE+idx]   ),
+                .fu_bc_o        (fu_bc_o[C_MULT_BASE+idx]   ),
+                .bc_fu_i        (bc_fu_i[C_MULT_BASE+idx]   ),
+                .br_mis_i       (br_mis_i                   ),
+                .exception_i    (exception_i                )
             );
         end
     endgenerate
@@ -829,59 +905,50 @@ module FU #(
     generate
         for (idx = 0; idx < C_BR_NUM; idx++) begin
             branch branch_unit (
-                .clk_i          (clk_i                                  ),
-                .rst_i          (rst_i                                  ),
-                .ib_fu_i        (ib_fu_i[C_BR_BASE+idx:C_BR_BASE+idx]   ),
-                .fu_ib_o        (fu_ib_o[C_BR_BASE+idx:C_BR_BASE+idx]   ),
-                .fu_bc_o        (fu_bc_o[C_BR_BASE+idx:C_BR_BASE+idx]   ),
-                .bc_fu_i        (bc_fu_i[C_BR_BASE+idx:C_BR_BASE+idx]   ),
-                .br_mis_i       (br_mis_i                               ),
-                .exception_i    (exception_i                            )
+                .clk_i          (clk_i                  ),
+                .rst_i          (rst_i                  ),
+                .ib_fu_i        (ib_fu_i[C_BR_BASE+idx] ),
+                .fu_ib_o        (fu_ib_o[C_BR_BASE+idx] ),
+                .fu_bc_o        (fu_bc_o[C_BR_BASE+idx] ),
+                .bc_fu_i        (bc_fu_i[C_BR_BASE+idx] ),
+                .br_mis_i       (br_mis_i               ),
+                .exception_i    (exception_i            )
             );
         end
     endgenerate
 
-    // load load_unit [C_LOAD_NUM-1:0](
-    //     .clk_i(clk_i),
-    //     .rst_i(rst_i),
-    //     .ib_fu_i(ib_fu_i[C_LOAD_BASE+C_LOAD_NUM-1:C_LOAD_BASE]),
-    //     .fu_ib_o(fu_ib_o[C_LOAD_BASE+C_LOAD_NUM-1:C_LOAD_BASE]),
-    //     .fu_bc_o(fu_bc_o[C_LOAD_BASE+C_LOAD_NUM-1:C_LOAD_BASE]),
-    //     .bc_fu_i(bc_fu_i[C_LOAD_BASE+C_LOAD_NUM-1:C_LOAD_BASE]),
-
-    //     .proc2Dmem_command_o(proc2Dmem_command_o[C_LOAD_NUM-1:0]),
-    //     .proc2Dmem_size_o(proc2Dmem_size_o[C_LOAD_NUM-1:0]),
-    //     .proc2Dmem_addr_o(proc2Dmem_addr_o[C_LOAD_NUM-1:0]),
-    //     .proc2Dmem_request_o(proc2Dmem_request_o[C_LOAD_NUM-1:0]),
-    //     .proc2Dmem_recieved_i(proc2Dmem_recieved_i[C_LOAD_NUM-1:0]),
-    //     .Dmem2proc_data_i(Dmem2proc_data_i[C_LOAD_NUM-1:0]),
-    //     .Dmem2proc_request_i(Dmem2proc_request_i[C_LOAD_NUM-1:0]),
-    //     .Dmem2proc_recieved_o(Dmem2proc_recieved_o[C_LOAD_NUM-1:0])
-    // );
-
-    // store store_unit [C_STORE_NUM-1:0](
-    //     .clk_i(clk_i),
-    //     .rst_i(rst_i),
-    //     .ib_fu_i(ib_fu_i[C_STORE_BASE+C_STORE_NUM-1:C_STORE_BASE]),
-    //     .fu_ib_o(fu_ib_o[C_STORE_BASE+C_STORE_NUM-1:C_STORE_BASE]),
-    //     .fu_bc_o(fu_bc_o[C_STORE_BASE+C_STORE_NUM-1:C_STORE_BASE]),
-    //     .bc_fu_i(bc_fu_i[C_STORE_BASE+C_STORE_NUM-1:C_STORE_BASE]),
-
-    //     .proc2Dmem_command_o(proc2Dmem_command_o[C_STORE_NUM+C_LOAD_NUM-1:C_LOAD_NUM]),
-    //     .proc2Dmem_data_o(proc2Dmem_data_o[C_STORE_NUM-1:0]),
-    //     .proc2Dmem_size_o(proc2Dmem_size_o[C_STORE_NUM+C_LOAD_NUM-1:C_LOAD_NUM]),
-    //     .proc2Dmem_addr_o(proc2Dmem_addr_o[C_STORE_NUM+C_LOAD_NUM-1:C_LOAD_NUM]),
-    //     .proc2Dmem_request_o(proc2Dmem_request_o[C_STORE_NUM+C_LOAD_NUM-1:C_LOAD_NUM]),
-    //     .proc2Dmem_recieved_i(proc2Dmem_recieved_i[C_STORE_NUM+C_LOAD_NUM-1:C_LOAD_NUM])
-    // );
-
-    always_comb begin
-        for (int unsigned fu_idx = C_LOAD_BASE; fu_idx < C_FU_NUM; fu_idx++) begin
-            fu_ib_o[fu_idx].ready   =   1'b1;
-            fu_bc_o[fu_idx]         =   'b0;
+    generate
+        for (idx = 0; idx < C_STORE_NUM; idx++) begin
+            store store_unit (
+                clk_i           (clk_i                          ),
+                rst_i           (rst_i                          ),
+                ib_fu_i         (ib_fu_i[C_STORE_BASE+idx]      ),
+                fu_ib_o         (fu_ib_o[C_STORE_BASE+idx]      ),
+                fu_bc_o         (fu_bc_o[C_STORE_BASE+idx]      ),
+                bc_fu_i         (bc_fu_i[C_STORE_BASE+idx]      ),
+                fu_lsq_o        (fu_lsq_o[C_LSQ_STORE_BASE+idx] ),
+                br_mis_i        (br_mis_i                       ),
+                exception_i     (exception_i                    )
+            );
         end
-    end
+    endgenerate
 
+    generate
+        for (idx = 0; idx < C_LOAD_NUM; idx++) begin
+            load load_unit (
+                .clk_i          (clk_i                          ),
+                .rst_i          (rst_i                          ),
+                .ib_fu_i        (ib_fu_i[C_LOAD_BASE+idx]       ),
+                .fu_ib_o        (fu_ib_o[C_LOAD_BASE+idx]       ),
+                .fu_lsq_o       (fu_lsq_o[C_LSQ_LOAD_BASE+idx]  ),
+                .br_mis_i       (br_mis_i                       ),
+                .exception_i    (exception_i                    )
+            );
+
+            assign  fu_bc_o[C_LOAD_BASE+idx]    =   lsq_bc_i[idx]           ;
+            assign  bc_lsq_o[idx]               =   bc_fu_i[C_LOAD_BASE+idx];
+        end
+    endgenerate
 
 endmodule // module fu_module
 `endif // __FU_MODULE_V__

@@ -496,6 +496,19 @@ typedef struct packed {
     logic   [8*`CACHE_BLOCK_SIZE-1:0]   data        ;
 } CACHE_MEM_ENTRY;  // for each block
 
+typedef struct packed {
+    BUS_COMMAND                                     cmd         ;
+    logic [`XLEN-1:0]                               pc          ;   
+    logic [`TAG_IDX_WIDTH-1:0]                      tag         ;   
+    logic [`ROB_IDX_WIDTH-1:0]                      rob_idx     ;   
+    MEM_SIZE                                        mem_size    ;
+    logic [`XLEN-1:0]                               addr        ;   
+    logic                                           addr_valid  ;   
+    logic [`XLEN-1:0]                               data        ;   
+    logic                                           data_valid  ;   
+    logic                                           complete    ;   
+    logic                                           retire      ;   
+} LSQ_ENTRY;
 // Array Entry Contents End
 
 //////////////////////////////////////////////
@@ -702,7 +715,31 @@ typedef struct packed {
     logic   [`CACHE_BLOCK_SIZE*8-1:0]               evict_data  ;
 } CACHE_MEM_CTRL;
 
+typedef struct packed {
+    logic                                           valid       ;
+    logic   [`XLEN-1:0]                             addr        ;
+    logic   [`XLEN-1:0]                             data        ;
+    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;
+    logic   [`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
+} FU_LSQ;
+ 
+typedef struct packed {
+    logic       [`DP_NUM_WIDTH-1:0]                 dp_num      ;
+    BUS_COMMAND [`DP_NUM-1:0]                       cmd         ;
+    MEM_SIZE    [`DP_NUM-1:0]                       mem_size    ;
+    logic       [`DP_NUM-1:0][`ROB_IDX_WIDTH-1:0]   rob_idx     ;
+    logic       [`DP_NUM-1:0][`XLEN-1:0]            pc          ;
+    logic       [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]   tag         ;
+} DP_LSQ;
 
+typedef struct packed {
+    logic   [`DP_NUM_WIDTH-1:0]                     avail_num  ;
+} LSQ_DP; 
+
+typedef struct packed {
+    logic   [`RT_NUM_WIDTH-1:0]                     rt_num      ;
+    logic   [`RT_NUM-1:0][`ROB_IDX_WIDTH-1:0]       rob_idx     ;
+} ROB_LSQ; // Combined
 
 
 // Interface End
