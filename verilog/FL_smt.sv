@@ -247,10 +247,7 @@ module pe_mult_fl #(
                 assign  pe_bit_i[i] =   pe_bit_i[i-1] & (~mask[i-1]);
             end
             // Instantiate Priority Encoders for each output
-            pe_fl #(
-                .C_IN_WIDTH     (C_IN_WIDTH     ),
-                .C_OUT_WIDTH    (C_OUT_WIDTH    )
-            ) pe_fl_inst (
+            pe_fl pe_fl_inst (
                 .bit_i          (pe_bit_i[i]    ),
                 .enc_o          (enc_o[i]       ),
                 .valid_o        (valid_o[i]     )
@@ -258,10 +255,7 @@ module pe_mult_fl #(
 
             // Instantiate binary_decoders for masks generation
             if (i < C_OUT_NUM-1) begin
-                binary_decoder_fl #(
-                    .C_OUT_WIDTH    (C_IN_WIDTH     ),
-                    .C_IN_WIDTH     (C_OUT_WIDTH    )
-                ) binary_decoder_fl_inst (
+                binary_decoder_fl binary_decoder_fl_inst (
                     .enc_i          (enc_o[i]       ),
                     .valid_i        (valid_o[i]     ),
                     .bit_o          (mask[i]        )
@@ -277,7 +271,7 @@ endmodule
 
 
 module binary_decoder_fl #(
-    parameter   C_OUT_WIDTH =   32                  ,
+    parameter   C_OUT_WIDTH =   `FL_ENTRY_NUM       ,
     parameter   C_IN_WIDTH  =   $clog2(C_OUT_WIDTH)
 )(
     input   logic   [C_IN_WIDTH-1:0]    enc_i   ,
@@ -299,7 +293,7 @@ module binary_decoder_fl #(
 endmodule
 
 module pe_fl #(
-    parameter   C_IN_WIDTH  =   32                  ,
+    parameter   C_IN_WIDTH  =   `FL_ENTRY_NUM       ,
     parameter   C_OUT_WIDTH =   $clog2(C_IN_WIDTH)
 )(
     input   logic   [C_IN_WIDTH-1:0]    bit_i   ,
