@@ -38,7 +38,7 @@ module pipeline_dp_smt (
     output  logic       [$clog2(`RS_ENTRY_NUM)-1:0]             rs_cod_mon_o        ,
     output  MT_ENTRY    [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]    mt_mon_o            ,   // Map Table contents monitor
     output  AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]    amt_mon_o           ,   // Arch Map Table contents monitor
-    output  FL_ENTRY    [`THREAD_NUM-1:0][`FL_ENTRY_NUM-1:0]    fl_mon_o            ,   // Freelist monitor
+    output  FL_ENTRY    [`FL_ENTRY_NUM-1:0]                     fl_mon_o            ,   // Freelist monitor
     //output  logic       [`THREAD_NUM-1:0][`FL_IDX_WIDTH-1:0]    fl_head_mon_o       ,
     //output  logic       [`THREAD_NUM-1:0][`FL_IDX_WIDTH-1:0]    fl_tail_mon_o       ,
     output  IS_INST     [`ALU_Q_SIZE  -1:0]                     ALU_queue_mon_o     ,   // IB queue monitor
@@ -75,30 +75,30 @@ module pipeline_dp_smt (
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-    ROB_DP      [`THREAD_NUM-1:0]                            rob_dp          ;
-    DP_ROB      [`THREAD_NUM-1:0]                            dp_rob          ;
-    DP_MT       [`THREAD_NUM-1:0][`DP_NUM-1:0]               dp_mt           ;
-    FL_DP       [`THREAD_NUM-1:0]                            fl_dp           ;
-    DP_FL       [`THREAD_NUM-1:0]                            dp_fl           ;
-    // FIQ_DP                                                fiq_dp          ;
-    // DP_FIQ                                                dp_fiq          ;
-    RS_DP                                                    rs_dp           ;
-    DP_RS                                                    dp_rs           ;
-    CDB         [`CDB_NUM-1:0]                               cdb             ;
-    RS_IB       [`IS_NUM-1:0]                                rs_ib           ;
-    IB_RS                                                    ib_rs           ;
-    RS_PRF      [`IS_NUM-1:0]                                rs_prf          ;
-    PRF_RS      [`IS_NUM-1:0]                                prf_rs          ;
-    BR_MIS                                                   br_mis          ;
-    ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]               rob_amt         ;
-    ROB_FL      [`THREAD_NUM-1:0]                            rob_fl          ;
-    FU_IB       [`FU_NUM-1:0]                                fu_ib           ;
-    IB_FU       [`FU_NUM-1:0]                                ib_fu           ;
-    BC_PRF      [`CDB_NUM-1:0]                               bc_prf          ;
-    AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]         amt             ;
-    MT_DP       [`THREAD_NUM-1:0][`DP_NUM-1:0]               mt_dp           ;
-    FU_BC       [`FU_NUM-1:0]                                fu_bc           ;
-    BC_FU       [`FU_NUM-1:0]                                bc_fu           ;
+    ROB_DP      [`THREAD_NUM-1:0]                           rob_dp          ;
+    DP_ROB      [`THREAD_NUM-1:0]                           dp_rob          ;
+    DP_MT       [`THREAD_NUM-1:0][`DP_NUM-1:0]              dp_mt           ;
+    FL_DP                                                   fl_dp           ;
+    DP_FL                                                   dp_fl           ;
+    // FIQ_DP                                               fiq_dp          ;
+    // DP_FIQ                                               dp_fiq          ;
+    RS_DP                                                   rs_dp           ;
+    DP_RS                                                   dp_rs           ;
+    CDB         [`CDB_NUM-1:0]                              cdb             ;
+    RS_IB       [`IS_NUM-1:0]                               rs_ib           ;
+    IB_RS                                                   ib_rs           ;
+    RS_PRF      [`IS_NUM-1:0]                               rs_prf          ;
+    PRF_RS      [`IS_NUM-1:0]                               prf_rs          ;
+    BR_MIS                                                  br_mis          ;
+    ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]              rob_amt         ;
+    ROB_FL      [`THREAD_NUM-1:0]                           rob_fl          ;
+    FU_IB       [`FU_NUM-1:0]                               fu_ib           ;
+    IB_FU       [`FU_NUM-1:0]                               ib_fu           ;
+    BC_PRF      [`CDB_NUM-1:0]                              bc_prf          ;
+    AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]        amt             ;
+    MT_DP       [`THREAD_NUM-1:0][`DP_NUM-1:0]              mt_dp           ;
+    FU_BC       [`FU_NUM-1:0]                               fu_bc           ;
+    BC_FU       [`FU_NUM-1:0]                               bc_fu           ;
 
     genvar thread_idx;
 
@@ -149,7 +149,6 @@ module pipeline_dp_smt (
 // Module name  :   ROB_thread_0
 // Description  :   Reorder Buffer
 // --------------------------------------------------------------------
-    genvar thread_idx;
     generate
         for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
             ROB ROB_inst (
@@ -161,6 +160,7 @@ module pipeline_dp_smt (
                 .rob_amt_o          (rob_amt[thread_idx]            ),
                 .rob_fl_o           (rob_fl [thread_idx]            ),
                 .exception_i        (exception_i                    ),
+                .thread_idx_i       (thread_idx                     ),
                 .br_mis_valid_o     (br_mis.valid[thread_idx]       ),
                 .br_target_o        (br_mis.br_target[thread_idx]   ),
                 //ROB testing
@@ -187,6 +187,7 @@ module pipeline_dp_smt (
                 .cdb_i          (cdb                                        ),
                 .dp_mt_i        (dp_mt[thread_idx]                          ),
                 .amt_i          (amt[thread_idx]                            ),
+                .thread_idx_i   (thread_idx                                 ),
                 .mt_dp_o        (mt_dp[thread_idx]                          ),
                  // MT Testing
                 .mt_mon_o       (mt_mon_o[thread_idx]                       )
@@ -205,6 +206,7 @@ module pipeline_dp_smt (
                 .clk_i          (clk_i                                      ),
                 .rst_i          (rst_i                                      ),
                 .rollback_i     (exception_i || br_mis.valid[thread_idx]    ),
+                .thread_idx_i   (thread_idx                                 ),
                 .rob_amt_i      (rob_amt[thread_idx]                        ),
                 .amt_o          (amt[thread_idx]                            )
             );

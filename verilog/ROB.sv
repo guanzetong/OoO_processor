@@ -10,26 +10,29 @@
 /////////////////////////////////////////////////////////////////////////
 
 module ROB # ( 
-    parameter   C_DP_NUM            =   `DP_NUM         ,
-    parameter   C_CDB_NUM           =   `CDB_NUM        ,
-    parameter   C_RT_NUM            =   `RT_NUM         ,
-    parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM  ,
-    parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM   ,
-    parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    ,
-    parameter   C_XLEN              =   `XLEN           ,
-    parameter   C_ROB_IDX_WIDTH     =   $clog2(C_ROB_ENTRY_NUM)
+    parameter   C_DP_NUM            =   `DP_NUM                 ,
+    parameter   C_CDB_NUM           =   `CDB_NUM                ,
+    parameter   C_RT_NUM            =   `RT_NUM                 ,
+    parameter   C_ROB_ENTRY_NUM     =   `ROB_ENTRY_NUM          ,
+    parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM           ,
+    parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM            ,
+    parameter   C_XLEN              =   `XLEN                   ,
+    parameter   C_ROB_IDX_WIDTH     =   $clog2(C_ROB_ENTRY_NUM) ,
+    parameter   C_THREAD_NUM        =   `THREAD_NUM             ,
+    parameter   C_THREAD_IDX_WIDTH  =   $clog2(C_THREAD_NUM)
 ) (
-    input   logic                           clk_i               ,   // Clock
-    input   logic                           rst_i               ,   // Reset
-    output  ROB_DP                          rob_dp_o            ,   // To Dispatcher - ROB_DP, Entry readiness for structural hazard detection
-    input   DP_ROB                          dp_rob_i            ,   // From Dispatcher - DP_ROB
-    input   CDB     [C_CDB_NUM-1:0]         cdb_i               ,   // From Complete stage - CDB
-    output  ROB_AMT [C_RT_NUM-1:0]          rob_amt_o           ,   // To Architectural Map Table - ROB_AMT
-    output  ROB_FL                          rob_fl_o            ,   // To Free List - ROB_FL
-    //output  ROB_VFL [C_RT_NUM-1:0]          rob_vfl_o           ,   // To Victim Free List - ROB_VFL
-    input   logic                           exception_i         ,   // From Exception Controller
-    output  logic                           br_mis_valid_o      ,
-    output  logic   [C_XLEN-1:0]            br_target_o         ,
+    input   logic                               clk_i           ,   // Clock
+    input   logic                               rst_i           ,   // Reset
+    output  ROB_DP                              rob_dp_o        ,   // To Dispatcher - ROB_DP, Entry readiness for structural hazard detection
+    input   DP_ROB                              dp_rob_i        ,   // From Dispatcher - DP_ROB
+    input   CDB     [C_CDB_NUM-1:0]             cdb_i           ,   // From Complete stage - CDB
+    output  ROB_AMT [C_RT_NUM-1:0]              rob_amt_o       ,   // To Architectural Map Table - ROB_AMT
+    output  ROB_FL                              rob_fl_o        ,   // To Free List - ROB_FL
+    //output  ROB_VFL [C_RT_NUM-1:0]            rob_vfl_o       ,   // To Victim Free List - ROB_VFL
+    input   logic                               exception_i     ,   // From Exception Controller
+    input   logic   [C_THREAD_IDX_WIDTH-1:0]    thread_idx_i    ,
+    output  logic                               br_mis_valid_o  ,
+    output  logic   [C_XLEN-1:0]                br_target_o     ,
 
     // For testing
     output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
@@ -206,7 +209,9 @@ module ROB # (
             // Check if any rob_idx from valid CDB channels
             // matches the current entry idx
             for (int unsigned cdb_idx = 0; cdb_idx < C_CDB_NUM; cdb_idx++) begin 
-                if ((entry_idx == cdb_i[cdb_idx].rob_idx) && cdb_i[cdb_idx].valid)begin
+                if ((entry_idx == cdb_i[cdb_idx].rob_idx) 
+                && cdb_i[cdb_idx].valid 
+                && cdb_i[cdb_idx].thread_idx == thread_idx_i)begin
                     cp_sel[entry_idx]   =   1'b1;
                     cp_idx[entry_idx]   =   cdb_idx;
                 end

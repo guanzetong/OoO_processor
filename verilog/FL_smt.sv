@@ -24,7 +24,7 @@ module FL_smt #(
     output  FL_DP                               fl_dp_o     ,
     input   logic                               exception_i ,
     //test
-    output  FL_ENTRY                        fl_mon_o
+    output  FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    fl_mon_o
 );
 
 // ====================================================================
@@ -34,6 +34,7 @@ module FL_smt #(
     localparam  C_FL_NUM_WIDTH  =   $clog2(C_FL_ENTRY_NUM+1);
     localparam  C_DP_NUM_WIDTH  =   $clog2(C_DP_NUM+1)      ;
     localparam  C_RT_NUM_WIDTH  =   $clog2(C_RT_NUM+1)      ;
+    localparam  C_FL_START_TAG  =   C_THREAD_NUM * C_ARCH_REG_NUM - (C_THREAD_NUM - 1);
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -44,6 +45,7 @@ module FL_smt #(
     // Freelist array
     FL_ENTRY        [C_FL_ENTRY_NUM-1:0]                fl_entry            ;   // Freelist entry
     logic           [C_RT_NUM_WIDTH-1:0]                rt_num              ;
+    logic           [C_FL_NUM_WIDTH-1:0]                avail_num           ;
 
     // Dispatch entry select
     logic           [C_FL_ENTRY_NUM-1:0]                entry_valid_concat  ;
@@ -85,9 +87,9 @@ module FL_smt #(
         for(int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++)begin
             //RESET : default set as all tags are available;
             if (rst_i || exception_i) begin
-                    fl_entry[fl_idx].valid      <=  `SD 'd1;
-                    fl_entry[fl_idx].thread_idx <=  `SD 'd0;
-                    fl_entry[fl_idx].tag        <=  `SD fl_idx + C_ARCH_REG_NUM; 
+                fl_entry[fl_idx].valid      <=  `SD 'd1;
+                fl_entry[fl_idx].thread_idx <=  `SD 'd0;
+                fl_entry[fl_idx].tag        <=  `SD fl_idx + C_FL_START_TAG; 
             end//if
             // IF the entry is in-flight
             else if (!fl_entry[fl_idx].valid) begin
@@ -95,6 +97,14 @@ module FL_smt #(
                 // ->   Assert its valid bit
                 if (br_mis_i.valid[fl_entry[fl_idx].thread_idx]) begin
                     fl_entry[fl_idx].valid  <=  `SD 'd1;
+                    for(int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++)begin
+                        // The retirement matches this entry
+                        if((rt_idx < rob_fl_i[fl_entry[fl_idx].thread_idx].rt_num) 
+                        && (fl_entry[fl_idx].tag == rob_fl_i[fl_entry[fl_idx].thread_idx].tag[rt_idx]))begin
+                            fl_entry[fl_idx].thread_idx <=  `SD 'd0;
+                            fl_entry[fl_idx].tag        <=  `SD rob_fl_i[fl_entry[fl_idx].thread_idx].tag_old[rt_idx];
+                        end//if
+                    end//for rt_idx
                 end
                 // ELSE the corresponding thread doesn't need roll-back
                 // ->   Check for retirement
@@ -164,19 +174,29 @@ module FL_smt #(
 // --------------------------------------------------------------------
     always_ff @(posedge clk_i) begin
         if (rst_i || exception_i) begin
-            fl_dp_o.avail_num   <=   `SD C_FL_ENTRY_NUM ;
+            avail_num   <=   `SD C_FL_ENTRY_NUM ;
         end//if
         else begin
-            fl_dp_o.avail_num   <=   `SD fl_dp_o.avail_num + rt_num - dp_fl_i.dp_num;
+            avail_num   <=   `SD avail_num + rt_num - dp_fl_i.dp_num;
         end  
     end//ff
     //available nums are the ones has vaild value to be dispatched
+
+    always_comb begin
+        if (avail_num > C_DP_NUM) begin
+            fl_dp_o.avail_num   =   C_DP_NUM;
+        end else begin
+            fl_dp_o.avail_num   =   avail_num;
+        end
+    end
 
 // --------------------------------------------------------------------
 // Output dispatch tags
 // --------------------------------------------------------------------
     always_comb begin
-        fl_dp_o.tag     =   fl_dp_idx;
+        for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
+            fl_dp_o.tag[dp_idx] =   fl_entry[fl_dp_idx[dp_idx]].tag;
+        end
     end
 // ====================================================================
 // RTL Logic End

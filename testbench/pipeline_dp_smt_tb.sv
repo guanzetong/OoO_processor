@@ -18,50 +18,43 @@ endclass // gen_item
 // Driver Start
 // ====================================================================
 class driver;
-    virtual pipeline_dp_if  vif                 ;
-    mailbox                 drv_mbx             ;
-    event                   drv_done            ;
-    logic   [`XLEN-1:0]     pc                  ;
-    logic   [`XLEN-1:0]     inst_pc             ;
-    logic   [`XLEN-1:0]     program_mem_addr    ;
-    logic   [64-1:0]        program_mem_data    ;
-    logic   [64-1:0]        program_mem     [`MEM_64BIT_LINES-1:0];
+    virtual pipeline_dp_if                  vif                     ;
+    mailbox                                 drv_mbx                 ;
+    event                                   drv_done                ;
+    logic   [`THREAD_IDX_WIDTH-1:0]         thread_sel              ;
+    logic   [`THREAD_NUM-1:0][`XLEN-1:0]    pc                      ;
+    logic   [`XLEN-1:0]                     inst_pc                 ;
+    logic   [`XLEN-1:0]                     program_mem_addr        ;
+    logic   [64-1:0]                        program_mem_data        ;
+    logic   [64-1:0]                        program_mem     [`MEM_64BIT_LINES-1:0];
 
     task run();
         $display("T=%0t [Driver] starting ...", $time);
 
-        pc  =   0;
+        for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+            pc[thread_idx]  =   thread_idx * 'h100;
+        end
+        thread_sel  =   0;
+
         @(negedge vif.clk_i);
 
         $display("T=%0t [Driver] Reading program.mem", $time);
-        $readmemh("program.mem", program_mem);
-
-        // for (int unsigned addr = 0; addr < `MEM_64BIT_LINES; addr++) begin
-        //     $display("addr=%0d\tdata=%16h", addr, program_mem[addr]);
-        // end
+        $readmemh("program_smt.mem", program_mem);
 
         forever begin
-            gen_item    item    ;
-            
-            $display("T=%0t [Driver] waiting for item from Generator ...", $time);
+            gen_item    item;
             drv_mbx.get(item);
 
-            // item.print("[Driver]");
-
-            // Fetch Instructions
-            // $display("T=%0t [Driver] Feeding instructions", $time);
-
-            // vif.fiq_dp.avail_num =   $urandom % (`DP_NUM + 1);
 
             /////////////////////////////////////////////////////////////////////////
             vif.fiq_dp.avail_num =   `DP_NUM;
             for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
-                vif.fiq_dp.thread_idx[dp_idx] = 1;
+                vif.fiq_dp.thread_idx[dp_idx] = thread_sel;
             end
             /////////////////////////////////////////////////////////////////////////
 
             for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
-                inst_pc                 =   pc + dp_idx * 4;
+                inst_pc                 =   pc[thread_sel] + dp_idx * 4;
                 program_mem_addr        =   {3'b0, inst_pc[`XLEN-1:3]};
                 program_mem_data        =   program_mem[program_mem_addr];
                 vif.fiq_dp.pc[dp_idx]   =   inst_pc;
@@ -71,28 +64,26 @@ class driver;
             /////////////////////////////////////////////////////////////////////////
             //Move PC
             @(posedge vif.clk_i);
-            if (vif.rst_i) begin
-                pc  =   0;
-            end else if (vif.br_mis_mon_o.valid[0]) begin
-                pc  =   vif.br_mis_mon_o.br_target[0];
-            end else begin
-                pc  =   pc + vif.dp_fiq.dp_num * 4;
+            for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+                if (vif.rst_i) begin
+                    pc[thread_idx]  =   thread_idx * 'h100;
+                end else if (vif.br_mis_mon_o.valid[thread_idx]) begin
+                    pc[thread_idx]  =   vif.br_mis_mon_o.br_target[thread_idx];
+                end else if (thread_sel == thread_idx) begin
+                    pc[thread_idx]  =   pc[thread_idx] + vif.dp_fiq.dp_num * 4;
+                end
             end
             /////////////////////////////////////////////////////////////////////////
 
-            $display("T=%0t [Driver] PC=%0d, dp_num=%0d", $time, pc, vif.dp_fiq.dp_num);
+            $display("T=%0t [Driver] PC=%0h, dp_num=%0d", $time, pc, vif.dp_fiq.dp_num);
 
             @(negedge vif.clk_i);
             vif.fiq_dp      =   0;
             vif.exception_i =   0;
+            thread_sel      =   thread_sel + 'd1;
             ->drv_done;
         end
     endtask // run()
-
-    task init();
-        $display("T=%0t [Driver] Reading program.mem", $time);
-        $readmemh("../program.mem", program_mem);
-    endtask
 
 endclass //
 // ====================================================================
@@ -111,74 +102,92 @@ endclass //
 // Monitor Start
 // ====================================================================
 class monitor;
-    virtual pipeline_dp_if  vif         ;
-    mailbox                 scb_mbx     ;
-    logic   [`XLEN-1:0]     wfi_pc      ;
-    int                     wb_fileno   ;
+    virtual pipeline_dp_if      vif                             ;
+    mailbox                     scb_mbx                         ;
+    logic   [`XLEN-1:0]         wfi_pc      [`THREAD_NUM-1:0]   ;
+    int                         wb_fileno   [`THREAD_NUM-1:0]   ;
+    string                      wb_filename                     ;
+    logic   [`THREAD_NUM-1:0]   wfi_flag                        ;
 
     task run();
         $display("T=%0t [Monitor] starting ...", $time);
         
         // Open writeback.out
-        wb_fileno = $fopen("writeback.out");
+        for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+            wb_filename             =   {"writeback_t", (thread_idx + 'd48), ".out"};
+            wb_fileno[thread_idx]   =   $fopen(wb_filename);
+        end
 
         // Initialize wfi_pc
-        wfi_pc  =   32'hFFFFFFFF;
+        for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+            wfi_pc[thread_idx]      =   32'hFFFFFFFF;
+            wfi_flag[thread_idx]    =   1'b0        ;
+        end
+
+        // wfi_flag[1] =   1'b1;
 
         forever begin
             @(posedge vif.clk_i);
             // If the first WFI instruction is dispatched, record its PC
             // wfi_pc is used to compare with the PC retired.
             // Testbench calls $finish if the retired PC match wfi_pc
-            if (wfi_pc == 32'hFFFFFFFF) begin
-                for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
-                    if (dp_idx < vif.dp_rs_mon_o.dp_num 
-                    && vif.dp_rs_mon_o.dec_inst[dp_idx].halt == `TRUE) begin
-                        wfi_pc  =   vif.dp_rs_mon_o.dec_inst[dp_idx].pc;
-                    end
-                end
-            end
-
-            for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-                print_rob(vif.rob_mon_o[thread_idx], vif.rob_head_mon_o[thread_idx], vif.rob_tail_mon_o[thread_idx]);
-                // print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
-                // print_mt(vif.mt_mon_o);
-                // print_amt(vif.amt_mon_o);
-                // print_prf(vif.prf_mon_o);
-                // print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
-                // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
-                // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
-                print_fl(vif.fl_mon_o[thread_idx]);
-                //print_vfl(vif.vfl_fl_mon_o);
-                // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
-                // print_cdb(vif.cdb_mon_o);
-                // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
-            end
-
-            // Monitor Retire
-            for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
-                // Record write back of every retire to writeback.out
-                if (vif.rt_valid_o[rt_idx]) begin
-                    for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-                        if ((vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg != `ZERO_REG)
-                        && (vif.rob_amt_mon_o[thread_idx][rt_idx].wr_en == 1'b1)) begin
-                            $fdisplay(wb_fileno, "PC=%x, REG[%d]=%x",
-                                vif.rt_pc_o[rt_idx],
-                                vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg,
-                                vif.prf_mon_o[vif.rob_amt_mon_o[thread_idx][rt_idx].phy_reg]);
-                        end else begin
-					        $fdisplay(wb_fileno, "PC=%x, ---", vif.rt_pc_o[rt_idx]);
+            for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+                if (wfi_pc[thread_idx] == 32'hFFFFFFFF) begin
+                    for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
+                        if (dp_idx < vif.dp_rs_mon_o.dp_num 
+                        && vif.dp_rs_mon_o.dec_inst[dp_idx].halt == `TRUE
+                        && vif.dp_rs_mon_o.dec_inst[dp_idx].thread_idx == thread_idx) begin
+                            wfi_pc[thread_idx]  =   vif.dp_rs_mon_o.dec_inst[dp_idx].pc;
                         end
                     end
                 end
+            end
 
-                // Check if the retired PC matches wfi_pc.
-                // If matched, exit.
-                if (vif.rt_valid_o[rt_idx]
-                && vif.rt_pc_o[rt_idx] == wfi_pc) begin
-                    $display("T=%0t [Monitor] WFI instruction retired at PC=%0d, exit program", $time, wfi_pc);
-                    $finish;
+            $display("%0d", vif.fiq_dp.avail_num);
+            print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
+            print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
+            print_mt(vif.mt_mon_o);
+            print_amt(vif.amt_mon_o);
+            print_prf(vif.prf_mon_o);
+            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
+            // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
+            // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
+            print_fl(vif.fl_mon_o);
+            //print_vfl(vif.vfl_fl_mon_o);
+            // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
+            print_cdb(vif.cdb_mon_o);
+            // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
+
+            // Monitor Retire
+            for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+                for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
+                // Record write back of every retire to writeback.out
+                    if (vif.rt_valid_o[thread_idx][rt_idx]) begin
+                        if ((vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg != `ZERO_REG)
+                        && (vif.rob_amt_mon_o[thread_idx][rt_idx].wr_en == 1'b1)) begin
+                            $fdisplay(wb_fileno[thread_idx], "PC=%x, REG[%d]=%x",
+                                (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100),
+                                vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg,
+                                vif.prf_mon_o[vif.rob_amt_mon_o[thread_idx][rt_idx].phy_reg]);
+                        end else begin
+                            $fdisplay(wb_fileno[thread_idx], "PC=%x, ---", 
+                            (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100));
+                        end
+                    end
+
+                    // Check if the retired PC matches wfi_pc.
+                    // If matched, exit.
+                    if (vif.rt_valid_o[thread_idx][rt_idx]
+                    && vif.rt_pc_o[thread_idx][rt_idx] == wfi_pc[thread_idx]) begin
+                        wfi_flag[thread_idx]    =   1'b1;
+                        $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, exit thread %0d", $time, wfi_pc[thread_idx], thread_idx);
+                    end
                 end
+            end
+
+            if (&wfi_flag == 1) begin
+                $display("All the threads are completed. exit program.");
+                $finish;
             end
         end
     endtask
@@ -189,12 +198,11 @@ class monitor;
         logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]    rob_tail_mon
     );
         for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-            $display("T=%0t ROB Contents", $time);
-            $display("thread_idx=%0d", thread_idx);
+            $display("T=%0t ROB[%0d] Contents", $time, thread_idx);
             $display("head=%0d, tail=%0d", rob_head_mon[thread_idx], rob_tail_mon[thread_idx]);
             $display("Index\t|valid\t|PC\t|rd\t|told\t|tag\t|br_predict\t|br_result\t|br_target\t|complete");      
             for (int entry_idx = 0; entry_idx < `ROB_ENTRY_NUM; entry_idx++) begin
-                $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t\t|%0d\t\t|%0d\t\t|%0d",
+                $display("%0d\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t\t|%0d\t\t|%0d\t\t|%0d",
                 entry_idx                                   ,
                 rob_mon[thread_idx][entry_idx].valid        ,
                 rob_mon[thread_idx][entry_idx].pc           ,
@@ -237,7 +245,7 @@ class monitor;
             end else begin
                 op_string   =   "-";
             end
-            $display("%0d\t|%s\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d",
+            $display("%0d\t|%s\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d",
             entry_idx                               ,
             op_string                               ,
             rs_mon[entry_idx].valid                 ,
@@ -254,8 +262,7 @@ class monitor;
 
     function void print_mt(MT_ENTRY [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0] mt_mon);
         for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-            $display("T=%0t MT Contents", $time);
-            $display("thread_idx=%0d", thread_idx);
+            $display("T=%0t MT[%0d] Contents", $time, thread_idx);
             $display("arch\t|tag\t|ready\t|arch\t|tag\t|ready\t");
             for (int arch_idx = 0; arch_idx < `ARCH_REG_NUM/2; arch_idx++) begin
                 $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
@@ -267,8 +274,7 @@ class monitor;
 
     function void print_amt(AMT_ENTRY [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0] amt_mon);
         for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-            $display("T=%0t AMT Contents", $time);
-            $display("thread_idx=%0d", thread_idx);
+            $display("T=%0t AMT[%0d] Contents", $time, thread_idx);
             $display("arch\t|tag\t|arch\t|tag\t|arch\t|tag\t|arch\t|tag\t");
             for (int arch_idx = 0; arch_idx < `ARCH_REG_NUM/4; arch_idx++) begin
                 $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
@@ -291,7 +297,7 @@ class monitor;
         $display("head=%0d, tail=%0d", ALU_head_mon, ALU_tail_mon);
         $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
         for (int entry_idx = 0; entry_idx < `ALU_Q_SIZE; entry_idx++) begin
-            $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+            $display("%0d\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t", 
             entry_idx,
             ALU_valid_mon[entry_idx],
             ALU_queue_mon[entry_idx].pc,
@@ -313,7 +319,7 @@ class monitor;
         $display("head=%0d, tail=%0d", MULT_head_mon, MULT_tail_mon);
         $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
         for (int entry_idx = 0; entry_idx < `MULT_Q_SIZE; entry_idx++) begin
-            $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+            $display("%0d\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t", 
             entry_idx,
             MULT_valid_mon[entry_idx],
             MULT_queue_mon[entry_idx].pc,
@@ -335,7 +341,7 @@ class monitor;
         $display("head=%0d, tail=%0d", BR_head_mon, BR_tail_mon);
         $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
         for (int entry_idx = 0; entry_idx < `BR_Q_SIZE; entry_idx++) begin
-            $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+            $display("%0d\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t", 
             entry_idx,
             BR_valid_mon[entry_idx],
             BR_queue_mon[entry_idx].pc,
@@ -362,14 +368,15 @@ class monitor;
 
     function void print_fl(FL_ENTRY [`FL_ENTRY_NUM-1:0] fl_mon);
         $display("T=%0t FL Contents", $time);
-        $display("Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t");
+        $display("Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t|Index\t|Tag\t|TID\t|valid\t");
         // $display("%0d", `FL_ENTRY_NUM/4);
-        for (int fl_idx = 0; fl_idx < `FL_ENTRY_NUM/4; fl_idx++) begin
-            $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+        for (int fl_idx = 0; fl_idx < `FL_ENTRY_NUM/5; fl_idx++) begin
+            $display("%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t", 
             fl_idx, fl_mon[fl_idx].tag, fl_mon[fl_idx].thread_idx, fl_mon[fl_idx].valid,
-            fl_idx+`FL_ENTRY_NUM/4, fl_mon[fl_idx+`FL_ENTRY_NUM/4].tag, fl_mon[fl_idx+`FL_ENTRY_NUM/4].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM/4].valid,
-            fl_idx+`FL_ENTRY_NUM/2, fl_mon[fl_idx+`FL_ENTRY_NUM/2].tag, fl_mon[fl_idx+`FL_ENTRY_NUM/2].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM/2].valid,
-            fl_idx+`FL_ENTRY_NUM*3/4, fl_mon[fl_idx+`FL_ENTRY_NUM*3/4].tag, fl_mon[fl_idx+`FL_ENTRY_NUM*3/4].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM*3/4].valid);
+            fl_idx+`FL_ENTRY_NUM/5, fl_mon[fl_idx+`FL_ENTRY_NUM/5].tag, fl_mon[fl_idx+`FL_ENTRY_NUM/5].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM/5].valid,
+            fl_idx+`FL_ENTRY_NUM*2/5, fl_mon[fl_idx+`FL_ENTRY_NUM*2/5].tag, fl_mon[fl_idx+`FL_ENTRY_NUM*2/5].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM*2/5].valid,
+            fl_idx+`FL_ENTRY_NUM*3/5, fl_mon[fl_idx+`FL_ENTRY_NUM*3/5].tag, fl_mon[fl_idx+`FL_ENTRY_NUM*3/5].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM*3/5].valid,
+            fl_idx+`FL_ENTRY_NUM*4/5, fl_mon[fl_idx+`FL_ENTRY_NUM*4/5].tag, fl_mon[fl_idx+`FL_ENTRY_NUM*4/5].thread_idx, fl_mon[fl_idx+`FL_ENTRY_NUM*3/5].valid);
         end
     endfunction
 
@@ -415,7 +422,7 @@ class monitor;
 
     function void print_cdb(CDB [`CDB_NUM-1:0] cdb_mon);
         for (int cp_idx = 0; cp_idx < `CDB_NUM; cp_idx++) begin
-            $display("T=%0t CDB[%0d] valid=%0d, pc=%0d, tag=%0d, rob_idx=%0d, thread_idx=%0d, br_result=%0d, br_traget=%0d",
+            $display("T=%0t CDB[%0d] valid=%0d, pc=%0h, tag=%0d, rob_idx=%0d, thread_idx=%0d, br_result=%0d, br_traget=%0d",
                 $time, cp_idx, 
                 cdb_mon[cp_idx].valid     ,
                 cdb_mon[cp_idx].pc        ,
@@ -437,7 +444,7 @@ class monitor;
         for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
             $display("thread_idx=%0d", thread_idx);
             for (int rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
-                $display("T=%0t RT[%0d] valid=%0d, pc=%0d, rd=%0d, tag=%0d, told=%0d, rd_value=%0d",
+                $display("T=%0t RT[%0d] valid=%0d, pc=%0h, rd=%0d, tag=%0d, told=%0d, rd_value=%0d",
                     $time, rt_idx, 
                     rt_valid[rt_idx]                        ,
                     rt_pc[rt_idx]                           ,
@@ -461,15 +468,15 @@ endclass
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   1000;
+    int     num     =   200;
 
     task run();
         for (int i = 0; i < num; i++) begin
             gen_item item   =   new;
             item.randomize();
-            $display("T=%0t [Generator] Loop:%0d/%0d create next item",
-                    $time, i+1, num);
-            item.print("[Generator]");
+            // $display("T=%0t [Generator] Loop:%0d/%0d create next item",
+            //         $time, i+1, num);
+            // item.print("[Generator]");
             drv_mbx.put(item);
             @(drv_done);
         end
@@ -568,8 +575,8 @@ interface pipeline_dp_if (input bit clk_i);
     FU_BC                                               fu_bc_mon_o         ;   // From FU to BC
     CDB         [`CDB_NUM-1:0]                          cdb_mon_o           ;   // CDB
     //      Retire
-    logic       [`RT_NUM-1:0][`XLEN-1:0]                rt_pc_o             ;   // PC of retired instructions
-    logic       [`RT_NUM-1:0]                           rt_valid_o          ;   // Retire valid
+    logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]   rt_pc_o             ;   // PC of retired instructions
+    logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]              rt_valid_o          ;   // Retire valid
     ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]          rob_amt_mon_o       ;   // From ROB to AMT
     ROB_FL      [`THREAD_NUM-1:0]                       rob_fl_mon_o        ;   // From ROB to FL
     //ROB_VFL                                           rob_vfl_mon_o       ;   // From ROB to VFL
@@ -582,7 +589,7 @@ interface pipeline_dp_if (input bit clk_i);
     logic       [$clog2(`RS_ENTRY_NUM)-1:0]             rs_cod_mon_o        ;
     MT_ENTRY    [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]    mt_mon_o            ;   // Map Table contents monitor
     AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]    amt_mon_o           ;  // Arch Map Table contents monitor
-    FL_ENTRY    [`THREAD_NUM-1:0][`FL_ENTRY_NUM-1:0]    fl_mon_o            ;   // Freelist contents monitor
+    FL_ENTRY    [`FL_ENTRY_NUM-1:0]                     fl_mon_o            ;   // Freelist contents monitor
     //logic       [`FL_IDX_WIDTH-1:0]                   fl_head_mon_o       ;
     //logic       [`FL_IDX_WIDTH-1:0]                   fl_tail_mon_o       ;
     //FL_ENTRY    [`FL_ENTRY_NUM-1:0]                   vfl_fl_mon_o        ;

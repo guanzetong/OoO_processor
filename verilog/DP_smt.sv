@@ -137,12 +137,24 @@ module DP_smt # (
 // ====================================================================
 
 // --------------------------------------------------------------------
-//  actual number of dispatched instructions known as the comparator
+// The thread to dispatch during the current cycle
+// --------------------------------------------------------------------  
+    always_comb begin
+        thread_sel  =   fiq_dp_i.thread_idx[0];
+    end//comb
+
+
+// --------------------------------------------------------------------
+// Route the tags from Freelist to those instructions with rd != ZERO_REG
+// --------------------------------------------------------------------  
+    always_comb begin
+        fl_route    =   route(dp_num);
+    end//comb
+
+// --------------------------------------------------------------------
+//  Actual number of dispatched instructions known as the comparator
 // --------------------------------------------------------------------
     always_comb begin
-
-        thread_sel = fiq_dp_i.thread_idx[0];
-
         // calculates the actual minum number of dispatched entries.
         if (rob_dp_i[thread_sel].avail_num < fiq_dp_i.avail_num) begin 
             comp_1  =   rob_dp_i[thread_sel].avail_num  ;   
@@ -173,74 +185,99 @@ module DP_smt # (
     end//comb
 
 // --------------------------------------------------------------------
-// get what RS needs without decoder to update in the DEC_INST
-// get tags renewed from fl needs consider OoO
+// DP_FIQ
 // --------------------------------------------------------------------  
     always_comb begin
-        fl_route    =    route(dp_num);
+        dp_fiq_o    =   legal_dp_num    ;
+    end
 
-        // Default
-        dp_fiq_o    =   'b0     ;
-        dp_mt_o     =   'b0     ;
+// --------------------------------------------------------------------
+// DP_MT
+// --------------------------------------------------------------------  
+    always_comb begin
+        dp_mt_o =   'b0;
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            if (thread_idx == thread_sel) begin
+                for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
+                    if (dp_idx < dp_num) begin
+                        dp_mt_o[thread_idx][dp_idx].wr_en   =   1'b1;
+                    end else begin
+                        dp_mt_o[thread_idx][dp_idx].wr_en   =   1'b0;
+                    end
+                    dp_mt_o[thread_idx][dp_idx].thread_idx  =   fiq_dp_i.thread_idx[dp_idx]     ;
+                    dp_mt_o[thread_idx][dp_idx].rd          =   dec_rd [dp_idx]                 ;
+                    dp_mt_o[thread_idx][dp_idx].rs1         =   dec_rs1[dp_idx]                 ;
+                    dp_mt_o[thread_idx][dp_idx].rs2         =   dec_rs2[dp_idx]                 ;
+                    if(dp_mt_o[thread_idx][dp_idx].rd == `ZERO_REG)begin
+                        dp_mt_o[thread_idx][dp_idx].tag     =   `ZERO_REG                       ;
+                    end else begin
+                        dp_mt_o[thread_idx][dp_idx].tag     =   fl_dp_i.tag[fl_route[dp_idx]]   ;
+                    end//if-else
+                end
+            end 
+        end
+    end
+
+// --------------------------------------------------------------------
+// DP_RS
+// --------------------------------------------------------------------  
+    always_comb begin
+        dp_rs_o.dp_num  =   legal_dp_num    ;
+        for(int dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
+            // DP_RS
+            //  The rest of the signals are directly assigned in Decoder
+            dp_rs_o.dec_inst[dp_idx].pc            =   fiq_dp_i.pc[dp_idx]                      ;
+            dp_rs_o.dec_inst[dp_idx].inst          =   fiq_dp_i.inst[dp_idx]                    ;
+            dp_rs_o.dec_inst[dp_idx].tag1          =   mt_dp_i[thread_sel][dp_idx].tag1         ;
+            dp_rs_o.dec_inst[dp_idx].tag1_ready    =   mt_dp_i[thread_sel][dp_idx].tag1_ready   ;
+            dp_rs_o.dec_inst[dp_idx].tag2          =   mt_dp_i[thread_sel][dp_idx].tag2         ; 
+            dp_rs_o.dec_inst[dp_idx].tag2_ready    =   mt_dp_i[thread_sel][dp_idx].tag2_ready   ;
+            dp_rs_o.dec_inst[dp_idx].thread_idx    =   fiq_dp_i.thread_idx[dp_idx]              ;
+            dp_rs_o.dec_inst[dp_idx].rob_idx       =   rob_dp_i[thread_sel].rob_idx[dp_idx]     ;
+            if(dp_mt_o[thread_sel][dp_idx].rd == `ZERO_REG)begin
+                dp_rs_o.dec_inst[dp_idx].tag      =   `ZERO_REG   ;
+            end else begin
+                dp_rs_o.dec_inst[dp_idx].tag      =   fl_dp_i.tag[fl_route[dp_idx]]  ;
+            end//if-else
+        end
+    end
+
+
+// --------------------------------------------------------------------
+// DP_ROB
+// --------------------------------------------------------------------  
+    always_comb begin
         dp_rob_o    =   'b0     ;
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            if (thread_idx == thread_sel) begin
+                dp_rob_o[thread_idx].dp_num =   legal_dp_num    ;
+                for(int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
+                    dp_rob_o[thread_idx].tag_old[dp_idx]    =   mt_dp_i[thread_idx][dp_idx].tag_old ;
+                    dp_rob_o[thread_idx].br_predict[dp_idx] =   fiq_dp_i.br_predict[dp_idx]         ;
+                    dp_rob_o[thread_idx].pc[dp_idx]         =   fiq_dp_i.pc[dp_idx]                 ;
+                    dp_rob_o[thread_idx].rd[dp_idx]         =   dp_mt_o[thread_idx][dp_idx].rd      ;
+                    if(dp_mt_o[thread_idx][dp_idx].rd == `ZERO_REG)begin
+                        dp_rob_o[thread_idx].tag[dp_idx]    =   `ZERO_REG   ;
+                    end else begin
+                        dp_rob_o[thread_idx].tag[dp_idx]    =   fl_dp_i.tag[fl_route[dp_idx]]   ;
+                    end//if-else
+                end
+            end
+        end
+    end
 
-        // Dispatch Number
-        dp_fiq_o.dp_num             =   legal_dp_num    ;
-        dp_rob_o[thread_sel].dp_num =   legal_dp_num    ;
-        dp_rs_o.dp_num              =   legal_dp_num    ;
-        dp_fl_o.dp_num              =   legal_dp_num    ;
-        for (int idx = 0; idx < C_DP_NUM; idx++) begin
-            if((idx < legal_dp_num) && (dp_mt_o[thread_sel][idx].rd == `ZERO_REG))begin
+// --------------------------------------------------------------------
+// DP_FL
+// --------------------------------------------------------------------  
+    always_comb begin
+        dp_fl_o.thread_idx  =   fiq_dp_i.thread_idx[0]  ;
+        dp_fl_o.dp_num      =   legal_dp_num            ;
+        for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
+            if((dp_idx < legal_dp_num) && (dp_mt_o[thread_sel][dp_idx].rd == `ZERO_REG))begin
                 dp_fl_o.dp_num-- ;
             end//if    
         end//for
-
-        // Other interface
-        for(int idx = 0; idx < C_DP_NUM; idx++)begin
-            // DP_RS
-            //  The rest of the signals are directly assigned in Decoder
-            dp_rs_o.dec_inst[idx].pc            =   fiq_dp_i.pc[idx]          ;
-            dp_rs_o.dec_inst[idx].inst          =   fiq_dp_i.inst[idx]        ;
-            dp_rs_o.dec_inst[idx].tag1          =   mt_dp_i[thread_sel][idx].tag1         ;
-            dp_rs_o.dec_inst[idx].tag1_ready    =   mt_dp_i[thread_sel][idx].tag1_ready   ;
-            dp_rs_o.dec_inst[idx].tag2          =   mt_dp_i[thread_sel][idx].tag2         ; 
-            dp_rs_o.dec_inst[idx].tag2_ready    =   mt_dp_i[thread_sel][idx].tag2_ready   ;
-            dp_rs_o.dec_inst[idx].thread_idx    =   fiq_dp_i.thread_idx[idx]  ;
-            dp_rs_o.dec_inst[idx].rob_idx       =   rob_dp_i[thread_sel].rob_idx[idx]     ;
-
-            // DP_MT
-            if (idx < dp_num) begin
-                dp_mt_o[thread_sel][idx].wr_en    =   1'b1;
-            end else begin
-                dp_mt_o[thread_sel][idx].wr_en    =   1'b0;
-            end
-            dp_mt_o[thread_sel][idx].thread_idx   =   fiq_dp_i.thread_idx[idx]   ;
-            dp_mt_o[thread_sel][idx].rd           =   dec_rd    ;
-            dp_mt_o[thread_sel][idx].rs1          =   dec_rs1   ;
-            dp_mt_o[thread_sel][idx].rs2          =   dec_rs2   ;
-            //mt doesn't really need thread_id.
-
-            //DP_FL
-            dp_fl_o.thread_idx   =   fiq_dp_i.thread_idx[0]   ;
-
-            // DP_ROB
-            dp_rob_o[thread_sel].tag_old[idx]       =   mt_dp_i[thread_sel][idx].tag_old    ;
-            dp_rob_o[thread_sel].br_predict[idx]    =   fiq_dp_i.br_predict[idx]            ;   
-            dp_rob_o[thread_sel].pc[idx]            =   fiq_dp_i.pc[idx]                    ;
-            dp_rob_o[thread_sel].rd[idx]            =   dp_mt_o[thread_sel][idx].rd         ;
-
-            // Free List routing
-            if(dp_mt_o[thread_sel][idx].rd == `ZERO_REG)begin
-                dp_rs_o.dec_inst[idx].tag      =   `ZERO_REG   ;
-                dp_rob_o[thread_sel].tag[idx]  =   `ZERO_REG   ;
-                dp_mt_o[thread_sel][idx].tag   =   `ZERO_REG   ;
-            end else begin
-                dp_rs_o.dec_inst[idx].tag      =   fl_dp_i.tag[fl_route[idx]]  ;
-                dp_rob_o[thread_sel].tag[idx]  =   fl_dp_i.tag[fl_route[idx]]  ;
-                dp_mt_o[thread_sel][idx].tag   =   fl_dp_i.tag[fl_route[idx]]  ;
-            end//if-else
-        end//for
-    end//comb
+    end
 
 // ====================================================================
 // RTL Logic End
@@ -327,6 +364,10 @@ module decoder#(
         opa_select  =   OPA_IS_RS1  ;
         opb_select  =   OPB_IS_RS2  ;
         alu_func    =   ALU_ADD     ;
+
+        rd_select   =   RD_NONE     ;
+        rs1_select  =   RS1_NONE    ;
+        rs2_select  =   RS2_NONE    ;
  
         rd_mem      =   `FALSE      ; // ALU=`TRUE
         wr_mem      =   `FALSE      ; // ALU=`TRUE
