@@ -39,10 +39,79 @@
 // float to integer conversion is rounding to nearest
 
 typedef union packed {
-    logic [7:0][7:0] byte_level;
+    logic [7:0][7:0]  byte_level;
     logic [3:0][15:0] half_level;
     logic [1:0][31:0] word_level;
 } EXAMPLE_CACHE_BLOCK;
+
+//////////////////////////////////////////////
+// 
+// Architecture Parameters
+// 
+//////////////////////////////////////////////
+`define FETCH_NUM       8   // The number of fetch channels.
+`define IF_NUM          16  // The number of instructions buffered.
+`define DP_NUM          2   // The number of Dispatch channels.
+`define IS_NUM          2   // The number of Issue channels.
+`define CDB_NUM         2   // The number of CDB/Complete channels.
+`define RT_NUM          2   // The number of Retire channels.
+`define ROB_ENTRY_NUM   32  // The number of ROB entries.
+`define RS_ENTRY_NUM    16	// The number of RS entries.
+`define ARCH_REG_NUM    32  // The number of Architectural registers.
+`define PHY_REG_NUM     64  // The number of Physical registers.
+`define FL_ENTRY_NUM    (`PHY_REG_NUM - `ARCH_REG_NUM)
+`define THREAD_NUM      2
+
+`define ALU_NUM         3
+`define MULT_NUM        2
+`define BR_NUM          1
+`define LOAD_NUM        1
+`define STORE_NUM       1
+`define FU_NUM          (`ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM)
+
+`define ALU_CYCLE       1
+`define MULT_CYCLE      3
+`define BR_CYCLE        1
+
+`define ALU_Q_SIZE      8
+`define MULT_Q_SIZE     8
+`define BR_Q_SIZE       8
+`define LOAD_Q_SIZE     8
+`define STORE_Q_SIZE    8
+
+`define CACHE_SIZE          256     // The capacity of cache in bytes.
+`define CACHE_BLOCK_SIZE    8       // The number of bytes in a block
+`define CACHE_SASS          2       // Set associativity.
+`define C_MSHR_ENTRY_NUM    16      // The number of entries in the MSHR.
+
+//////////////////////////////////////////////
+// 
+// Signal width
+// 
+//////////////////////////////////////////////
+`define IF_IDX_WIDTH        $clog2(`IF_NUM)
+
+`define IF_NUM_WIDTH        $clog2(`IF_NUM+1)
+`define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
+`define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
+
+`define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
+`define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
+`define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
+`define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
+`define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
+`define FL_IDX_WIDTH        $clog2(`FL_ENTRY_NUM)
+
+`define ALU_IDX_WIDTH       $clog2(`ALU_Q_SIZE  )
+`define MULT_IDX_WIDTH      $clog2(`MULT_Q_SIZE )
+`define BR_IDX_WIDTH        $clog2(`BR_Q_SIZE   )
+`define LOAD_IDX_WIDTH      $clog2(`LOAD_Q_SIZE )
+`define STORE_IDX_WIDTH     $clog2(`STORE_Q_SIZE)
+
+`define CACHE_OFFSET_WIDTH  $clog2(`CACHE_BLOCK_SIZE)
+`define CACHE_IDX_WIDTH     $clog2(`CACHE_SIZE / `CACHE_BLOCK_SIZE / `CACHE_SET_ASS)
+`define CACHE_TAG_WIDTH     (`XLEN - `CACHE_IDX_WIDTH - `CACHE_OFFSET_WIDTH)
+`define MSHR_IDX_WIDTH      $clog2(`MSHR_ENTRY_NUM)
 
 //////////////////////////////////////////////
 // Exception codes
@@ -99,14 +168,6 @@ typedef enum logic [3:0] {
     OPB_IS_U_IMM  = 4'h4,
     OPB_IS_J_IMM  = 4'h5
 } ALU_OPB_SELECT;
-
-//
-// Destination register select
-//
-typedef enum logic [1:0] {
-    DEST_RD = 2'h0,
-    DEST_NONE  = 2'h1
-} DEST_REG_SEL;
 
 //
 // ALU function code input
@@ -177,6 +238,8 @@ typedef enum logic [1:0] {
 
 // RISCV ISA SPEC
 `define XLEN 32
+`define XLEN_BYTES  `XLEN >> 3
+
 typedef union packed {
     logic [31:0] inst;
     struct packed {
@@ -221,7 +284,7 @@ typedef union packed {
         logic       of; //offset[20]
         logic [9:0] et; //offset[10:1]
         logic       s;  //offset[11]
-        logic [7:0] f;	//offset[19:12]
+        logic [7:0] f;  //offset[19:12]
         logic [4:0] rd; //dest
         logic [6:0] opcode;
     } j;  //jump instructions
@@ -255,122 +318,61 @@ typedef union packed {
 //
 `define NOP 32'h00000013
 
-//////////////////////////////////////////////
-//
-// IF Packets:
-// Data that is exchanged between the IF and the ID stages  
-//
-//////////////////////////////////////////////
+typedef enum logic [1:0] {
+	RD_USED  = 2'h0,
+	RD_NONE  = 2'h1
+} RD_SEL;
 
-typedef struct packed {
-    logic valid; // If low, the data in this struct is garbage
-    INST  inst;  // fetched instruction out
-    logic [`XLEN-1:0] NPC; // PC + 4
-    logic [`XLEN-1:0] PC;  // PC 
-} IF_ID_PACKET;
+typedef enum logic [1:0] {
+	RS1_USED  = 2'h0,
+	RS1_NONE  = 2'h1
+} RS1_SEL;
 
-//////////////////////////////////////////////
-//
-// ID Packets:
-// Data that is exchanged from ID to EX stage
-//
-//////////////////////////////////////////////
+typedef enum logic [1:0] {
+	RS2_USED  = 2'h0,
+	RS2_NONE  = 2'h1
+} RS2_SEL;
 
-typedef struct packed {
-    logic [`XLEN-1:0] NPC;   // PC + 4
-    logic [`XLEN-1:0] PC;    // PC
+typedef enum logic [1:0] {
+    REQ_NONE    =   2'h0    ,   // Do nothing
+    REQ_LOAD    =   2'h1    ,   // Load request from processor
+    REQ_STORE   =   2'h2    ,   // Store request from processor
+    REQ_MISS    =   2'h3        // Update request from miss handling
+} CACHE_REQ_CMD;
 
-    logic [`XLEN-1:0] rs1_value;    // reg A value                                  
-    logic [`XLEN-1:0] rs2_value;    // reg B value                                  
-                                                                                    
-    ALU_OPA_SELECT opa_select; // ALU opa mux select (ALU_OPA_xxx *)
-    ALU_OPB_SELECT opb_select; // ALU opb mux select (ALU_OPB_xxx *)
-    INST inst;                 // instruction
-    
-    logic [4:0] dest_reg_idx;  // destination (writeback) register index      
-    ALU_FUNC    alu_func;      // ALU function select (ALU_xxx *)
-    logic       rd_mem;        // does inst read memory?
-    logic       wr_mem;        // does inst write memory?
-    logic       cond_branch;   // is inst a conditional branch?
-    logic       uncond_branch; // is inst an unconditional branch?
-    logic       halt;          // is this a halt?
-    logic       illegal;       // is this instruction illegal?
-    logic       csr_op;        // is this a CSR operation? (we only used this as a cheap way to get return code)
-    logic       valid;         // is inst a valid instruction to be counted for CPI calculations?
-} ID_EX_PACKET;
-
-typedef struct packed {
-    logic [`XLEN-1:0] alu_result; // alu_result
-    logic [`XLEN-1:0] NPC; //pc + 4
-    logic             take_branch; // is this a taken branch?
-    //pass throughs from decode stage
-    logic [`XLEN-1:0] rs2_value;
-    logic             rd_mem, wr_mem;
-    logic [4:0]       dest_reg_idx;
-    logic             halt, illegal, csr_op, valid;
-    logic [2:0]       mem_size; // byte, half-word or word
-} EX_MEM_PACKET;
-
-`endif // __SYS_DEFS_VH__
+typedef enum logic [2:0] {
+    ST_IDLE         =   3'h0    ,
+    ST_DEPEND       =   3'h1    ,
+    ST_WAIT_EVICT   =   3'h2    ,
+    ST_RD_MEM       =   3'h3    ,
+    ST_WAIT_MEM     =   3'h4    ,
+    ST_UPDATE       =   3'h5    ,
+    ST_OUTPUT       =   3'h6    ,
+    ST_EVICT        =   3'h7    
+} MSHR_STATE;
 
 //////////////////////////////////////////////
 // 
-// Architecture Parameters
+// Entry contents struct
 // 
 //////////////////////////////////////////////
-`define IF_NUM          2
-`define DP_NUM          2  // The number of Dispatch channels.
-`define IS_NUM          2  // The number of Issue channels.
-`define CDB_NUM         2  // The number of CDB/Complete channels.
-`define RT_NUM          2  // The number of Retire channels.
-`define ROB_ENTRY_NUM   32  // The number of ROB entries.
-`define RS_ENTRY_NUM    16	// The number of RS entries.
-`define ARCH_REG_NUM    32  // The number of Architectural registers.
-`define PHY_REG_NUM     128 // The number of Physical registers.
-`define THREAD_NUM      2
-`define FL_ENTRY_NUM    (`PHY_REG_NUM - (`ARCH_REG_NUM - 1) * `THREAD_NUM - 1)
-
-`define ALU_NUM         3
-`define MULT_NUM        2
-`define BR_NUM          1
-`define LOAD_NUM        1
-`define STORE_NUM       1
-`define FU_NUM          (`ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM)
-
-`define ALU_CYCLE       1
-`define MULT_CYCLE      3
-`define BR_CYCLE        1
-
-`define ALU_Q_SIZE      8
-`define MULT_Q_SIZE     8
-`define BR_Q_SIZE       8
-`define LOAD_Q_SIZE     8
-`define STORE_Q_SIZE    8
-
-`define ALU_IDX_WIDTH   $clog2(`ALU_Q_SIZE  )
-`define MULT_IDX_WIDTH  $clog2(`MULT_Q_SIZE )
-`define BR_IDX_WIDTH    $clog2(`BR_Q_SIZE   )
-`define LOAD_IDX_WIDTH  $clog2(`LOAD_Q_SIZE )
-`define STORE_IDX_WIDTH $clog2(`STORE_Q_SIZE)
-
-//////////////////////////////////////////////
-// 
-// Interfaces between modules
-// 
-//////////////////////////////////////////////
-
-`define ARCH_REG_IDX_WIDTH  $clog2(`ARCH_REG_NUM)
-`define TAG_IDX_WIDTH       $clog2(`PHY_REG_NUM)
-`define ROB_IDX_WIDTH       $clog2(`ROB_ENTRY_NUM)
-`define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
-`define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
-`define FL_IDX_WIDTH        $clog2(`FL_ENTRY_NUM)
-`define ZERO_PREG           ({`TAG_IDX_WIDTH{1'b0}})
-
-`define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
-`define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
 
 // Array Entry Contents Start
+
+// Struct that holds both the PC and the 
+typedef struct packed {
+    INST                                inst                ;
+    logic   [`XLEN-1:0]                 pc                  ;
+} INST_PC;
+
+// Per-thread data structures.
+typedef struct packed {
+    logic   [`XLEN-1:0]                 PC_reg             ;
+    INST_PC [`IF_NUM-1:0]               inst_buff          ;           // Instruction buffer (remember doesn't have logic since we're using a user defined type)
+    logic   [`IF_NUM_WIDTH-1:0]         avail_size         ;           // Essentially size of buff where can fetch (used to indicate 
+    logic   [`IF_IDX_WIDTH:0]           hd_ptr             ;           // Points to the front of the queue (extra bit for wrapping around).
+    logic   [`IF_IDX_WIDTH:0]           tail_ptr           ;           // Points to the back of the queue.
+} CONTEXT;
 
 typedef struct packed {
     logic   [`XLEN-1:0]                 pc          ;
@@ -421,7 +423,6 @@ typedef struct packed {
 
 typedef struct packed {
     logic                               valid       ;
-    // ROB_DATA                            rob_data    ;
     logic   [`XLEN-1:0]                 pc          ;
     logic   [`ARCH_REG_IDX_WIDTH-1:0]   rd          ;
     logic   [`TAG_IDX_WIDTH-1:0]        tag_old     ;
@@ -433,8 +434,8 @@ typedef struct packed {
 } ROB_ENTRY;
 
 typedef struct packed {
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag          ;
-    logic                                           tag_ready    ;
+	logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
+    logic                               tag_ready   ;
 } MT_ENTRY; // Per-channel
 
 typedef struct packed {
@@ -442,8 +443,31 @@ typedef struct packed {
     DEC_INST                            dec_inst    ;
 } RS_ENTRY;
 
+typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]        amt_tag     ;
+} AMT_ENTRY;
+
+typedef struct packed {
+    MSHR_STATE                          state       ;
+    BUS_COMMAND                         cmd         ;
+    logic   [`XLEN-1:0]                 req_addr    ;
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]   req_data    ;
+    MEM_SIZE                            req_size    ;
+    logic   [`XLEN-1:0]                 evict_addr  ;
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]   evict_data  ;
+    logic                               evict_dirty ;
+    logic   [`MSHR_IDX_WIDTH-1:0]       link_idx    ;
+    logic                               linked      ;
+    logic   [4-1:0]                     mem_tag     ;
+} MSHR_ENTRY;
+
 // Array Entry Contents End
 
+//////////////////////////////////////////////
+// 
+// Module interface struct
+// 
+//////////////////////////////////////////////
 // Interface Start
 
 //  If an interface is marked as "Combined", no external dimension should
@@ -452,17 +476,17 @@ typedef struct packed {
 //  be defined at port instantiation as the number of channels.
 
 typedef struct packed {
-    logic   [`DP_NUM_WIDTH-1:0]                     dp_num      ;
-    logic   [`DP_NUM-1:0][`XLEN-1:0]                pc          ;
-    logic   [`DP_NUM-1:0][`ARCH_REG_IDX_WIDTH-1:0]  rd          ;
-    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag         ;
-    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag_old     ;
-    logic   [`DP_NUM-1:0]                           br_predict  ;
+    logic   [`DP_NUM_WIDTH-1:0]                     dp_num     ;
+    logic   [`DP_NUM-1:0][`XLEN-1:0]                pc         ;
+    logic   [`DP_NUM-1:0][`ARCH_REG_IDX_WIDTH-1:0]  rd         ;
+    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag        ;
+    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag_old    ;
+    logic   [`DP_NUM-1:0]                           br_predict ;
 } DP_ROB; // Combined
 
 typedef struct packed {
-    logic   [`DP_NUM_WIDTH-1:0]                     avail_num   ;
-    logic   [`DP_NUM-1:0][`ROB_IDX_WIDTH-1:0]       rob_idx     ;
+    logic   [`DP_NUM_WIDTH-1:0]                     avail_num  ;
+    logic   [`DP_NUM-1:0][`ROB_IDX_WIDTH-1:0]       rob_idx    ;
 } ROB_DP; // Combined
 
 typedef struct packed{
@@ -513,6 +537,16 @@ typedef struct packed {
     logic   [`DP_NUM_WIDTH-1:0]                     dp_num      ;
     logic	[`DP_NUM-1:0][`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
 } DP_FL; // Combined
+
+typedef struct packed {
+    logic [`THREAD_NUM-1:0][`XLEN-1:0]              addr            ;
+    logic [`THREAD_NUM-1:0][`IF_NUM_WIDTH-1:0]      inst_num_to_ft  ; // Number of instructions to fetch (obtain) relative to pc.
+} IF_IC;
+
+typedef struct packed {
+    logic [`THREAD_NUM-1:0][`IF_NUM-1:0][`XLEN-1:0] data            ;
+    logic [`THREAD_NUM-1:0][`IF_NUM_WIDTH-1:0]      inst_num_fted   ; // Number of instructions fetched relative to pc.
+} IC_IF;
 
 typedef struct packed {
     logic   [`DP_NUM_WIDTH-1:0]                     avail_num   ;
@@ -582,7 +616,7 @@ typedef struct packed {
 } FU_BC; // Per-Channel
 
 typedef struct packed {
-    logic                                           broadcasted       ;
+    logic                                           broadcasted ;
 } BC_FU; // Per-Channel
 
 typedef struct packed {
@@ -597,27 +631,10 @@ typedef struct packed {
 } BR_MIS; // Combined
 
 typedef struct packed {
-    logic   [`TAG_IDX_WIDTH-1:0]                    amt_tag      ;
-} AMT_ENTRY;
-
-typedef struct packed {
-    logic   [`TAG_IDX_WIDTH-1:0]                    amt_tag      ;
-} AMT_OUTPUT;
-
-typedef enum logic [1:0] {
-    RD_USED  = 2'h0,
-    RD_NONE  = 2'h1
-} RD_SEL;
-
-typedef enum logic [1:0] {
-    RS1_USED  = 2'h0,
-    RS1_NONE  = 2'h1
-} RS1_SEL;
-
-typedef enum logic [1:0] {
-    RS2_USED  = 2'h0,
-    RS2_NONE  = 2'h1
-} RS2_SEL;
+    logic                                           wr_en       ;
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;
+} ROB_VFL;  // Per-Channel
 
 typedef struct packed {
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
@@ -626,9 +643,35 @@ typedef struct packed {
 } FL_ENTRY;
 
 typedef struct packed {
-    logic                                           wr_en       ;
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;
-} ROB_VFL;  // Per-Channel
+    logic   [`XLEN-1:0]                             addr        ;
+    logic   [64-1:0]                                data        ;
+    MEM_SIZE                                        size        ;
+    BUS_COMMAND                                     command     ;
+} MEM_IN;
+
+typedef struct packed {
+    logic   [4-1:0]                                 response    ;
+    logic   [64-1:0]                                data        ;
+    logic   [4-1:0]                                 tag         ;
+} MEM_OUT;
+
+typedef struct packed {
+    // Request Interface
+    CACHE_REQ_CMD                                   req_cmd     ;   // Requested command.
+    logic   [`XLEN-1:0]                             req_addr    ;   // Requested address.
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]               req_data_in ;
+} CACHE_CTRL_MEM;
+
+typedef struct packed {
+    // Request Interface
+    logic                                           req_hit     ;
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]               req_data_out;
+    // Evict Interface
+    logic                                           evict_dirty ;
+    logic   [`XLEN-1:0]                             evict_addr  ;
+    logic   [`CACHE_BLOCK_SIZE*8-1:0]               evict_data  ;
+} CACHE_MEM_CTRL;
 
 // Interface End
+
+`endif // __SYS_DEFS_VH__

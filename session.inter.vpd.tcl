@@ -411,7 +411,7 @@ gui_get_drivers -session -id ${DriverLoad.1} -signal {pipeline_dp_tb.dut.FL_inst
 if {[gui_exist_window -window ${TopLevel.1}]} {
 	gui_set_active_window -window ${TopLevel.1}
 	gui_set_active_window -window ${Source.1}
-	gui_set_active_window -window ${DriverLoad.1}
+	gui_set_active_window -window ${HSPane.1}
 }
 if {[gui_exist_window -window ${TopLevel.2}]} {
 	gui_set_active_window -window ${TopLevel.2}

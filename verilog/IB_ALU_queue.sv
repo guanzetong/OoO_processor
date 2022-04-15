@@ -1,16 +1,16 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//  Modulename  :  IB_queue.sv                                         //
+//  Modulename  :  IB_ALU_queue.sv                                     //
 //                                                                     //
 //  Description :  Instruction Queue inside Issue Buffer. The depth    // 
 //                 is configurable.                                    //
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module IB_queue #(
-    parameter   C_SIZE      =   8           ,
-    parameter   C_IN_NUM    =   `IS_NUM     ,
-    parameter   C_OUT_NUM   =   `ALU_NUM    ,
+module IB_ALU_queue #(
+    parameter   C_SIZE      =   `ALU_Q_SIZE     ,
+    parameter   C_IN_NUM    =   `IS_NUM         ,
+    parameter   C_OUT_NUM   =   `ALU_NUM        ,
     parameter   C_IDX_WIDTH =   $clog2(C_SIZE)
 ) (
     input   logic                       clk_i           ,   // Clock
@@ -37,6 +37,7 @@ module IB_queue #(
 // Local Parameters Declarations Start
 // ====================================================================
     // localparam  C_IDX_WIDTH =   $clog2(C_SIZE);
+    localparam  C_NUM_WIDTH     =   $clog2(C_SIZE+1);
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -51,20 +52,21 @@ module IB_queue #(
 
     logic   [C_IDX_WIDTH-1:0]                   next_head       ;
     logic   [C_IDX_WIDTH-1:0]                   next_tail       ;
-    logic   [C_IDX_WIDTH:0]                     push_in_num     ;
-    logic   [C_IDX_WIDTH:0]                     pop_out_num     ;
+    logic   [C_NUM_WIDTH-1:0]                   push_in_num     ;
+    logic   [C_NUM_WIDTH-1:0]                   pop_out_num     ;
 
     IS_INST [C_SIZE-1:0]                        queue           ;
     logic   [C_SIZE-1:0]                        valid           ;
 
-    logic   [C_IDX_WIDTH:0]                     data_num        ;
-    logic   [C_IDX_WIDTH:0]                     empty_num       ;
+    logic   [C_NUM_WIDTH-1:0]                   data_num        ;
+    logic   [C_NUM_WIDTH-1:0]                   empty_num       ;
 
     logic   [C_IN_NUM-1:0]                      push_in_en      ;
     logic   [C_SIZE-1:0]                        push_in_sel     ;
     IS_INST [C_SIZE-1:0]                        push_in_switch  ;
     logic   [C_OUT_NUM-1:0]                     pop_out_en      ;
     logic   [C_SIZE-1:0]                        pop_out_sel     ;
+    logic   [C_OUT_NUM-1:0]                     squash_flag     ;
 
     logic   [C_IN_NUM-1:0][C_IDX_WIDTH-1:0]     push_in_idx     ;
     logic   [C_OUT_NUM-1:0][C_IDX_WIDTH-1:0]    pop_out_idx     ;
@@ -87,7 +89,7 @@ module IB_queue #(
 // --------------------------------------------------------------------
     always_comb begin
         push_in_num =   0;
-        for (int in_idx = 0; in_idx < C_IN_NUM; in_idx++) begin
+        for (int unsigned in_idx = 0; in_idx < C_IN_NUM; in_idx++) begin
             if (push_in_en[in_idx]) begin
                 push_in_num =   push_in_num + 'd1;
             end
@@ -96,8 +98,8 @@ module IB_queue #(
 
     always_comb begin
         pop_out_num =   0;
-        for (int out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
-            if (pop_out_en[out_idx]) begin
+        for (int unsigned out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
+            if (pop_out_en[out_idx] || squash_flag[out_idx]) begin
                 pop_out_num =   pop_out_num + 'd1;
             end
         end
@@ -112,9 +114,6 @@ module IB_queue #(
             head    <=  `SD 'd0;
             tail    <=  `SD 'd0;
         end else if (exception_i) begin
-            head    <=  `SD 'd0;
-            tail    <=  `SD 'd0;
-        end else if (br_mis_i.valid[0]) begin
             head    <=  `SD 'd0;
             tail    <=  `SD 'd0;
         end else begin
@@ -146,9 +145,6 @@ module IB_queue #(
         end else if (exception_i) begin
             head_rollover   <=  `SD 1'b0;
             tail_rollover   <=  `SD 1'b0;
-        end else if (br_mis_i.valid[0]) begin
-            head_rollover   <=  `SD 1'b0;
-            tail_rollover   <=  `SD 1'b0;
         end else begin
             if (head + pop_out_num >= C_SIZE) begin
                 head_rollover   <=  `SD ~head_rollover;
@@ -177,7 +173,7 @@ module IB_queue #(
 // --------------------------------------------------------------------
     always_comb begin
         push_in_switch  =   0;
-        for (int in_idx = 0; in_idx < C_IN_NUM; in_idx++) begin
+        for (int unsigned in_idx = 0; in_idx < C_IN_NUM; in_idx++) begin
             // Push-in Ready
             if (in_idx < empty_num) begin
                 s_ready_o[in_idx]   =   1'b1;
@@ -204,14 +200,7 @@ module IB_queue #(
 // Pop-out Entry
 // --------------------------------------------------------------------
     always_comb begin
-        for (int out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
-            // Pop-out Valid
-            if (out_idx < data_num) begin
-                m_valid_o[out_idx]   =   1'b1;
-            end else begin
-                m_valid_o[out_idx]   =   1'b0;
-            end
-
+        for (int unsigned out_idx = 0; out_idx < C_OUT_NUM; out_idx++) begin
             // Pop-out Data
             //  Derive the entry indexes to be popped-out
             if (out_idx + head >= C_SIZE) begin
@@ -221,15 +210,45 @@ module IB_queue #(
             end
             //  Route the entry content to the output
             m_data_o[out_idx]   =   queue[pop_out_idx[out_idx]];
+
+            // Pop-out Valid
+            // If the pop-out channel is within head and tail pointers
+            if (out_idx < data_num) begin
+                // If the instruction is not squashed
+                // -> Pop-out valid asserted
+                if ((valid[pop_out_idx[out_idx]] == 1'b1)
+                && (br_mis_i.valid[queue[pop_out_idx[out_idx]].thread_idx] == 1'b0)) begin
+                    m_valid_o[out_idx]      =   1'b1;
+                    squash_flag[out_idx]    =   1'b0;
+                // Else, the instruction is squashed
+                end else begin
+                    // If it is the first to pop-out
+                    // -> Pop-out valid deasserted, and squash flag asserted
+                    if (out_idx == 0) begin
+                        m_valid_o[out_idx]      =   1'b0;
+                        squash_flag[out_idx]    =   1'b1;
+                    // Else
+                    // the entry is ready to pop-out if the previous instructions
+                    // are all ready to pop-out or squashed
+                    end else begin
+                        m_valid_o[out_idx]      =   1'b0;
+                        squash_flag[out_idx]    =   pop_out_en[out_idx-1] || squash_flag[out_idx-1];
+                    end
+                end
+            end else begin
+                m_valid_o[out_idx]      =   1'b0;
+                squash_flag[out_idx]    =   1'b0;
+            end
         end
-        pop_out_sel =   (pop_out_en << head) | (pop_out_en >> (C_SIZE - head));
+        pop_out_sel =   (pop_out_en << head) | (pop_out_en >> (C_SIZE - head))
+                    | (squash_flag << head) | (squash_flag >> (C_SIZE - head));
     end
 
 // --------------------------------------------------------------------
 // Queue Entry
 // --------------------------------------------------------------------
     always_ff @(posedge clk_i) begin
-        for (int entry_idx = 0; entry_idx < C_SIZE; entry_idx++) begin
+        for (int unsigned entry_idx = 0; entry_idx < C_SIZE; entry_idx++) begin
             // Reset
             if (rst_i) begin
                 valid[entry_idx]   <=  `SD 1'b0;
@@ -238,11 +257,6 @@ module IB_queue #(
             end else if (exception_i) begin
                 valid[entry_idx]   <=  `SD 1'b0;
                 queue[entry_idx]   <=  `SD 'b0;
-            // Branch Misprediction of a thread -> Empty the entry
-            // end else if (br_mis_i.valid[queue[entry_idx].thread_idx]) begin
-            end else if (br_mis_i.valid[0]) begin
-                valid[entry_idx]    <=  `SD 1'b0;
-                queue[entry_idx]    <=  `SD 'b0;
             // Push-in the entry (including Pop-up at the same time)
             end else if (push_in_sel[entry_idx]) begin
                 valid[entry_idx]    <=  `SD 1'b1;
@@ -251,6 +265,10 @@ module IB_queue #(
             end else if (pop_out_sel[entry_idx]) begin
                 valid[entry_idx]    <=  `SD 1'b0;
                 queue[entry_idx]    <=  `SD 'b0;
+            // Branch Misprediction of a thread -> Empty the entry
+            end else if (valid[entry_idx] && br_mis_i.valid[queue[entry_idx].thread_idx]) begin
+                valid[entry_idx]    <=  `SD 1'b0;
+                queue[entry_idx]    <=  `SD queue[entry_idx];
             // Otherwise -> Latch
             end else begin
                 valid[entry_idx]    <=  `SD valid[entry_idx];

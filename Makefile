@@ -60,6 +60,12 @@ TESTBENCH	= testbench/pipeline_dp_smt_tb.sv
 PIPEFILES   = $(wildcard verilog/*.sv)
 # PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
 # PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
+# PIPEFILES	= verilog/IB.sv 
+# PIPEFILES	+= verilog/IB_ALU_push_in_router.sv verilog/IB_ALU_queue.sv verilog/IB_ALU_pop_out_router.sv verilog/IB_ALU.sv
+# PIPEFILES	+= verilog/IB_MULT_push_in_router.sv verilog/IB_MULT_queue.sv verilog/IB_MULT_pop_out_router.sv verilog/IB_MULT.sv
+# PIPEFILES	+= verilog/IB_BR_push_in_router.sv verilog/IB_BR_queue.sv verilog/IB_BR_pop_out_router.sv verilog/IB_BR.sv
+# PIPEFILES	+= verilog/IB_LOAD_push_in_router.sv verilog/IB_LOAD_queue.sv verilog/IB_LOAD_pop_out_router.sv verilog/IB_LOAD.sv
+# PIPEFILES	+= verilog/IB_STORE_push_in_router.sv verilog/IB_STORE_queue.sv verilog/IB_STORE_pop_out_router.sv verilog/IB_STORE.sv 
 
 # PIPEFILES	= verilog/MT.sv
 # PIPEFILES	= verilog/freelist.sv
@@ -85,7 +91,7 @@ SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_PERIOD   = 10	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################
