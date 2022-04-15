@@ -30,9 +30,10 @@ module ROB # (
     output  ROB_FL                              rob_fl_o        ,   // To Free List - ROB_FL
     //output  ROB_VFL [C_RT_NUM-1:0]            rob_vfl_o       ,   // To Victim Free List - ROB_VFL
     input   logic                               exception_i     ,   // From Exception Controller
-    input   logic   [C_THREAD_IDX_WIDTH-1:0]    thread_idx_i    ,
-    output  logic                               br_mis_valid_o  ,
-    output  logic   [C_XLEN-1:0]                br_target_o     ,
+    input   logic   [C_THREAD_IDX_WIDTH-1:0]    thread_idx_i    ,   // Thread index of this ROB
+    output  logic                               br_mis_valid_o  ,   // Branch misprediction valid
+    output  logic   [C_XLEN-1:0]                br_target_o     ,   // Branch target address
+    output  ROB_LSQ                             rob_lsq_o       ,   // To Load/Store Queue - ROB_LSQ
 
     // For testing
     output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
@@ -381,6 +382,20 @@ module ROB # (
     end
 
 // --------------------------------------------------------------------
+// Send retired entry index to Load/Store Queue
+// --------------------------------------------------------------------
+    always_comb begin
+        rob_lsq_o.rt_num    =   rt_num;
+        for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
+            if (head + idx >= C_ROB_ENTRY_NUM) begin
+                rob_lsq_o.rob_idx[idx]  =   head + idx - C_ROB_ENTRY_NUM;
+            end else begin
+                rob_lsq_o.rob_idx[idx]  =   head + idx;
+            end
+        end
+    end
+
+// --------------------------------------------------------------------
 // For Pipeline Testing
 // --------------------------------------------------------------------
     assign  rob_mon_o       =   rob_array   ;
@@ -402,6 +417,7 @@ module ROB # (
             end
         end
     end
+
 // ====================================================================
 // RTL Logic End
 // ====================================================================

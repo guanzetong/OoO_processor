@@ -468,6 +468,13 @@ typedef struct packed {
 } AMT_ENTRY;
 
 typedef struct packed {
+    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;
+    logic                               valid		;
+    logic	[`THREAD_IDX_WIDTH-1:0]     thread_idx  ;
+} FL_ENTRY;
+
+
+typedef struct packed {
     MSHR_STATE                          state       ;
     BUS_COMMAND                         cmd         ;
     logic   [`XLEN-1:0]                 req_addr    ;
@@ -664,11 +671,6 @@ typedef struct packed {
     logic   [`TAG_IDX_WIDTH-1:0]                    tag_old     ;
 } ROB_VFL;  // Per-Channel
 
-typedef struct packed {
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;
-    logic                                           valid		;
-    logic	[`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
-} FL_ENTRY;
 
 typedef struct packed {
     logic   [`XLEN-1:0]                             addr        ;
