@@ -10,7 +10,7 @@ module dcache #(
     parameter   C_CACHE_SIZE            =   `CACHE_SIZE         ,
     parameter   C_CACHE_BLOCK_SIZE      =   `CACHE_BLOCK_SIZE   ,
     parameter   C_CACHE_SASS            =   `DCACHE_SASS        ,
-    parameter   C_CACHE_SET_NUM         =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_DCACHE_SASS),
+    parameter   C_CACHE_SET_NUM         =   (C_CACHE_SIZE / C_CACHE_BLOCK_SIZE / C_CACHE_SASS),
     parameter   C_MSHR_ENTRY_NUM        =   `MSHR_ENTRY_NUM
 ) (
     // For Testing

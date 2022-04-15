@@ -121,7 +121,7 @@ module alu #(
         if (rst_i) begin
             valid_sh    <=  `SD 'b0;
         // Squash
-        end else if (squash || exception_i) begin
+        end else if (exception_i) begin
             valid_sh    <=  `SD 'b0;
         // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
         end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
@@ -130,6 +130,8 @@ module alu #(
         end else begin
             if (C_CYCLE == 1) begin
                 valid_sh    <=  `SD ex_start;
+            end else if (squash) begin
+                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
             end else begin
                 valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
             end
@@ -148,24 +150,22 @@ module alu #(
 
     // Output to Broadcaster
     always_comb begin
-        fu_bc_o.valid       =   valid_sh[C_CYCLE-1]         ;
-        fu_bc_o.pc          =   ib_fu.is_inst.pc            ;
-        fu_bc_o.write_reg   =   1'b1                        ;
-        fu_bc_o.rd_value    =   rd_value                    ;
-        fu_bc_o.tag         =   ib_fu.is_inst.tag           ;
-        fu_bc_o.br_inst     =   1'b0                        ;
-        fu_bc_o.br_result   =   1'b0                        ;
-        fu_bc_o.br_target   =   'b0                         ;
-        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx    ;
-        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
+        fu_bc_o.valid       =   valid_sh[C_CYCLE-1] && (!squash);
+        fu_bc_o.pc          =   ib_fu.is_inst.pc                ;
+        fu_bc_o.write_reg   =   1'b1                            ;
+        fu_bc_o.rd_value    =   rd_value                        ;
+        fu_bc_o.tag         =   ib_fu.is_inst.tag               ;
+        fu_bc_o.br_inst     =   1'b0                            ;
+        fu_bc_o.br_result   =   1'b0                            ;
+        fu_bc_o.br_target   =   'b0                             ;
+        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx        ;
+        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx           ;
     end
 
     always_comb begin
         squash   =   1'b0;
-        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
-            if ((br_mis_i.valid[thread_idx] == 1'b1) && (ib_fu.is_inst.thread_idx == thread_idx)) begin
-               squash   =   1'b1; 
-            end
+        if (br_mis_i.valid[ib_fu.is_inst.thread_idx] == 1'b1) begin
+            squash   =   1'b1; 
         end
     end
 
@@ -283,7 +283,8 @@ module mult #(
         // System reset
         if (rst_i) begin
             valid_sh    <=  `SD 'b0;
-        end else if (squash || exception_i) begin
+        // Squash
+        end else if (exception_i) begin
             valid_sh    <=  `SD 'b0;
         // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
         end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
@@ -292,6 +293,8 @@ module mult #(
         end else begin
             if (C_CYCLE == 1) begin
                 valid_sh    <=  `SD ex_start;
+            end else if (squash) begin
+                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
             end else begin
                 valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
             end
@@ -310,24 +313,22 @@ module mult #(
 
     // Output to Broadcaster
     always_comb begin
-        fu_bc_o.valid       =   valid_sh[C_CYCLE-1]         ;
-        fu_bc_o.pc          =   ib_fu.is_inst.pc            ;
-        fu_bc_o.write_reg   =   1'b1                        ;
-        fu_bc_o.rd_value    =   rd_value                    ;
-        fu_bc_o.tag         =   ib_fu.is_inst.tag           ;
-        fu_bc_o.br_inst     =   1'b0                        ;
-        fu_bc_o.br_result   =   1'b0                        ;
-        fu_bc_o.br_target   =   'b0                         ;
-        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx    ;
-        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
+        fu_bc_o.valid       =   valid_sh[C_CYCLE-1] && (!squash);
+        fu_bc_o.pc          =   ib_fu.is_inst.pc                ;
+        fu_bc_o.write_reg   =   1'b1                            ;
+        fu_bc_o.rd_value    =   rd_value                        ;
+        fu_bc_o.tag         =   ib_fu.is_inst.tag               ;
+        fu_bc_o.br_inst     =   1'b0                            ;
+        fu_bc_o.br_result   =   1'b0                            ;
+        fu_bc_o.br_target   =   'b0                             ;
+        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx        ;
+        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx           ;
     end
 
     always_comb begin
         squash   =   1'b0;
-        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
-            if ((br_mis_i.valid[thread_idx] == 1'b1) && (ib_fu.is_inst.thread_idx == thread_idx)) begin
-               squash   =   1'b1; 
-            end
+        if (br_mis_i.valid[ib_fu.is_inst.thread_idx] == 1'b1) begin
+            squash   =   1'b1; 
         end
     end
 
@@ -496,24 +497,22 @@ module branch #(
 
     // Output to Broadcaster
     always_comb begin
-        fu_bc_o.valid       =   valid_sh[C_CYCLE-1]         ;
-        fu_bc_o.pc          =   ib_fu.is_inst.pc            ;
-        fu_bc_o.write_reg   =   ib_fu.is_inst.uncond_br     ;
-        fu_bc_o.rd_value    =   ib_fu.is_inst.npc           ;
-        fu_bc_o.tag         =   ib_fu.is_inst.tag           ;
-        fu_bc_o.br_inst     =   1'b1                        ;
-        fu_bc_o.br_result   =   br_result                   ;
-        fu_bc_o.br_target   =   br_target                   ;
-        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx    ;
-        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx       ;
+        fu_bc_o.valid       =   valid_sh[C_CYCLE-1] && (!squash);
+        fu_bc_o.pc          =   ib_fu.is_inst.pc                ;
+        fu_bc_o.write_reg   =   ib_fu.is_inst.uncond_br         ;
+        fu_bc_o.rd_value    =   ib_fu.is_inst.npc               ;
+        fu_bc_o.tag         =   ib_fu.is_inst.tag               ;
+        fu_bc_o.br_inst     =   1'b1                            ;
+        fu_bc_o.br_result   =   br_result                       ;
+        fu_bc_o.br_target   =   br_target                       ;
+        fu_bc_o.thread_idx  =   ib_fu.is_inst.thread_idx        ;
+        fu_bc_o.rob_idx     =   ib_fu.is_inst.rob_idx           ;
     end
 
     always_comb begin
         squash   =   1'b0;
-        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
-            if ((br_mis_i.valid[thread_idx] == 1'b1) && (ib_fu.is_inst.thread_idx == thread_idx)) begin
-               squash   =   1'b1; 
-            end
+        if (br_mis_i.valid[ib_fu.is_inst.thread_idx] == 1'b1) begin
+            squash   =   1'b1; 
         end
     end
     
@@ -792,41 +791,55 @@ module FU #(
     localparam  C_BR_BASE       =   C_MULT_BASE + C_MULT_NUM    ;
     localparam  C_LOAD_BASE     =   C_BR_BASE + C_BR_NUM        ;
     localparam  C_STORE_BASE    =   C_LOAD_BASE + C_LOAD_NUM    ;
+
+    genvar  idx ;
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
-    alu alu_unit [C_ALU_NUM-1:0] (
-        .clk_i          (clk_i                                          ),
-        .rst_i          (rst_i                                          ),
-        .ib_fu_i        (ib_fu_i[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]     ),
-        .fu_ib_o        (fu_ib_o[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]     ),
-        .fu_bc_o        (fu_bc_o[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]     ),
-        .bc_fu_i        (bc_fu_i[C_ALU_BASE+C_ALU_NUM-1:C_ALU_BASE]     ),
-        .br_mis_i       (br_mis_i                                       ),
-        .exception_i    (exception_i                                    )
-    );
+    generate
+        for (idx = 0; idx < C_ALU_NUM; idx++) begin
+            alu alu_unit (
+                .clk_i          (clk_i                                  ),
+                .rst_i          (rst_i                                  ),
+                .ib_fu_i        (ib_fu_i[C_ALU_BASE+idx:C_ALU_BASE+idx] ),
+                .fu_ib_o        (fu_ib_o[C_ALU_BASE+idx:C_ALU_BASE+idx] ),
+                .fu_bc_o        (fu_bc_o[C_ALU_BASE+idx:C_ALU_BASE+idx] ),
+                .bc_fu_i        (bc_fu_i[C_ALU_BASE+idx:C_ALU_BASE+idx] ),
+                .br_mis_i       (br_mis_i                               ),
+                .exception_i    (exception_i                            )
+            );
+        end
+    endgenerate
 
-    mult mult_unit [C_MULT_NUM-1:0](
-        .clk_i          (clk_i                                          ),
-        .rst_i          (rst_i                                          ),
-        .ib_fu_i        (ib_fu_i[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
-        .fu_ib_o        (fu_ib_o[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
-        .fu_bc_o        (fu_bc_o[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
-        .bc_fu_i        (bc_fu_i[C_MULT_BASE+C_MULT_NUM-1:C_MULT_BASE]  ),
-        .br_mis_i       (br_mis_i                                       ),
-        .exception_i    (exception_i                                    )
-    );
+    generate
+        for (idx = 0; idx < C_MULT_NUM; idx++) begin
+            mult mult_unit (
+                .clk_i          (clk_i                                      ),
+                .rst_i          (rst_i                                      ),
+                .ib_fu_i        (ib_fu_i[C_MULT_BASE+idx:C_MULT_BASE+idx]   ),
+                .fu_ib_o        (fu_ib_o[C_MULT_BASE+idx:C_MULT_BASE+idx]   ),
+                .fu_bc_o        (fu_bc_o[C_MULT_BASE+idx:C_MULT_BASE+idx]   ),
+                .bc_fu_i        (bc_fu_i[C_MULT_BASE+idx:C_MULT_BASE+idx]   ),
+                .br_mis_i       (br_mis_i                                   ),
+                .exception_i    (exception_i                                )
+            );
+        end
+    endgenerate
 
-    branch branch_unit [C_BR_NUM-1:0](
-        .clk_i          (clk_i                                          ),
-        .rst_i          (rst_i                                          ),
-        .ib_fu_i        (ib_fu_i[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]        ),
-        .fu_ib_o        (fu_ib_o[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]        ),
-        .fu_bc_o        (fu_bc_o[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]        ),
-        .bc_fu_i        (bc_fu_i[C_BR_BASE+C_BR_NUM-1:C_BR_BASE]        ),
-        .br_mis_i       (br_mis_i                                       ),
-        .exception_i    (exception_i                                    )
-    );
+    generate
+        for (idx = 0; idx < C_BR_NUM; idx++) begin
+            branch branch_unit (
+                .clk_i          (clk_i                                  ),
+                .rst_i          (rst_i                                  ),
+                .ib_fu_i        (ib_fu_i[C_BR_BASE+idx:C_BR_BASE+idx]   ),
+                .fu_ib_o        (fu_ib_o[C_BR_BASE+idx:C_BR_BASE+idx]   ),
+                .fu_bc_o        (fu_bc_o[C_BR_BASE+idx:C_BR_BASE+idx]   ),
+                .bc_fu_i        (bc_fu_i[C_BR_BASE+idx:C_BR_BASE+idx]   ),
+                .br_mis_i       (br_mis_i                               ),
+                .exception_i    (exception_i                            )
+            );
+        end
+    endgenerate
 
     // load load_unit [C_LOAD_NUM-1:0](
     //     .clk_i(clk_i),

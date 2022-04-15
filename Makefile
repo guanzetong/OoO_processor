@@ -92,24 +92,24 @@ export PIPEFILES
 export PIPELINE_NAME = pipeline_dp_smt
 # export PIPELINE_NAME = cache
 
-# PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
-# SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
+PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
+SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
-CACHEFILES	= verilog/cache_mem.sv verilog/cache_ctrl.sv verilog/cache.sv
-CACHEFILES	+= verilog/LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
-CACHEFILES	+= verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
-CACHEFILES	+= verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
-CACHE_NAME	=	cache
-export CACHEFILES
-export CACHE_NAME
-CACHE     = $(SYNTH_DIR)/$(CACHE_NAME).vg 
-SYNFILES  = $(CACHE) $(SYNTH_DIR)/$(CACHE_NAME)_svsim.sv
+# CACHEFILES	= verilog/cache_mem.sv verilog/cache_ctrl.sv verilog/cache.sv
+# CACHEFILES	+= verilog/LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
+# CACHEFILES	+= verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
+# CACHEFILES	+= verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
+# CACHE_NAME	=	cache
+# export CACHEFILES
+# export CACHE_NAME
+# CACHE     = $(SYNTH_DIR)/$(CACHE_NAME).vg 
+# SYNFILES  = $(CACHE) $(SYNTH_DIR)/$(CACHE_NAME)_svsim.sv
 
 
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_PERIOD   = 15	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################

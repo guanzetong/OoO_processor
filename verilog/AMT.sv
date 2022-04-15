@@ -10,7 +10,7 @@ module AMT #(
     input   logic                                   rollback_i      , 
     input   logic       [C_THREAD_IDX_WIDTH-1:0]    thread_idx_i    ,
     input   ROB_AMT     [C_RT_NUM-1:0]   			rob_amt_i       , 
-    output  AMT_OUTPUT  [C_ARCH_REG_NUM-1:0] 		amt_o
+    output  AMT_ENTRY  [C_ARCH_REG_NUM-1:0] 		amt_o
 );
 
     AMT_ENTRY  [C_ARCH_REG_NUM- 1:0] amt_entry;

@@ -152,23 +152,23 @@ module pipeline_dp_smt (
     generate
         for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
             ROB ROB_inst (
-                .clk_i              (clk_i                          ),
-                .rst_i              (rst_i                          ),
-                .rob_dp_o           (rob_dp[thread_idx]             ),
-                .dp_rob_i           (dp_rob[thread_idx]             ),
-                .cdb_i              (cdb                            ),
-                .rob_amt_o          (rob_amt[thread_idx]            ),
-                .rob_fl_o           (rob_fl [thread_idx]            ),
-                .exception_i        (exception_i                    ),
-                .thread_idx_i       (thread_idx                     ),
-                .br_mis_valid_o     (br_mis.valid[thread_idx]       ),
-                .br_target_o        (br_mis.br_target[thread_idx]   ),
+                .clk_i              (clk_i                              ),
+                .rst_i              (rst_i                              ),
+                .rob_dp_o           (rob_dp[thread_idx]                 ),
+                .dp_rob_i           (dp_rob[thread_idx]                 ),
+                .cdb_i              (cdb                                ),
+                .rob_amt_o          (rob_amt[thread_idx]                ),
+                .rob_fl_o           (rob_fl [thread_idx]                ),
+                .exception_i        (exception_i                        ),
+                .thread_idx_i       (thread_idx[`THREAD_IDX_WIDTH-1:0]  ),
+                .br_mis_valid_o     (br_mis.valid[thread_idx]           ),
+                .br_target_o        (br_mis.br_target[thread_idx]       ),
                 //ROB testing
-                .rob_mon_o          (rob_mon_o[thread_idx]          ),
-                .rob_head_mon_o     (rob_head_mon_o[thread_idx]     ),
-                .rob_tail_mon_o     (rob_tail_mon_o[thread_idx]     ),
-                .rt_pc_o            (rt_pc_o[thread_idx]            ),
-                .rt_valid_o         (rt_valid_o[thread_idx]         )
+                .rob_mon_o          (rob_mon_o[thread_idx]              ),
+                .rob_head_mon_o     (rob_head_mon_o[thread_idx]         ),
+                .rob_tail_mon_o     (rob_tail_mon_o[thread_idx]         ),
+                .rt_pc_o            (rt_pc_o[thread_idx]                ),
+                .rt_valid_o         (rt_valid_o[thread_idx]             )
             );
         end// for threads
     endgenerate
@@ -187,7 +187,7 @@ module pipeline_dp_smt (
                 .cdb_i          (cdb                                        ),
                 .dp_mt_i        (dp_mt[thread_idx]                          ),
                 .amt_i          (amt[thread_idx]                            ),
-                .thread_idx_i   (thread_idx                                 ),
+                .thread_idx_i   (thread_idx[`THREAD_IDX_WIDTH-1:0]          ),
                 .mt_dp_o        (mt_dp[thread_idx]                          ),
                  // MT Testing
                 .mt_mon_o       (mt_mon_o[thread_idx]                       )
@@ -206,7 +206,7 @@ module pipeline_dp_smt (
                 .clk_i          (clk_i                                      ),
                 .rst_i          (rst_i                                      ),
                 .rollback_i     (exception_i || br_mis.valid[thread_idx]    ),
-                .thread_idx_i   (thread_idx                                 ),
+                .thread_idx_i   (thread_idx[`THREAD_IDX_WIDTH-1:0]          ),
                 .rob_amt_i      (rob_amt[thread_idx]                        ),
                 .amt_o          (amt[thread_idx]                            )
             );

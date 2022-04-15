@@ -1,12 +1,12 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//  Modulename  :  cache.sv                                            //
+//  Modulename  :  icache.sv                                           //
 //                                                                     //
 //  Description :  Non-blocking N-way set associative cache.           // 
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module cache #(
+module icache #(
     parameter   C_CACHE_SIZE            =   `CACHE_SIZE         ,
     parameter   C_CACHE_BLOCK_SIZE      =   `CACHE_BLOCK_SIZE   ,
     parameter   C_CACHE_SASS            =   `CACHE_SASS         ,

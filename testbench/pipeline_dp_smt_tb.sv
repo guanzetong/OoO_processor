@@ -42,8 +42,8 @@ class driver;
         $readmemh("program_smt.mem", program_mem);
 
         forever begin
-            gen_item    item;
-            drv_mbx.get(item);
+            // gen_item    item;
+            // drv_mbx.get(item);
 
 
             /////////////////////////////////////////////////////////////////////////
@@ -81,7 +81,7 @@ class driver;
             vif.fiq_dp      =   0;
             vif.exception_i =   0;
             thread_sel      =   thread_sel + 'd1;
-            ->drv_done;
+            // ->drv_done;
         end
     endtask // run()
 

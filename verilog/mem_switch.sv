@@ -20,7 +20,7 @@ module mem_switch #(
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-
+    localparam  C_REQ_IDX_WIDTH =   $clog2(C_REQ_NUM);
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -28,9 +28,9 @@ module mem_switch #(
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-    logic   [C_MSHR_ENTRY_NUM-1:0]      arbiter_req                 ;
+    logic   [C_REQ_NUM-1:0]             arbiter_req                 ;
     logic                               arbiter_ack                 ;
-    logic   [C_MSHR_IDX_WIDTH-1:0]      grant_idx                   ;
+    logic   [C_REQ_IDX_WIDTH-1:0]       grant_idx                   ;
     logic                               grant_valid                 ;
 // ====================================================================
 // Signal Declarations End
@@ -63,7 +63,7 @@ module mem_switch #(
     always_comb begin
         // Pick the requesters with valid Memory requests
         arbiter_req =   'b0;
-        for (int unsigned req_idx = 1; req_idx < C_MSHR_ENTRY_NUM; req_idx++) begin
+        for (int unsigned req_idx = 1; req_idx < C_REQ_NUM; req_idx++) begin
             if (req2mem_i[req_idx].command != BUS_NONE) begin
                 arbiter_req[req_idx]    =   1'b1;
             end

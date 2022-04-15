@@ -35,7 +35,7 @@ module mem_fixed_priority_arbiter #(
             grant_o <=  `SD 'd0;
             valid_o <=  `SD 1'b1;
         end else begin
-            grant_o <=  `SD next_grant_idx;
+            grant_o <=  `SD next_grant;
             valid_o <=  `SD next_valid;
         end
     end
@@ -46,7 +46,7 @@ module mem_fixed_priority_arbiter #(
         if (ack_i) begin
             next_grant  =   'd0;
             next_valid  =   1'b0;
-            for (int unsigned req_idx = C_REQ_NUM; req_idx > 0; req_idx++) begin
+            for (int unsigned req_idx = C_REQ_NUM; req_idx > 0; req_idx--) begin
                 if (req_i[req_idx-1] == 1'b1) begin
                     next_grant  =   req_idx - 'd1;
                     next_valid  =   1'b1;

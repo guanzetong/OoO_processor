@@ -226,14 +226,14 @@ module RS #(
         dp_sel      =   'b0;
         dp_switch   =   'b0;
         dp_valid    =   'b0;
-        for (int unsigned dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
+        for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
             if ((dp_entry_idx_valid[dp_idx] == 1'b1) && (dp_idx < dp_rs_i.dp_num)) begin
                 dp_valid[dp_idx]    =   1'b1;
             end
         end
 
         for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
-            for (int unsigned dp_idx = 0; dp_idx < C_IS_NUM; dp_idx++) begin
+            for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
                 if ((dp_entry_idx[dp_idx] == entry_idx) && dp_valid[dp_idx]) begin
                     dp_sel   [entry_idx]    =   1'b1                    ;
                     dp_switch[entry_idx]    =   dp_rs_i.dec_inst[dp_idx];
@@ -251,7 +251,7 @@ module RS #(
         // Also, the thread index must be considered.
         cp_sel_tag1 =   'b0;
         for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
-            for (int unsigned cp_idx = 0; cp_idx < C_IS_NUM; cp_idx++) begin
+            for (int unsigned cp_idx = 0; cp_idx < C_CDB_NUM; cp_idx++) begin
                 // Compare tag1 and thread_idx
                 if ((cdb_i[cp_idx].valid == 1'b1) && 
                     (cdb_i[cp_idx].tag == rs_array[entry_idx].dec_inst.tag1) && 
@@ -268,7 +268,7 @@ module RS #(
         // Also, the thread index must be considered.
         cp_sel_tag2 =   'b0;
         for (int unsigned entry_idx = 0; entry_idx < C_RS_ENTRY_NUM; entry_idx++) begin
-            for (int unsigned cp_idx = 0; cp_idx < C_IS_NUM; cp_idx++) begin
+            for (int unsigned cp_idx = 0; cp_idx < C_CDB_NUM; cp_idx++) begin
                 // Compare tag2 and thread_idx
                 if ((cdb_i[cp_idx].valid == 1'b1) && 
                     (cdb_i[cp_idx].tag == rs_array[entry_idx].dec_inst.tag2) && 
