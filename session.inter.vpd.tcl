@@ -1,15 +1,18 @@
 # Begin_DVE_Session_Save_Info
 # DVE full session
-# Saved on Fri Apr 1 23:12:38 2022
+# Saved on Tue Apr 12 23:54:03 2022
 # Designs open: 1
 #   Sim: simv
 # Toplevel windows open: 2
 # 	TopLevel.1
 # 	TopLevel.2
-#   Source.1: pipeline_dp_tb.dut.FL_inst
-#   Wave.1: 31 signals
-#   Group count = 1
-#   Group FL_inst signal count = 31
+#   Source.1: cache_tb
+#   Wave.1: 98 signals
+#   Group count = 4
+#   Group dut signal count = 9
+#   Group cache_ctrl_inst signal count = 31
+#   Group genblk1[3].mshr_entry_ctrl_inst signal count = 32
+#   Group cache_mem_inst signal count = 26
 # End_DVE_Session_Save_Info
 
 # DVE version: R-2020.12-SP2-1_Full64
@@ -68,7 +71,7 @@ if {![gui_exist_window -window TopLevel.1]} {
 } else { 
     set TopLevel.1 TopLevel.1
 }
-gui_show_window -window ${TopLevel.1} -show_state normal -rect {{414 215} {1918 981}}
+gui_show_window -window ${TopLevel.1} -show_state normal -rect {{944 180} {2311 856}}
 
 # ToolBar settings
 gui_set_toolbar_attributes -toolbar {TimeOperations} -dock_state top
@@ -115,33 +118,33 @@ gui_show_toolbar -toolbar {Testbench}
 # End ToolBar settings
 
 # Docked window settings
-set HSPane.1 [gui_create_window -type HSPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 215]
+set HSPane.1 [gui_create_window -type HSPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 181]
 catch { set Hier.1 [gui_share_window -id ${HSPane.1} -type Hier] }
 catch { set Stack.1 [gui_share_window -id ${HSPane.1} -type Stack -silent] }
 catch { set Class.1 [gui_share_window -id ${HSPane.1} -type Class -silent] }
 catch { set Object.1 [gui_share_window -id ${HSPane.1} -type Object -silent] }
-gui_set_window_pref_key -window ${HSPane.1} -key dock_width -value_type integer -value 215
+gui_set_window_pref_key -window ${HSPane.1} -key dock_width -value_type integer -value 181
 gui_set_window_pref_key -window ${HSPane.1} -key dock_height -value_type integer -value -1
 gui_set_window_pref_key -window ${HSPane.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${HSPane.1} {{left 0} {top 0} {width 214} {height 488} {dock_state left} {dock_on_new_line true} {child_hier_colhier 193} {child_hier_coltype 83} {child_hier_colpd 0} {child_hier_col1 0} {child_hier_col2 1} {child_hier_col3 -1}}
-set DLPane.1 [gui_create_window -type DLPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 325]
+gui_update_layout -id ${HSPane.1} {{left 0} {top 0} {width 180} {height 403} {dock_state left} {dock_on_new_line true} {child_hier_colhier 193} {child_hier_coltype 83} {child_hier_colpd 0} {child_hier_col1 0} {child_hier_col2 1} {child_hier_col3 -1}}
+set DLPane.1 [gui_create_window -type DLPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 291]
 catch { set Data.1 [gui_share_window -id ${DLPane.1} -type Data] }
 catch { set Local.1 [gui_share_window -id ${DLPane.1} -type Local -silent] }
 catch { set Member.1 [gui_share_window -id ${DLPane.1} -type Member -silent] }
-gui_set_window_pref_key -window ${DLPane.1} -key dock_width -value_type integer -value 325
-gui_set_window_pref_key -window ${DLPane.1} -key dock_height -value_type integer -value 530
+gui_set_window_pref_key -window ${DLPane.1} -key dock_width -value_type integer -value 291
+gui_set_window_pref_key -window ${DLPane.1} -key dock_height -value_type integer -value 463
 gui_set_window_pref_key -window ${DLPane.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${DLPane.1} {{left 0} {top 0} {width 324} {height 488} {dock_state left} {dock_on_new_line true} {child_data_colvariable 196} {child_data_colvalue 103} {child_data_coltype 101} {child_data_col1 0} {child_data_col2 1} {child_data_col3 2}}
-set Console.1 [gui_create_window -type Console -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line true -dock_extent 138]
+gui_update_layout -id ${DLPane.1} {{left 0} {top 0} {width 290} {height 403} {dock_state left} {dock_on_new_line true} {child_data_colvariable 196} {child_data_colvalue 103} {child_data_coltype 101} {child_data_col1 0} {child_data_col2 1} {child_data_col3 2}}
+set Console.1 [gui_create_window -type Console -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line true -dock_extent 175]
 gui_set_window_pref_key -window ${Console.1} -key dock_width -value_type integer -value -1
-gui_set_window_pref_key -window ${Console.1} -key dock_height -value_type integer -value 138
+gui_set_window_pref_key -window ${Console.1} -key dock_height -value_type integer -value 175
 gui_set_window_pref_key -window ${Console.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${Console.1} {{left 0} {top 0} {width 271} {height 179} {dock_state bottom} {dock_on_new_line true}}
-set DriverLoad.1 [gui_create_window -type DriverLoad -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line false -dock_extent 180]
+gui_update_layout -id ${Console.1} {{left 0} {top 0} {width 271} {height 174} {dock_state bottom} {dock_on_new_line true}}
+set DriverLoad.1 [gui_create_window -type DriverLoad -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line false -dock_extent 175]
 gui_set_window_pref_key -window ${DriverLoad.1} -key dock_width -value_type integer -value 150
-gui_set_window_pref_key -window ${DriverLoad.1} -key dock_height -value_type integer -value 180
+gui_set_window_pref_key -window ${DriverLoad.1} -key dock_height -value_type integer -value 175
 gui_set_window_pref_key -window ${DriverLoad.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${DriverLoad.1} {{left 0} {top 0} {width 1232} {height 179} {dock_state bottom} {dock_on_new_line false}}
+gui_update_layout -id ${DriverLoad.1} {{left 0} {top 0} {width 1095} {height 174} {dock_state bottom} {dock_on_new_line false}}
 #### Start - Readjusting docked view's offset / size
 set dockAreaList { top left right bottom }
 foreach dockArea $dockAreaList {
@@ -178,7 +181,7 @@ if {![gui_exist_window -window TopLevel.2]} {
 } else { 
     set TopLevel.2 TopLevel.2
 }
-gui_show_window -window ${TopLevel.2} -show_state normal -rect {{152 174} {1682 982}}
+gui_show_window -window ${TopLevel.2} -show_state normal -rect {{71 181} {1787 1042}}
 
 # ToolBar settings
 gui_set_toolbar_attributes -toolbar {TimeOperations} -dock_state top
@@ -230,7 +233,7 @@ gui_sync_global -id ${TopLevel.2} -option true
 # MDI window settings
 set Wave.1 [gui_create_window -type {Wave}  -parent ${TopLevel.2}]
 gui_show_window -window ${Wave.1} -show_state maximized
-gui_update_layout -id ${Wave.1} {{show_state maximized} {dock_state undocked} {dock_on_new_line false} {child_wave_left 443} {child_wave_right 1082} {child_wave_colname 219} {child_wave_colvalue 219} {child_wave_col1 0} {child_wave_col2 1}}
+gui_update_layout -id ${Wave.1} {{show_state maximized} {dock_state undocked} {dock_on_new_line false} {child_wave_left 498} {child_wave_right 1213} {child_wave_colname 201} {child_wave_colvalue 293} {child_wave_col1 0} {child_wave_col2 1}}
 
 # End MDI window settings
 
@@ -251,8 +254,8 @@ gui_update_statusbar_target_frame ${TopLevel.2}
 # DVE Open design session: 
 
 if { [llength [lindex [gui_get_db -design Sim] 0]] == 0 } {
-gui_set_env SIMSETUP::SIMARGS {{}}
-gui_set_env SIMSETUP::SIMEXE {./simv}
+gui_set_env SIMSETUP::SIMARGS {{ -ucligui}}
+gui_set_env SIMSETUP::SIMEXE {simv}
 gui_set_env SIMSETUP::ALLOW_POLL {0}
 if { ![gui_is_db_opened -db {simv}] } {
 gui_sim_run Ucli -exe simv -args { -ucligui} -dir ../group6w22 -nosource
@@ -277,32 +280,81 @@ gui_set_time_units 1s
 # Global: Signal Compare
 
 # Global: Signal Groups
-gui_load_child_values {pipeline_dp_tb.dut.FL_inst}
+gui_load_child_values {cache_tb.dut}
+gui_load_child_values {cache_tb.dut.cache_ctrl_inst}
+gui_load_child_values {cache_tb.dut.cache_mem_inst}
+gui_load_child_values {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst}
 
 
-set _session_group_1 FL_inst
+set _session_group_1 dut
 gui_sg_create "$_session_group_1"
-set FL_inst "$_session_group_1"
+set dut "$_session_group_1"
 
-gui_sg_addsignal -group "$_session_group_1" { pipeline_dp_tb.dut.FL_inst.clk_i pipeline_dp_tb.dut.FL_inst.dp_fl_i pipeline_dp_tb.dut.FL_inst.head pipeline_dp_tb.dut.FL_inst.tail pipeline_dp_tb.dut.FL_inst.next_head pipeline_dp_tb.dut.FL_inst.next_tail pipeline_dp_tb.dut.FL_inst.rt_num pipeline_dp_tb.dut.FL_inst.tail_rollover pipeline_dp_tb.dut.FL_inst.head_rollover pipeline_dp_tb.dut.FL_inst.fl_head_mon_o pipeline_dp_tb.dut.FL_inst.fl_entry pipeline_dp_tb.dut.FL_inst.fl_dp_o pipeline_dp_tb.dut.FL_inst.C_TAG_IDX_WIDTH pipeline_dp_tb.dut.FL_inst.C_PHY_REG_NUM pipeline_dp_tb.dut.FL_inst.fl_mon_o pipeline_dp_tb.dut.FL_inst.vfl_fl_i pipeline_dp_tb.dut.FL_inst.rollback_i pipeline_dp_tb.dut.FL_inst.rob_fl_i pipeline_dp_tb.dut.FL_inst.rt_route pipeline_dp_tb.dut.FL_inst.C_FL_ENTRY_NUM pipeline_dp_tb.dut.FL_inst.rst_i pipeline_dp_tb.dut.FL_inst.avail_num pipeline_dp_tb.dut.FL_inst.C_RT_NUM pipeline_dp_tb.dut.FL_inst.C_ARCH_REG_NUM pipeline_dp_tb.dut.FL_inst.C_FL_NUM_WIDTH pipeline_dp_tb.dut.FL_inst.C_RT_NUM_WIDTH pipeline_dp_tb.dut.FL_inst.C_DP_NUM pipeline_dp_tb.dut.FL_inst.fl_tail_mon_o {pipeline_dp_tb.dut.FL_inst.$unit} pipeline_dp_tb.dut.FL_inst.C_FL_IDX_WIDTH pipeline_dp_tb.dut.FL_inst.next_fl_entry }
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_TAG_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_TAG_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_PHY_REG_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_PHY_REG_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_FL_ENTRY_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_FL_ENTRY_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_RT_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_RT_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_ARCH_REG_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_ARCH_REG_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_FL_NUM_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_FL_NUM_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_RT_NUM_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_RT_NUM_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_DP_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_DP_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_FL_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_tb.dut.FL_inst.C_FL_IDX_WIDTH}
+gui_sg_addsignal -group "$_session_group_1" { cache_tb.dut.clk_i cache_tb.dut.proc2cache_i cache_tb.dut.cache2proc_o cache_tb.dut.cache_ctrl_mem cache_tb.dut.cache_mem_ctrl cache_tb.dut.mem2cache_i cache_tb.dut.cache2mem_o cache_tb.dut.rst_i {cache_tb.dut.$unit} }
+
+set _session_group_2 cache_ctrl_inst
+gui_sg_create "$_session_group_2"
+set cache_ctrl_inst "$_session_group_2"
+
+gui_sg_addsignal -group "$_session_group_2" { cache_tb.dut.cache_ctrl_inst.clk_i cache_tb.dut.cache_ctrl_inst.cache_mem_ctrl_i cache_tb.dut.cache_ctrl_inst.proc2cache_i cache_tb.dut.cache_ctrl_inst.cache2proc_o cache_tb.dut.cache_ctrl_inst.cache_ctrl_mem_o cache_tb.dut.cache_ctrl_inst.mshr_memory cache_tb.dut.cache_ctrl_inst.C_CACHE_SASS cache_tb.dut.cache_ctrl_inst.proc_grant cache_tb.dut.cache_ctrl_inst.mem2cache_i cache_tb.dut.cache_ctrl_inst.C_MSHR_IDX_WIDTH cache_tb.dut.cache_ctrl_inst.mshr_hit_idx cache_tb.dut.cache_ctrl_inst.mshr_hit cache_tb.dut.cache_ctrl_inst.C_XLEN cache_tb.dut.cache_ctrl_inst.mshr_cache_mem cache_tb.dut.cache_ctrl_inst.cp_flag cache_tb.dut.cache_ctrl_inst.mshr_array cache_tb.dut.cache_ctrl_inst.evict_hit_idx cache_tb.dut.cache_ctrl_inst.cache_mem_grant cache_tb.dut.cache_ctrl_inst.C_CACHE_TAG_WIDTH cache_tb.dut.cache_ctrl_inst.memory_grant cache_tb.dut.cache_ctrl_inst.cache2mem_o cache_tb.dut.cache_ctrl_inst.evict_hit cache_tb.dut.cache_ctrl_inst.dp_sel cache_tb.dut.cache_ctrl_inst.cp_data cache_tb.dut.cache_ctrl_inst.C_CACHE_OFFSET_WIDTH cache_tb.dut.cache_ctrl_inst.C_MSHR_ENTRY_NUM cache_tb.dut.cache_ctrl_inst.rst_i cache_tb.dut.cache_ctrl_inst.mshr_proc cache_tb.dut.cache_ctrl_inst.C_CACHE_BLOCK_SIZE {cache_tb.dut.cache_ctrl_inst.$unit} cache_tb.dut.cache_ctrl_inst.C_CACHE_IDX_WIDTH }
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_SASS}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_SASS}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_MSHR_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_MSHR_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_XLEN}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_XLEN}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_TAG_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_TAG_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_OFFSET_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_OFFSET_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_MSHR_ENTRY_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_MSHR_ENTRY_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_BLOCK_SIZE}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_BLOCK_SIZE}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_ctrl_inst.C_CACHE_IDX_WIDTH}
+
+set _session_group_3 {genblk1[3].mshr_entry_ctrl_inst}
+gui_sg_create "$_session_group_3"
+set {genblk1[3].mshr_entry_ctrl_inst} "$_session_group_3"
+
+gui_sg_addsignal -group "$_session_group_3" { {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.next_mshr_cp_flag} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.dp_sel_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.cache_mem_ctrl_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.proc2cache_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_cp_data_o} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_proc_o} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mem2cache_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_MSHR_IDX_WIDTH} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_entry_idx_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_XLEN} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.evict_hit_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.next_mshr_entry} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.cp_data_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.next_mshr_cp_data} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_hit_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.memory_grant_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_cp_flag_o} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_memory_o} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_entry_o} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_CACHE_OFFSET_WIDTH} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_MSHR_ENTRY_NUM} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.evict_hit_idx_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_hit_idx_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.rst_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.cache_mem_grant_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_entry} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.cp_flag_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_CACHE_BLOCK_SIZE} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.proc_grant_i} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.$unit} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_cache_mem_o} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.clk_i} }
+gui_set_radix -radix {decimal} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_MSHR_IDX_WIDTH}}
+gui_set_radix -radix {twosComplement} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_MSHR_IDX_WIDTH}}
+gui_set_radix -radix {decimal} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_XLEN}}
+gui_set_radix -radix {twosComplement} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_XLEN}}
+gui_set_radix -radix {decimal} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_CACHE_OFFSET_WIDTH}}
+gui_set_radix -radix {twosComplement} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_CACHE_OFFSET_WIDTH}}
+gui_set_radix -radix {decimal} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_MSHR_ENTRY_NUM}}
+gui_set_radix -radix {twosComplement} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_MSHR_ENTRY_NUM}}
+gui_set_radix -radix {decimal} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_CACHE_BLOCK_SIZE}}
+gui_set_radix -radix {twosComplement} -signals {{Sim:cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.C_CACHE_BLOCK_SIZE}}
+
+set _session_group_4 cache_mem_inst
+gui_sg_create "$_session_group_4"
+set cache_mem_inst "$_session_group_4"
+
+gui_sg_addsignal -group "$_session_group_4" { cache_tb.dut.cache_mem_inst.C_CACHE_SIZE cache_tb.dut.cache_mem_inst.cache_ctrl_mem_i cache_tb.dut.cache_mem_inst.mem_idx cache_tb.dut.cache_mem_inst.C_CACHE_SASS cache_tb.dut.cache_mem_inst.cache_mem_ctrl_o cache_tb.dut.cache_mem_inst.C_XLEN cache_tb.dut.cache_mem_inst.use_history cache_tb.dut.cache_mem_inst.mem_blk_offset cache_tb.dut.cache_mem_inst.C_CACHE_TAG_WIDTH cache_tb.dut.cache_mem_inst.access cache_tb.dut.cache_mem_inst.next_lru cache_tb.dut.cache_mem_inst.mem_tag cache_tb.dut.cache_mem_inst.C_WAY_IDX_WIDTH cache_tb.dut.cache_mem_inst.empty_way_idx cache_tb.dut.cache_mem_inst.next_use_history cache_tb.dut.cache_mem_inst.C_CACHE_SET_NUM cache_tb.dut.cache_mem_inst.cache_array cache_tb.dut.cache_mem_inst.C_CACHE_OFFSET_WIDTH cache_tb.dut.cache_mem_inst.rst_i cache_tb.dut.cache_mem_inst.C_USE_HISTORY_WIDTH cache_tb.dut.cache_mem_inst.empty_way_valid cache_tb.dut.cache_mem_inst.next_cache_array cache_tb.dut.cache_mem_inst.C_CACHE_BLOCK_SIZE {cache_tb.dut.cache_mem_inst.$unit} cache_tb.dut.cache_mem_inst.C_CACHE_IDX_WIDTH cache_tb.dut.cache_mem_inst.clk_i }
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_SIZE}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_SIZE}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_SASS}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_SASS}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_XLEN}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_XLEN}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_TAG_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_TAG_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_WAY_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_WAY_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_SET_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_SET_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_OFFSET_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_OFFSET_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_USE_HISTORY_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_USE_HISTORY_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_BLOCK_SIZE}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_BLOCK_SIZE}
+gui_set_radix -radix {decimal} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:cache_tb.dut.cache_mem_inst.C_CACHE_IDX_WIDTH}
 
 # Global: Highlighting
 
@@ -312,7 +364,7 @@ gui_change_stack_mode -mode list
 # Post database loading setting...
 
 # Restore C1 time
-gui_set_time -C1_only 65
+gui_set_time -C1_only 196
 
 
 
@@ -337,16 +389,17 @@ gui_list_set_filter -id ${Hier.1} -list { {Package 1} {All 0} {Process 1} {VirtP
 gui_list_set_filter -id ${Hier.1} -text {*}
 gui_hier_list_init -id ${Hier.1}
 gui_change_design -id ${Hier.1} -design Sim
-catch {gui_list_expand -id ${Hier.1} pipeline_dp_tb}
-catch {gui_list_expand -id ${Hier.1} pipeline_dp_tb.dut}
-catch {gui_list_select -id ${Hier.1} {pipeline_dp_tb.dut.FL_inst}}
-gui_view_scroll -id ${Hier.1} -vertical -set 14
-gui_view_scroll -id ${Hier.1} -horizontal -set 0
+catch {gui_list_expand -id ${Hier.1} cache_tb}
+catch {gui_list_expand -id ${Hier.1} cache_tb.dut}
+catch {gui_list_select -id ${Hier.1} {cache_tb.dut.cache_mem_inst}}
+gui_view_scroll -id ${Hier.1} -vertical -set 301
+gui_view_scroll -id ${Hier.1} -horizontal -set 1
 
 # Class 'Class.1'
 gui_list_set_filter -id ${Class.1} -list { {OVM 1} {VMM 1} {All 1} {Object 1} {UVM 1} {RVM 1} }
 gui_list_set_filter -id ${Class.1} -text {*}
 gui_change_design -id ${Class.1} -design Sim
+# Warning: Class view not found.
 
 # Member 'Member.1'
 gui_list_set_filter -id ${Member.1} -list { {InternalMember 0} {RandMember 1} {All 0} {BaseMember 0} {PrivateMember 1} {LibBaseMember 0} {AutomaticMember 1} {VirtualMember 1} {PublicMember 1} {ProtectedMember 1} {OverRiddenMember 0} {InterfaceClassMember 1} {StaticMember 1} }
@@ -355,21 +408,26 @@ gui_list_set_filter -id ${Member.1} -text {*}
 # Data 'Data.1'
 gui_list_set_filter -id ${Data.1} -list { {Buffer 1} {Input 1} {Others 1} {Linkage 1} {Output 1} {LowPower 1} {Parameter 1} {All 1} {Aggregate 1} {LibBaseMember 1} {Event 1} {Assertion 1} {Constant 1} {Interface 1} {BaseMembers 1} {Signal 1} {$unit 1} {Inout 1} {Variable 1} }
 gui_list_set_filter -id ${Data.1} -text {*}
-gui_list_show_data -id ${Data.1} {pipeline_dp_tb.dut.FL_inst}
+gui_list_show_data -id ${Data.1} {cache_tb.dut.cache_mem_inst}
 gui_view_scroll -id ${Data.1} -vertical -set 0
 gui_view_scroll -id ${Data.1} -horizontal -set 0
-gui_view_scroll -id ${Hier.1} -vertical -set 14
-gui_view_scroll -id ${Hier.1} -horizontal -set 0
+gui_view_scroll -id ${Hier.1} -vertical -set 301
+gui_view_scroll -id ${Hier.1} -horizontal -set 1
+
+# DriverLoad 'DriverLoad.1'
+gui_get_drivers -session -id ${DriverLoad.1} -signal {cache_tb.dut.cache_ctrl_inst.mshr_dispatch_selector_inst.mshr_array_i[15:0]} -time 0 -starttime 2509
+gui_get_drivers -session -id ${DriverLoad.1} -signal cache_tb.dut.cache_ctrl_inst.mshr_cache_mem_switch_inst.mshr_rr_arbiter_inst.clk_i -time 55 -starttime 56
+gui_get_drivers -session -id ${DriverLoad.1} -signal {cache_tb.dut.cache_ctrl_inst.genblk1[1].mshr_entry_ctrl_inst.mshr_entry_idx_i[3:0]} -time 0 -starttime 76
+gui_get_drivers -session -id ${DriverLoad.1} -signal {cache_tb.dut.cache_ctrl_inst.genblk1[1].mshr_entry_ctrl_inst.mshr_memory_o.command[1:0]} -time 86 -starttime 86
 
 # Source 'Source.1'
 gui_src_value_annotate -id ${Source.1} -switch false
 gui_set_env TOGGLE::VALUEANNOTATE 0
-gui_open_source -id ${Source.1}  -replace -active pipeline_dp_tb.dut.FL_inst verilog/FL_SS.sv
+gui_open_source -id ${Source.1}  -replace -active cache_tb testbench/cache_tb.sv
 gui_src_value_annotate -id ${Source.1} -switch true
 gui_set_env TOGGLE::VALUEANNOTATE 1
-gui_view_scroll -id ${Source.1} -vertical -set 1875
+gui_view_scroll -id ${Source.1} -vertical -set 2235
 gui_src_set_reusable -id ${Source.1}
-# Warning: Class view not found.
 
 # View 'Wave.1'
 gui_wv_sync -id ${Wave.1} -switch false
@@ -379,10 +437,27 @@ set origWaveHeight [gui_get_pref_value -category Wave -key waveRowHeight]
 gui_list_set_height -id Wave -height 25
 set origGroupCreationState [gui_list_create_group_when_add -wave]
 gui_list_create_group_when_add -wave -disable
+gui_marker_create -id ${Wave.1} M1 75
+gui_marker_create -id ${Wave.1} M2 95
+gui_marker_create -id ${Wave.1} M3 105
+gui_marker_create -id ${Wave.1} M4 115
+gui_marker_create -id ${Wave.1} M5 145
+gui_marker_select -id ${Wave.1} {  M5 }
 gui_marker_set_ref -id ${Wave.1}  C1
-gui_wv_zoom_timerange -id ${Wave.1} 0 354
-gui_list_add_group -id ${Wave.1} -after {New Group} {FL_inst}
-gui_list_select -id ${Wave.1} {pipeline_dp_tb.dut.FL_inst.rt_num }
+gui_wv_zoom_timerange -id ${Wave.1} 64 209
+gui_list_add_group -id ${Wave.1} -after {New Group} {dut}
+gui_list_add_group -id ${Wave.1} -after {New Group} {cache_ctrl_inst}
+gui_list_add_group -id ${Wave.1} -after {New Group} {{genblk1[3].mshr_entry_ctrl_inst}}
+gui_list_add_group -id ${Wave.1} -after {New Group} {cache_mem_inst}
+gui_list_expand -id ${Wave.1} cache_tb.dut.proc2cache_i
+gui_list_expand -id ${Wave.1} cache_tb.dut.cache2proc_o
+gui_list_expand -id ${Wave.1} cache_tb.dut.cache_mem_ctrl
+gui_list_expand -id ${Wave.1} cache_tb.dut.cache_ctrl_inst.cache_mem_ctrl_i
+gui_list_expand -id ${Wave.1} cache_tb.dut.cache_ctrl_inst.proc2cache_i
+gui_list_expand -id ${Wave.1} cache_tb.dut.cache_ctrl_inst.cache2proc_o
+gui_list_expand -id ${Wave.1} cache_tb.dut.cache_ctrl_inst.cache_ctrl_mem_o
+gui_list_expand -id ${Wave.1} {cache_tb.dut.cache_ctrl_inst.genblk1[3].mshr_entry_ctrl_inst.mshr_entry_o}
+gui_list_select -id ${Wave.1} {cache_tb.dut.cache_mem_inst.mem_tag }
 gui_seek_criteria -id ${Wave.1} {Any Edge}
 
 
@@ -398,14 +473,11 @@ if { $groupExD } {
 }
 gui_list_set_filter -id ${Wave.1} -list { {Buffer 1} {Input 1} {Others 1} {Linkage 1} {Output 1} {Parameter 1} {All 1} {Aggregate 1} {LibBaseMember 1} {Event 1} {Assertion 1} {Constant 1} {Interface 1} {BaseMembers 1} {Signal 1} {$unit 1} {Inout 1} {Variable 1} }
 gui_list_set_filter -id ${Wave.1} -text {*}
-gui_list_set_insertion_bar  -id ${Wave.1} -group FL_inst  -item pipeline_dp_tb.dut.FL_inst.clk_i -position below
+gui_list_set_insertion_bar  -id ${Wave.1} -group cache_mem_inst  -position in
 
-gui_marker_move -id ${Wave.1} {C1} 65
-gui_view_scroll -id ${Wave.1} -vertical -set 0
+gui_marker_move -id ${Wave.1} {C1} 196
+gui_view_scroll -id ${Wave.1} -vertical -set 2872
 gui_show_grid -id ${Wave.1} -enable false
-
-# DriverLoad 'DriverLoad.1'
-gui_get_drivers -session -id ${DriverLoad.1} -signal {pipeline_dp_tb.dut.FL_inst.next_tail[4:0]} -time 1276 -starttime 5110
 # Restore toplevel window zorder
 # The toplevel window could be closed if it has no view/pane
 if {[gui_exist_window -window ${TopLevel.1}]} {

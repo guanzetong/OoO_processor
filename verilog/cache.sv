@@ -62,7 +62,7 @@ module cache #(
 // Module name  :   cache_mem
 // Description  :   Cache memory
 // --------------------------------------------------------------------
-    icache_mem cache_mem_inst (
+    cache_mem cache_mem_inst (
         .cache_array_mon_o  (cache_array_mon_o  ),
         .clk_i              (clk_i              ),
         .rst_i              (rst_i              ),

@@ -1,28 +1,26 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//  Modulename  :  mshr_memory_switch.sv                               //
+//  Modulename  :  mem_switch.sv                                       //
 //                                                                     //
-//  Description :  Schedule the access of MSHR entries to              //
-//                 Memory Interface.                                   // 
+//  Description :  mem_switch                                          // 
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module mshr_memory_switch #(
-    parameter   C_MSHR_ENTRY_NUM    =   `MSHR_ENTRY_NUM
+module mem_switch #(
+    parameter   C_REQ_NUM   =   2   
 ) (
-    input   logic                               clk_i           ,   //  Clock
-    input   logic                               rst_i           ,   //  Reset
-    input   logic                               enable_i        ,
-    input   MEM_IN  [C_MSHR_ENTRY_NUM-1:0]      mshr_memory_i   ,   //  Memory request from each MSHR entry
-    input   MEM_OUT                             mem2cache_i     ,
-    output  logic   [C_MSHR_ENTRY_NUM-1:0]      memory_grant_o  ,   //  One-hot grant
-    output  MEM_IN                              cache2mem_o         //  Shared Memory Interface
+    input   logic                       clk_i           ,   //  Clock
+    input   logic                       rst_i           ,   //  Reset
+    input   MEM_IN  [C_REQ_NUM-1:0]     req2mem_i       ,
+    input   MEM_OUT                     mem2req_i       ,
+    output  logic   [C_REQ_NUM-1:0]     memory_grant_o  ,
+    output  MEM_IN                      switch2mem_o    
 );
 
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_MSHR_IDX_WIDTH        =   $clog2(C_MSHR_ENTRY_NUM);
+
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -42,10 +40,10 @@ module mshr_memory_switch #(
 // Module Instantiations Start
 // ====================================================================
 // --------------------------------------------------------------------
-// Module name  :   mshr_rr_arbiter
-// Description  :   Work-Conserving Round Robin Arbiter
+// Module name  :   mem_fixed_priority_arbiter
+// Description  :   Fixed Priority abitration on memory interface
 // --------------------------------------------------------------------
-    mshr_rr_arbiter mshr_rr_arbiter_inst (
+    mem_fixed_priority_arbiter mem_fixed_priority_arbiter_inst (
         .clk_i      (clk_i          ),
         .rst_i      (rst_i          ),
         .req_i      (arbiter_req    ),
@@ -63,30 +61,27 @@ module mshr_memory_switch #(
 // RTL Logic Start
 // ====================================================================
     always_comb begin
-        // Pick the MSHR entries with valid Memory requests
+        // Pick the requesters with valid Memory requests
         arbiter_req =   'b0;
-        for (int unsigned entry_idx = 1; entry_idx < C_MSHR_ENTRY_NUM; entry_idx++) begin
-            if ((mshr_memory_i[entry_idx].command == BUS_LOAD)
-            || (mshr_memory_i[entry_idx].command == BUS_STORE)) begin
-                arbiter_req[entry_idx]  =   1'b1;
+        for (int unsigned req_idx = 1; req_idx < C_MSHR_ENTRY_NUM; req_idx++) begin
+            if (req2mem_i[req_idx].command != BUS_NONE) begin
+                arbiter_req[req_idx]    =   1'b1;
             end
         end
 
         // Generate acknowledge signal for arbiter to switch priority
         arbiter_ack     =   1'b0;
-        if ((grant_valid == 1'b1) && (mem2cache_i.response != 'd0)) begin
+        if ((grant_valid == 1'b1) && (mem2req_i.response != 'd0)) begin
             arbiter_ack     =   1'b1;
         end
 
-        // Route the granted request to the Memory Interface
+        // Route the granted request to the proc Interface
         // Output grant signals to the MSHR entries
-        cache2mem_o     =   'b0 ;
+        switch2mem_o    =   'b0 ;
         memory_grant_o  =   'b0 ;
         if (grant_valid) begin
-            cache2mem_o     =   mshr_memory_i[grant_idx]    ;
-            if (enable_i) begin
-                memory_grant_o  =   {{(C_MSHR_ENTRY_NUM-1){1'b0}}, 1'b1} << grant_idx;
-            end
+            switch2mem_o    =   req2mem_i[grant_idx]    ;
+            memory_grant_o  =   {{(C_REQ_NUM-1){1'b0}}, 1'b1} << grant_idx;
         end
     end
 // ====================================================================

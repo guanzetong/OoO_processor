@@ -58,6 +58,10 @@ HEADERS     = $(wildcard *.svh)
 # TESTBENCH	= testbench/IB_tb.sv
 TESTBENCH	= testbench/pipeline_dp_smt_tb.sv
 PIPEFILES   = $(wildcard verilog/*.sv)
+# TESTBENCH	= testbench/cache_test.sv
+# TESTBENCH	= testbench/cache_tb.sv
+# TESTBENCH	+= testbench/mem.sv
+# PIPEFILES   = $(wildcard verilog/*.sv)
 # PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
 # PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
 # PIPEFILES	= verilog/IB.sv 
@@ -67,7 +71,10 @@ PIPEFILES   = $(wildcard verilog/*.sv)
 # PIPEFILES	+= verilog/IB_LOAD_push_in_router.sv verilog/IB_LOAD_queue.sv verilog/IB_LOAD_pop_out_router.sv verilog/IB_LOAD.sv
 # PIPEFILES	+= verilog/IB_STORE_push_in_router.sv verilog/IB_STORE_queue.sv verilog/IB_STORE_pop_out_router.sv verilog/IB_STORE.sv 
 
-# PIPEFILES	= verilog/MT.sv
+# PIPEFILES	= verilog/cache_mem.sv verilog/cache_ctrl.sv verilog/cache.sv
+# PIPEFILES   += verilog/LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
+# PIPEFILES	+= verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
+# PIPEFILES	+= verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
 # PIPEFILES	= verilog/freelist.sv
 SIMFILES    = $(PIPEFILES)
 
@@ -83,15 +90,26 @@ export PIPEFILES
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
 export PIPELINE_NAME = pipeline_dp_smt
+# export PIPELINE_NAME = cache
 
+# PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
+# SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
-PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
-SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
+CACHEFILES	= verilog/cache_mem.sv verilog/cache_ctrl.sv verilog/cache.sv
+CACHEFILES	+= verilog/LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
+CACHEFILES	+= verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
+CACHEFILES	+= verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
+CACHE_NAME	=	cache
+export CACHEFILES
+export CACHE_NAME
+CACHE     = $(SYNTH_DIR)/$(CACHE_NAME).vg 
+SYNFILES  = $(CACHE) $(SYNTH_DIR)/$(CACHE_NAME)_svsim.sv
+
 
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 10	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################
@@ -146,6 +164,11 @@ assembly: assemble disassemble hex
 $(PIPELINE): $(SIMFILES) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
 	cd $(SYNTH_DIR) && dc_shell-t -f ./$(PIPELINE_NAME).tcl | tee $(PIPELINE_NAME)_synth.out
 	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(PIPELINE)
+
+$(CACHE): $(SIMFILES) $(SYNTH_DIR)/$(CACHE_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(CACHE_NAME).tcl | tee $(CACHE_NAME)_synth.out
+	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(CACHE)
+
 
 syn:	syn_simv 
 	./syn_simv | tee syn_program.out
