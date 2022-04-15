@@ -78,6 +78,7 @@ typedef union packed {
 `define BR_Q_SIZE       8
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
+`define LSQ_ENTRY_NUM   8
 
 // General Cache
 `define CACHE_SIZE          256     // The capacity of cache in bytes.
@@ -370,6 +371,7 @@ typedef enum logic [2:0] {
     ST_OUTPUT       =   3'h6    ,
     ST_EVICT        =   3'h7    
 } MSHR_STATE;
+
 
 //////////////////////////////////////////////
 // 
@@ -732,11 +734,22 @@ typedef struct packed {
     MEM_SIZE                    mem_size  ;
     logic [         `XLEN-1:0] addr       ;   
     logic                      addr_valid ;   
-    logic [         `XLEN-1:0] addr       ;   
+    logic [         `XLEN-1:0] data       ;   
     logic                      data_valid ;   
     logic                      complete   ;   
-    logic                      retire     ;   
+    logic                      retire     ;  
+    logic                      valid      ; 
 } LSQ_ENTRY;
+
+typedef enum logic [2:0] {
+    ST_IDLE     =   0;
+    ST_ADDR     =   1;
+    ST_DEPEND   =   2;
+    ST_RD_MEM   =   3;
+    ST_LOAD_CP  =   4;
+    ST_RETIRE   =   5;
+    ST_WR_MEM   =   6;
+} LSQ_STATE;
 
 // Interface End
 
