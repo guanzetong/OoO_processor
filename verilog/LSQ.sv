@@ -39,6 +39,7 @@ module LSQ #(
     input   BC_FU                               bc_lsq_i        ,
     output  FU_BC    [C_LOAD_NUM-1:0]           lsq_bc_o        ,
     // MEM
+    input   logic                               mem_enable_i    ,
     input   MEM_OUT                             mem_lsq_i       ,
     output  MEM_IN                              lsq_mem_o       
 );
@@ -131,7 +132,8 @@ module LSQ #(
         .rst_i              (rst_i              ),
         .lsq_entry_mem_i    (lsq_entry_mem      ),
         .mem_lsq_i          (mem_lsq_i          ),
-        .memory_grant_o     (memory_grant_o     ),
+        .mem_enable_i       (mem_enable_i       ),
+        .memory_grant_o     (mem_grant          ),
         .lsq_mem_o          (lsq_mem_o          )
     );
 // --------------------------------------------------------------------

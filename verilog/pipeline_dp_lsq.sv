@@ -7,61 +7,62 @@
 /////////////////////////////////////////////////////////////////////////
 
 module pipeline_dp_smt (
-    input   logic                                               clk_i               ,   // Clock
-    input   logic                                               rst_i               ,   // Reset
-    input   FIQ_DP                                              fiq_dp              ,   // From FIQ to DP
-    output  DP_FIQ                                              dp_fiq              ,   // From DP to FIQ
-    input   logic                                               exception_i         ,   // External exception
+    input   logic                                                       clk_i               ,   // Clock
+    input   logic                                                       rst_i               ,   // Reset
+    input   FIQ_DP                                                      fiq_dp              ,   // From FIQ to DP
+    output  DP_FIQ                                                      dp_fiq              ,   // From DP to FIQ
+    input   logic                                                       exception_i         ,   // External exception
     // Testing
     //      Dispatch
-    output  DP_RS                                               dp_rs_mon_o         ,   // From Dispatcher to RS
-    output  DP_MT       [`THREAD_NUM-1:0][`DP_NUM-1:0]          dp_mt_mon_o         ,
-    output  MT_DP       [`THREAD_NUM-1:0][`DP_NUM-1:0]          mt_dp_mon_o         ,
+    output  DP_RS                                                       dp_rs_mon_o         ,   // From Dispatcher to RS
+    output  DP_MT       [`THREAD_NUM-1:0][`DP_NUM-1:0]                  dp_mt_mon_o         ,
+    output  MT_DP       [`THREAD_NUM-1:0][`DP_NUM-1:0]                  mt_dp_mon_o         ,
     //      Issue
-    output  RS_IB                                               rs_ib_mon_o         ,   // From RS to IB
+    output  RS_IB                                                       rs_ib_mon_o         ,   // From RS to IB
     //      Execute
-    output  IB_FU       [`FU_NUM-1:0]                           ib_fu_mon_o         ,   // From IB to FU
+    output  IB_FU       [`FU_NUM-1:0]                                   ib_fu_mon_o         ,   // From IB to FU
     //      Complete
-    output  FU_BC                                               fu_bc_mon_o         ,   // From FU to BC
-    output  CDB         [`CDB_NUM-1:0]                          cdb_mon_o           ,   // CDB
+    output  FU_BC                                                       fu_bc_mon_o         ,   // From FU to BC
+    output  CDB         [`CDB_NUM-1:0]                                  cdb_mon_o           ,   // CDB
     //      Retire
-    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]   rt_pc_o             ,   // PC of retired instructions
-    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]              rt_valid_o          ,   // Retire valid
-    output  ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]          rob_amt_mon_o       ,   // From ROB to AMT
-    output  ROB_FL      [`THREAD_NUM-1:0]                       rob_fl_mon_o        ,   // From ROB to FL
-    output  BR_MIS                                              br_mis_mon_o        ,   // Branch Misprediction
+    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]       rt_pc_o             ,   // PC of retired instructions
+    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_valid_o          ,   // Retire valid
+    output  ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rob_amt_mon_o       ,   // From ROB to AMT
+    output  ROB_FL      [`THREAD_NUM-1:0]                               rob_fl_mon_o        ,   // From ROB to FL
+    output  BR_MIS                                                      br_mis_mon_o        ,   // Branch Misprediction
     //      Contents
-    output  ROB_ENTRY   [`THREAD_NUM-1:0][`ROB_ENTRY_NUM-1:0]   rob_mon_o           ,   // ROB contents monitor
-    output  logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]   rob_head_mon_o      ,   // ROB head pointer
-    output  logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]   rob_tail_mon_o      ,   // ROB tail pointer
-    output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]                     rs_mon_o            ,   // RS contents monitor
-    output  logic       [$clog2(`RS_ENTRY_NUM)-1:0]             rs_cod_mon_o        ,
-    output  MT_ENTRY    [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]    mt_mon_o            ,   // Map Table contents monitor
-    output  AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]    amt_mon_o           ,   // Arch Map Table contents monitor
-    output  FL_ENTRY    [`FL_ENTRY_NUM-1:0]                     fl_mon_o            ,   // Freelist monitor
-    //output  logic       [`THREAD_NUM-1:0][`FL_IDX_WIDTH-1:0]    fl_head_mon_o       ,
-    //output  logic       [`THREAD_NUM-1:0][`FL_IDX_WIDTH-1:0]    fl_tail_mon_o       ,
-    output  IS_INST     [`ALU_Q_SIZE  -1:0]                     ALU_queue_mon_o     ,   // IB queue monitor
-    output  IS_INST     [`MULT_Q_SIZE -1:0]                     MULT_queue_mon_o    ,   // IB queue monitor
-    output  IS_INST     [`BR_Q_SIZE   -1:0]                     BR_queue_mon_o      ,   // IB queue monitor
-    output  IS_INST     [`LOAD_Q_SIZE -1:0]                     LOAD_queue_mon_o    ,   // IB queue monitor
-    output  IS_INST     [`STORE_Q_SIZE-1:0]                     STORE_queue_mon_o   ,   // IB queue monitor
-    output  logic       [`ALU_Q_SIZE  -1:0]                     ALU_valid_mon_o     ,   // IB queue monitor
-    output  logic       [`MULT_Q_SIZE -1:0]                     MULT_valid_mon_o    ,   // IB queue monitor
-    output  logic       [`BR_Q_SIZE   -1:0]                     BR_valid_mon_o      ,   // IB queue monitor
-    output  logic       [`LOAD_Q_SIZE -1:0]                     LOAD_valid_mon_o    ,   // IB queue monitor
-    output  logic       [`STORE_Q_SIZE-1:0]                     STORE_valid_mon_o   ,   // IB queue monitor
-    output  logic       [`ALU_IDX_WIDTH  -1:0]                  ALU_head_mon_o      ,   // IB queue pointer monitor
-    output  logic       [`ALU_IDX_WIDTH  -1:0]                  ALU_tail_mon_o      ,   // IB queue pointer monitor
-    output  logic       [`MULT_IDX_WIDTH -1:0]                  MULT_head_mon_o     ,   // IB queue pointer monitor
-    output  logic       [`MULT_IDX_WIDTH -1:0]                  MULT_tail_mon_o     ,   // IB queue pointer monitor
-    output  logic       [`BR_IDX_WIDTH   -1:0]                  BR_head_mon_o       ,   // IB queue pointer monitor
-    output  logic       [`BR_IDX_WIDTH   -1:0]                  BR_tail_mon_o       ,   // IB queue pointer monitor
-    output  logic       [`LOAD_IDX_WIDTH -1:0]                  LOAD_head_mon_o     ,   // IB queue pointer monitor
-    output  logic       [`LOAD_IDX_WIDTH -1:0]                  LOAD_tail_mon_o     ,   // IB queue pointer monitor
-    output  logic       [`STORE_IDX_WIDTH-1:0]                  STORE_head_mon_o    ,   // IB queue pointer monitor
-    output  logic       [`STORE_IDX_WIDTH-1:0]                  STORE_tail_mon_o    ,   // IB queue pointer monitor
-    output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]          prf_mon_o               // Physical Register File monitor
+    output  ROB_ENTRY   [`THREAD_NUM-1:0][`ROB_ENTRY_NUM-1:0]           rob_mon_o           ,   // ROB contents monitor
+    output  logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]           rob_head_mon_o      ,   // ROB head pointer
+    output  logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]           rob_tail_mon_o      ,   // ROB tail pointer
+    output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]                             rs_mon_o            ,   // RS contents monitor
+    output  logic       [$clog2(`RS_ENTRY_NUM)-1:0]                     rs_cod_mon_o        ,
+    output  MT_ENTRY    [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]            mt_mon_o            ,   // Map Table contents monitor
+    output  AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]            amt_mon_o           ,   // Arch Map Table contents monitor
+    output  FL_ENTRY    [`FL_ENTRY_NUM-1:0]                             fl_mon_o            ,   // Freelist monitor
+    output  IS_INST     [`ALU_Q_SIZE  -1:0]                             ALU_queue_mon_o     ,   // IB queue monitor
+    output  IS_INST     [`MULT_Q_SIZE -1:0]                             MULT_queue_mon_o    ,   // IB queue monitor
+    output  IS_INST     [`BR_Q_SIZE   -1:0]                             BR_queue_mon_o      ,   // IB queue monitor
+    output  IS_INST     [`LOAD_Q_SIZE -1:0]                             LOAD_queue_mon_o    ,   // IB queue monitor
+    output  IS_INST     [`STORE_Q_SIZE-1:0]                             STORE_queue_mon_o   ,   // IB queue monitor
+    output  logic       [`ALU_Q_SIZE  -1:0]                             ALU_valid_mon_o     ,   // IB queue monitor
+    output  logic       [`MULT_Q_SIZE -1:0]                             MULT_valid_mon_o    ,   // IB queue monitor
+    output  logic       [`BR_Q_SIZE   -1:0]                             BR_valid_mon_o      ,   // IB queue monitor
+    output  logic       [`LOAD_Q_SIZE -1:0]                             LOAD_valid_mon_o    ,   // IB queue monitor
+    output  logic       [`STORE_Q_SIZE-1:0]                             STORE_valid_mon_o   ,   // IB queue monitor
+    output  logic       [`ALU_IDX_WIDTH  -1:0]                          ALU_head_mon_o      ,   // IB queue pointer monitor
+    output  logic       [`ALU_IDX_WIDTH  -1:0]                          ALU_tail_mon_o      ,   // IB queue pointer monitor
+    output  logic       [`MULT_IDX_WIDTH -1:0]                          MULT_head_mon_o     ,   // IB queue pointer monitor
+    output  logic       [`MULT_IDX_WIDTH -1:0]                          MULT_tail_mon_o     ,   // IB queue pointer monitor
+    output  logic       [`BR_IDX_WIDTH   -1:0]                          BR_head_mon_o       ,   // IB queue pointer monitor
+    output  logic       [`BR_IDX_WIDTH   -1:0]                          BR_tail_mon_o       ,   // IB queue pointer monitor
+    output  logic       [`LOAD_IDX_WIDTH -1:0]                          LOAD_head_mon_o     ,   // IB queue pointer monitor
+    output  logic       [`LOAD_IDX_WIDTH -1:0]                          LOAD_tail_mon_o     ,   // IB queue pointer monitor
+    output  logic       [`STORE_IDX_WIDTH-1:0]                          STORE_head_mon_o    ,   // IB queue pointer monitor
+    output  logic       [`STORE_IDX_WIDTH-1:0]                          STORE_tail_mon_o    ,   // IB queue pointer monitor
+    output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]                  prf_mon_o           ,   // Physical Register File monitor
+    output  LSQ_ENTRY   [C_LSQ_ENTRY_NUM-1:0]                           lsq_array_mon_o     ,   // LSQ monitor
+    output  MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]                      dmshr_array_mon_o   ,   
+    output  CACHE_MEM_ENTRY [C_CACHE_SET_NUM-1:0][C_CACHE_SASS-1:0]     dcache_array_mon_o
 );
 
 // ====================================================================
@@ -75,31 +76,64 @@ module pipeline_dp_smt (
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-    ROB_DP      [`THREAD_NUM-1:0]                           rob_dp          ;
+    // From IF
+    // FIQ_DP                                               fiq_dp          ;
+
+    // From DP
     DP_ROB      [`THREAD_NUM-1:0]                           dp_rob          ;
     DP_MT       [`THREAD_NUM-1:0][`DP_NUM-1:0]              dp_mt           ;
-    FL_DP                                                   fl_dp           ;
-    DP_FL                                                   dp_fl           ;
-    // FIQ_DP                                               fiq_dp          ;
-    // DP_FIQ                                               dp_fiq          ;
-    RS_DP                                                   rs_dp           ;
     DP_RS                                                   dp_rs           ;
-    CDB         [`CDB_NUM-1:0]                              cdb             ;
-    RS_IB       [`IS_NUM-1:0]                               rs_ib           ;
-    IB_RS                                                   ib_rs           ;
-    RS_PRF      [`IS_NUM-1:0]                               rs_prf          ;
-    PRF_RS      [`IS_NUM-1:0]                               prf_rs          ;
-    BR_MIS                                                  br_mis          ;
+    DP_FL                                                   dp_fl           ;
+    DP_LSQ      [`THREAD_NUM-1:0]                           dp_lsq          ;
+    // DP_FIQ                                               dp_fiq          ;
+
+    // From ROB
+    ROB_DP      [`THREAD_NUM-1:0]                           rob_dp          ;
     ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]              rob_amt         ;
     ROB_FL      [`THREAD_NUM-1:0]                           rob_fl          ;
     ROB_LSQ     [`THREAD_NUM-1:0]                           rob_lsq         ;
-    FU_IB       [`FU_NUM-1:0]                               fu_ib           ;
+
+    // From RS
+    RS_DP                                                   rs_dp           ;
+    RS_PRF      [`IS_NUM-1:0]                               rs_prf          ;
+    RS_IB       [`IS_NUM-1:0]                               rs_ib           ;
+    BR_MIS                                                  br_mis          ;
+
+    // From FL
+    FL_DP                                                   fl_dp           ;
+
+    // From IB
+    IB_RS                                                   ib_rs           ;
     IB_FU       [`FU_NUM-1:0]                               ib_fu           ;
+
+    // From BC
+    BC_FU       [`FU_NUM-1:0]                               bc_fu           ;
     BC_PRF      [`CDB_NUM-1:0]                              bc_prf          ;
+    CDB         [`CDB_NUM-1:0]                              cdb             ;
+    BC_LSQ      [`THREAD_NUM*`LOAD_NUM-1:0]                 bc_lsq          ;
+
+    // From FU
+    FU_IB       [`FU_NUM-1:0]                               fu_ib           ;
+    FU_BC       [`FU_NUM-1:0]                               fu_bc           ;
+    FU_LSQ      [`LSQ_IN_NUM-1:0]                           fu_lsq          ;
+
+    // From PRF
+    PRF_RS      [`IS_NUM-1:0]                               prf_rs          ;
+
+    // From MT
     AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]        amt             ;
     MT_DP       [`THREAD_NUM-1:0][`DP_NUM-1:0]              mt_dp           ;
-    FU_BC       [`FU_NUM-1:0]                               fu_bc           ;
-    BC_FU       [`FU_NUM-1:0]                               bc_fu           ;
+
+    // From LSQ
+    LSQ_DP      [`THREAD_NUM-1:0]                           lsq_dp          ;
+    LSQ_BC      [`THREAD_NUM*`LOAD_NUM-1:0]                 lsq_bc          ;
+    MEM_IN      [`THREAD_NUM-1:0]                           lsq_mem         ;
+    MEM_IN                                                  proc2dcache     ;
+
+    // From DCache
+    logic       [`THREAD_NUM-1:0]                           dcache_grant    ;
+    MEM_OUT                                                 dcache2proc     ;
+    MEM_IN                                                  dcache2mem      ;
 
     genvar thread_idx;
 
@@ -110,8 +144,6 @@ module pipeline_dp_smt (
 // ====================================================================
 // Module Instantiations Start
 // ====================================================================
-
-
 
 // --------------------------------------------------------------------
 // Module name  :   DP_smt
@@ -211,6 +243,31 @@ module pipeline_dp_smt (
                 .thread_idx_i   (thread_idx[`THREAD_IDX_WIDTH-1:0]          ),
                 .rob_amt_i      (rob_amt[thread_idx]                        ),
                 .amt_o          (amt[thread_idx]                            )
+            );
+        end
+    endgenerate
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   LSQ
+// Description  :   Unified Load/Store Queue
+// --------------------------------------------------------------------
+    generate
+        for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
+            LSQ LSQ_inst (
+                .lsq_array_mon_o    (lsq_array_mon_o[thread_idx]                ),
+                .clk_i              (clk_i                                      ),
+                .rst_i              (rst_i                                      ),
+                .thread_idx_i       (thread_idx[`THREAD_IDX_WIDTH-1:0]          ),
+                .rob_lsq_i          (rob_lsq[thread_idx]                        ),
+                .lsq_dp_o           (lsq_dp[thread_idx]                         ),
+                .dp_lsq_i           (dp_lsq[thread_idx]                         ),
+                .fu_lsq_i           (fu_lsq                                     ),
+                .bc_lsq_i           (bc_lsq[thread_idx*C_LOAD_NUM+:C_LOAD_NUM]  ),
+                .lsq_bc_o           (lsq_bc[thread_idx*C_LOAD_NUM+:C_LOAD_NUM]  ),
+                .mem_enable_i       (dcache_grant[thread_idx]                   ),
+                .mem_lsq_i          (dcache2proc                                ),
+                .lsq_mem_o          (lsq_mem[thread_idx]                        )
             );
         end
     endgenerate
@@ -318,6 +375,32 @@ module pipeline_dp_smt (
         .bc_fu_o        (bc_fu      ),
         .bc_prf_o       (bc_prf     ),
         .cdb_o          (cdb        )
+    );
+// --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   DC
+// Description  :   D-Cache
+// --------------------------------------------------------------------
+    dcache_switch DC_SW_inst (
+        .clk_i              (clk_i              ),
+        .rst_i              (rst_i              ),
+        .lsq_mem_i          (lsq_mem            ),
+        .dcache_lsq_i       (dcache2proc        ),
+        .dcache_grant_o     (dcache_grant       ),
+        .lsq_dcache_o       (proc2dcache        )
+    );
+
+    dcache DC_inst (
+        .mshr_array_mon_o   (dmshr_array_mon_o  ),
+        .cache_array_mon_o  (dcache_array_mon_o ),
+        .clk_i              (clk_i              ),
+        .rst_i              (rst_i              ),
+        .proc2cache_i       (proc2dcache        ),
+        .cache2proc_o       (dcache2proc        ),
+        .memory_enable_i    (1'b1               ),
+        .cache2mem_o        (dcache2mem         ),
+        .mem2cache_i        (dmem2cache         )
     );
 // --------------------------------------------------------------------
 

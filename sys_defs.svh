@@ -68,6 +68,7 @@ typedef union packed {
 `define LOAD_NUM        1
 `define STORE_NUM       1
 `define FU_NUM          (`ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM)
+`define LSQ_IN_NUM      `LOAD_NUM + `STORE_NUM
 
 `define ALU_CYCLE       1
 `define MULT_CYCLE      3
