@@ -78,6 +78,7 @@ typedef union packed {
 `define BR_Q_SIZE       8
 `define LOAD_Q_SIZE     8
 `define STORE_Q_SIZE    8
+`define LSQ_ENTRY_NUM   8
 
 // General Cache
 `define CACHE_SIZE          256     // The capacity of cache in bytes.
@@ -371,6 +372,18 @@ typedef enum logic [2:0] {
     ST_EVICT        =   3'h7    
 } MSHR_STATE;
 
+
+typedef enum logic [2:0] {
+    ST_IDLE     =   3'h0;
+    ST_ADDR     =   3'h1;
+    ST_DEPEND   =   3'h2;
+    ST_RD_MEM   =   3'h3;
+    ST_WAIT_MEM =   3'h4;
+    ST_LOAD_CP  =   3'h5;
+    ST_RETIRE   =   3'h6;
+    ST_WR_MEM   =   3'h7;
+} LSQ_STATE;
+
 //////////////////////////////////////////////
 // 
 // Entry contents struct
@@ -497,17 +510,17 @@ typedef struct packed {
 } CACHE_MEM_ENTRY;  // for each block
 
 typedef struct packed {
-    BUS_COMMAND                                     cmd         ;
-    logic [`XLEN-1:0]                               pc          ;   
-    logic [`TAG_IDX_WIDTH-1:0]                      tag         ;   
-    logic [`ROB_IDX_WIDTH-1:0]                      rob_idx     ;   
-    MEM_SIZE                                        mem_size    ;
-    logic [`XLEN-1:0]                               addr        ;   
-    logic                                           addr_valid  ;   
-    logic [`XLEN-1:0]                               data        ;   
-    logic                                           data_valid  ;   
-    logic                                           complete    ;   
-    logic                                           retire      ;   
+    BUS_COMMAND                         cmd         ;
+    logic   [`XLEN-1:0]                 pc          ;   
+    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;   
+    logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;   
+    MEM_SIZE                            mem_size    ;
+    logic   [`XLEN-1:0]                 addr        ;   
+    logic                               addr_valid  ;   
+    logic   [`XLEN-1:0]                 data        ;   
+    logic                               data_valid  ;   
+    logic                               complete    ;   
+    logic                               retire      ;   
 } LSQ_ENTRY;
 // Array Entry Contents End
 
@@ -733,7 +746,24 @@ typedef struct packed {
 } DP_LSQ;
 
 typedef struct packed {
-    logic   [`DP_NUM_WIDTH-1:0]                     avail_num  ;
+    logic   [`XLEN-1:0]                             addr;
+    logic   [`XLEN-1:0]                             data;
+    logic                                           valid;
+    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx;
+} FU_LSQ;
+
+
+typedef struct packed {
+    logic       [`DP_NUM_WIDTH-1:0]                 dp_num      ;
+    BUS_COMMAND [`DP_NUM-1:0]                       cmd         ;
+    MEM_SIZE    [`DP_NUM-1:0]                       mem_size    ;
+    logic       [`DP_NUM-1:0][`ROB_IDX_WIDTH-1:0]   rob_idx     ;
+    logic       [`DP_NUM-1:0][`XLEN-1:0]            pc          ;
+    logic       [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]   tag         ;
+} DP_LSQ;
+
+typedef struct packed {
+    logic   [`DP_NUM_WIDTH-1:0]                     avail_num   ;
 } LSQ_DP; 
 
 typedef struct packed {
@@ -741,6 +771,20 @@ typedef struct packed {
     logic   [`RT_NUM-1:0][`ROB_IDX_WIDTH-1:0]       rob_idx     ;
 } ROB_LSQ; // Combined
 
+typedef struct packed {
+    BUS_COMMAND                                     cmd         ;
+    logic   [`XLEN-1:0]                             pc          ;   
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;   
+    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;   
+    MEM_SIZE                                        mem_size    ;
+    logic   [`XLEN-1:0]                             addr        ;   
+    logic                                           addr_valid  ;   
+    logic   [`XLEN-1:0]                             data        ;   
+    logic                                           data_valid  ;   
+    logic                                           retire      ;  
+    logic   [`MSHR_IDX_WIDTH-1:0]                   mem_tag     ;
+    LSQ_STATE                                       state       ;
+} LSQ_ENTRY;
 
 // Interface End
 
