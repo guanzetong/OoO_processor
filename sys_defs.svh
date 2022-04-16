@@ -727,18 +727,18 @@ typedef struct packed {
 } ROB_LSQ; // Combined
 
 typedef struct packed {
-    BUS_COMMAND                cmd        ;
-    logic [         `XLEN-1:0] pc         ;   
-    logic [`TAG_IDX_WIDTH-1:0] tag        ;   
-    logic [`ROB_IDX_WIDTH-1:0] rob_idx    ;   
-    MEM_SIZE                    mem_size  ;
-    logic [         `XLEN-1:0] addr       ;   
-    logic                      addr_valid ;   
-    logic [         `XLEN-1:0] data       ;   
-    logic                      data_valid ;   
-    logic                      complete   ;   
-    logic                      retire     ;  
-    logic                      valid      ; 
+    BUS_COMMAND                     cmd         ;
+    logic [         `XLEN-1:0]      pc          ;   
+    logic [`TAG_IDX_WIDTH-1:0]      tag         ;   
+    logic [`ROB_IDX_WIDTH-1:0]      rob_idx     ;   
+    MEM_SIZE                        mem_size    ;
+    logic [         `XLEN-1:0]      addr        ;   
+    logic                           addr_valid  ;   
+    logic [         `XLEN-1:0]      data        ;   
+    logic                           data_valid  ;   
+    logic                           retire      ;  
+    logic   [`MSHR_IDX_WIDTH-1:0]   mem_tag     ;
+    LSQ_STATE                       state       ;
 } LSQ_ENTRY;
 
 typedef enum logic [2:0] {
@@ -746,9 +746,10 @@ typedef enum logic [2:0] {
     ST_ADDR     =   1;
     ST_DEPEND   =   2;
     ST_RD_MEM   =   3;
-    ST_LOAD_CP  =   4;
-    ST_RETIRE   =   5;
-    ST_WR_MEM   =   6;
+    ST_WAIT_MEM =   4;
+    ST_LOAD_CP  =   5;
+    ST_RETIRE   =   6;
+    ST_WR_MEM   =   7;
 } LSQ_STATE;
 
 // Interface End

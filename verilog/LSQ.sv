@@ -24,6 +24,9 @@ module lsq #(
     input   FU_LSQ   [C_LSQ_IN_NUM-1:0]           fu_lsq_i,
     input   BC_FU               bc_lsq_i,
     input   MEM_OUT             cache_lsq_i,
+
+    input   LSQ_ENTRY   lsq_entry_i,
+
     output  LSQ_DP              lsq_dp_o,
     output  FU_BC    [C_LOAD_NUM]           lsq_bc_o,
     output  MEM_IN              lsq_cache_o
@@ -67,7 +70,10 @@ LSQ_STATE cstate, nstate;
 // Module name  :   sub_module_name
 // Description  :   sub module function
 // --------------------------------------------------------------------
-
+genvar entry_idx;
+generate
+    
+endgenerate
 
 // --------------------------------------------------------------------
 
@@ -134,142 +140,6 @@ LSQ_STATE cstate, nstate;
 // STORE/LOAD Dispatch
 // ====================================================================
 
-    always_comb begin
-        lsq_dp_num = dp_lsq_i.dp_num;
-
-        if (tail + dp_num >= C_LSQ_ENTRY_NUM) begin
-            for (int entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
-                if ((entry_idx >= tail) || (entry_idx < ((tail + lsq_dp_num) - C_LSQ_ENTRY_NUM))) begin
-                    dp_sel[entry_idx]   =   1'b1;
-                end
-            end
-        end else begin
-            for (int entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
-                if ((entry_idx >= tail) && (entry_idx < tail + lsq_dp_num)) begin
-                    dp_sel[entry_idx]   =   1'b1;
-                end
-            end
-        end
-    end
-
-    always_ff @(posedge clk_i) begin
-        for (int entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
-            // Reset
-            if (rst_i) begin 
-                lsq_entry <= `SD 'd0;
-            // Dispatch
-            end else if (dp_sel[entry_idx]) begin
-                if (entry_idx < tail) begin
-                    lsq_entry[entry_idx].valid      <=  `SD 1'b1                                                ;
-                    lsq_entry[entry_idx].cmd        <=  `SD dp_lsq_i.cmd     [entry_idx+C_LSQ_ENTRY_NUM-tail]   ;
-                    lsq_entry[entry_idx].pc         <=  `SD dp_lsq_i.pc      [entry_idx+C_LSQ_ENTRY_NUM-tail]   ;
-                    lsq_entry[entry_idx].tag        <=  `SD dp_lsq_i.tag     [entry_idx+C_LSQ_ENTRY_NUM-tail]   ;
-                    lsq_entry[entry_idx].rob_idx    <=  `SD dp_lsq_i.rob_idx [entry_idx+C_LSQ_ENTRY_NUM-tail]   ;
-                    lsq_entry[entry_idx].mem_size   <=  `SD dp_lsq_i.mem_size[entry_idx+C_LSQ_ENTRY_NUM-tail]   ;
-                end else begin
-                    lsq_entry[entry_idx].valid      <=  `SD 1'b1                             ;
-                    lsq_entry[entry_idx].cmd        <=  `SD dp_lsq_i.cmd     [entry_idx-tail];
-                    lsq_entry[entry_idx].pc         <=  `SD dp_lsq_i.pc      [entry_idx-tail];
-                    lsq_entry[entry_idx].tag        <=  `SD dp_lsq_i.tag     [entry_idx-tail];
-                    lsq_entry[entry_idx].rob_idx    <=  `SD dp_lsq_i.rob_idx [entry_idx-tail];
-                    lsq_entry[entry_idx].mem_size   <=  `SD dp_lsq_i.mem_size[entry_idx-tail];
-                end
-            // Address Calculation Complete
-            end else if ((lsq_entry[entry_idx].valid == 1'b1) && (lsq_entry[entry_idx].addr_valid == 1'b0)) begin
-                for (int unsigned in_idx = 0; in_idx < C_LSQ_IN_NUM; in_idx++) begin
-                    if ((lsq_entry[entry_idx].rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid) begin
-                        if (lsq_entry[entry_idx].cmd == BUS_STORE) begin
-                            lsq_entry[entry_idx].data_valid <=  `SD 1'b1                    ;
-                            lsq_entry[entry_idx].data       <=  `SD fu_lsq_i[in_idx].data   ;
-                            lsq_entry[entry_idx].complete   <=  `SD 1'b1                    ;
-                            lsq_entry[entry_idx].addr_valid <=  `SD 1'b1                    ;
-                            lsq_entry[entry_idx].addr       <=  `SD fu_lsq_i[in_idx].addr   ;
-                        end else begin
-                            lsq_entry[entry_idx].addr_valid <=  `SD 1'b1                    ;
-                            lsq_entry[entry_idx].addr       <=  `SD fu_lsq_i[in_idx].addr   ;
-                        end
-                    end
-                end
-            // Data Load Complete
-            end else if ((lsq_entry[entry_idx].cmd == BUS_LOAD) && (lsq_entry[entry_idx].addr_valid == 1'b1)) begin
-
-            // Store 
-            end else if ((lsq_entry[entry_idx].cmd == BUS_STORE) && (lsq_entry[entry_idx].addr_valid == 1'b1)) begin
-
-            end
-        end
-    end
-
-// ====================================================================
-// STORE/LOAD Complete
-// ====================================================================
-
-LSQ_IN_NUM = LOAD_NUM + STORE_NUM fu_lsq
-LOAD_NUM fu_bc_o
-    // store complete
-    always_ff @(posedge clk_i) begin
-        for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
-            for (int unsigned in_idx = 0; in_idx < C_LSQ_IN_NUM; in_idx++) begin
-                if ((lsq_entry[entry_idx].rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid) begin
-                    lsq_entry[entry_idx].data_valid <=  `SD fu_lsq_i[in_idx].valid  ;
-                    lsq_entry[entry_idx].addr_valid <=  `SD fu_lsq_i.valid  ;
-                    lsq_entry[entry_idx].data       <=  `SD fu_lsq_i.data   ;
-                    lsq_entry[entry_idx].addr       <=  `SD fu_lsq_i.addr   ;
-                end
-            end
-        end
-    end
-
-// load complete state transition logic
-always_comb begin
-    next_load_complete_state = IDLE;
-    case(load_complete_state)
-        IDLE: if (conditions) begin
-            
-        end
-        default:
-    endcase
-end
-
-
-
-always_ff @(posedge clk_i) begin
-    if (rst_i) begin
-        cstate  <=  `SD ST_IDLE;
-    end else begin
-        cstate  <=  `SD nstate;
-    end
-end
-
-always_comb begin
-    nstate  =   cstate;
-    case (cstate)
-        ST_IDLE     :   begin
-            if (dp_sel) begin
-                
-            end
-        end
-        ST_ADDR     :   begin
-
-        end
-        ST_DEPEND   :   begin
-
-        end
-        ST_RD_MEM   :   begin
-
-        end
-        ST_LOAD_CP  :   begin
-
-        end
-        ST_RETIRE   :   begin
-
-        end
-        ST_WR_MEM   :   begin
-
-        end
-        default: 
-    endcase    
-end
 
 // ====================================================================
 // Entry Manipulation

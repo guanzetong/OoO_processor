@@ -24,7 +24,7 @@ module LSQ_entry_control # (
     input   logic                               mem_grant_i     ,
     input   BC_FU                               bc_lsq_entry_i  ,
     input   ROB_LSQ                             rob_lsq_i       ,
-    output  lsq_entry_o                           lsq_entry_o         //  The contents of this entry
+    output  lsq_entry_o                         lsq_entry_o         //  The contents of this entry
 );
 
 // ====================================================================
@@ -42,7 +42,8 @@ module LSQ_entry_control # (
     LSQ_STATE   nstate      ;
 
     lsq_entry_o   next_lsq_entry  ;
-    logic [C_LSQ_IDX_WIDTH-1:0] depend_tag;
+    logic [C_LSQ_ENTRY_NUM-1:0] depend_tag;
+    logic [C_LSQ_IDX_WIDTH-1:0] depend_idx;
 
 // ====================================================================
 // Signal Declarations End
@@ -109,7 +110,7 @@ always_comb begin
                     if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid) begin
                         // IF   All the older STORE addresses are known and there is no dependency
                         // ->   Go to ST_RD_MEM to read from memory
-                        if ((older_store_known == 1'b1) && (depend == 1'b0)) begin
+                        if ((older_store_known == 1'b1) && (depend_tag[lsq_idx_i] == 1'b0)) begin
                             next_lsq_entry.state    =   ST_RD_MEM   ;
                         // ELSE Any older STORE addresses unknown or there is a dependency
                         // ->   Go to ST_DEPEND to wait for dependency resolution
@@ -141,7 +142,7 @@ always_comb begin
             if (older_store_known == 1'b1) begin
                 // IF   There is no dependency
                 // ->   Go to ST_RD_MEM to read from memory
-                if (depend == 1'b0) begin
+                if (depend_tag[lsq_idx_i] == 1'b0) begin
                     next_lsq_entry.state    =   ST_RD_MEM   ;
                 // ELSE there is a dependency on older STORE
                 // ->   Go to ST_LOAD_CP to complete LOAD instruction
@@ -242,9 +243,13 @@ always_comb begin
             for (int dep_idx = head_i; dep_idx <= entry_idx; dep_idx++) begin 
                 if (lsq_array_i[entry_idx].cmd == BUS_LOAD) begin
                     if (lsq_array_i[dep_idx].cmd == BUS_STORE  && lsq_array_i[dep_idx].addr_valid) begin
+                        older_store_known = 1'b1;
                         if (lsq_array_i[entry_idx].addr == lsq_array_i[dep_idx].addr && lsq_array_i[entry_idx].mem_size == lsq_array_i[dep_idx].mem_size) begin
                             depend_tag[entry_idx] = 1'b1;
+                            depend_idx = entry_idx;
                         end
+                    end else begin
+                        older_store_known = 1'b0;
                     end
                 end
             end
@@ -254,9 +259,13 @@ always_comb begin
             for (int dep_idx = head_i; dep_idx <= entry_idx; dep_idx++) begin 
                 if (lsq_array_i[entry_idx].cmd == BUS_LOAD) begin
                     if (lsq_array_i[dep_idx].cmd == BUS_STORE  && lsq_array_i[dep_idx].addr_valid) begin
+                        older_store_known = 1'b1;
                         if (lsq_array_i[entry_idx].addr == lsq_array_i[dep_idx].addr && lsq_array_i[entry_idx].mem_size == lsq_array_i[dep_idx].mem_size) begin
                             depend_tag[entry_idx] = 1'b1;
+                            depend_idx = entry_idx;
                         end
+                    end else begin
+                        older_store_known = 1'b0;
                     end
                 end
             end
@@ -266,9 +275,13 @@ always_comb begin
             for (int dep_idx = 0; dep_idx <= entry_idx; dep_idx++) begin 
                 if (lsq_array_i[entry_idx].cmd == BUS_LOAD) begin
                     if (lsq_array_i[dep_idx].cmd == BUS_STORE  && lsq_array_i[dep_idx].addr_valid) begin
+                        older_store_known = 1'b1;
                         if (lsq_array_i[entry_idx].addr == lsq_array_i[dep_idx].addr && lsq_array_i[entry_idx].mem_size == lsq_array_i[dep_idx].mem_size) begin
                             depend_tag[entry_idx] = 1'b1;
+                            depend_idx = entry_idx;
                         end
+                    end else begin
+                        older_store_known = 1'b0;
                     end
                 end
             end
