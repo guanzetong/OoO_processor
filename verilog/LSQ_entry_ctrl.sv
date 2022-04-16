@@ -7,24 +7,32 @@
 /////////////////////////////////////////////////////////////////////////
 
 module LSQ_entry_control # (
-    parameter   C_LSQ_ENTRY_NUM =   `LSQ_ENTRY_NUM;
-    parameter   C_LSQ_IDX_WIDTH =   $clog2(C_LSQ_ENTRY_NUM);
+    parameter   C_THREAD_NUM        =   `THREAD_NUM             ,
+    parameter   C_LSQ_ENTRY_NUM     =   `LSQ_ENTRY_NUM          ,
+    parameter   C_THREAD_IDX_WIDTH  =   $clog2(C_THREAD_NUM)    ,
+    parameter   C_LSQ_IDX_WIDTH     =   $clog2(C_LSQ_ENTRY_NUM) 
 ) (
-    input   logic                               clk_i           ,   //  Clock
-    input   logic                               rst_i           ,   //  Reset
-    input   logic       [C_LSQ_IDX_WIDTH-1:0]   lsq_idx_i       ,   //  Entry index of this entry
-    input   logic       [C_LSQ_IDX_WIDTH-1:0]   head_i          ,
-    input   logic       [C_LSQ_IDX_WIDTH-1:0]   tail_i          ,
-    input   LSQ_ENTRY   [C_LSQ_ENTRY_NUM-1:0]   lsq_array_i     ,
-    input   logic                               dp_sel_i        ,   //  Dispatch select
-    input   DP_LSQ                              dp_lsq_i        ,
-    input   FU_LSQ      [C_LSQ_IN_NUM-1:0]      fu_lsq_i        ,
-    output  MEM_IN                              lsq_entry_mem_o ,
-    input   MEM_OUT                             mem_lsq_i       ,
-    input   logic                               mem_grant_i     ,
-    input   BC_FU                               bc_lsq_entry_i  ,
-    input   ROB_LSQ                             rob_lsq_i       ,
-    output  LSQ_ENTRY                           lsq_entry_o         //  The contents of this entry
+    input   logic                                   clk_i           ,   //  Clock
+    input   logic                                   rst_i           ,   //  Reset
+    input   logic       [C_LSQ_IDX_WIDTH-1:0]       lsq_idx_i       ,   //  Entry index of this entry
+    input   logic       [C_THREAD_IDX_WIDTH-1:0]    thread_idx_i    ,   //  Entry index of this entry
+    // Global control
+    input   LSQ_ENTRY   [C_LSQ_ENTRY_NUM-1:0]       lsq_array_i     ,
+    input   logic       [C_LSQ_IDX_WIDTH-1:0]       head_i          ,
+    input   logic       [C_LSQ_IDX_WIDTH-1:0]       tail_i          ,
+    input   logic                                   dp_sel_i        ,   //  Dispatch select
+    input   logic                                   rt_sel_i        ,   //  Retire(from LSQ) select
+    // Interface with other modules
+    input   DP_LSQ                                  dp_lsq_i        ,   //  From Dipatcher
+    input   FU_LSQ      [C_LSQ_IN_NUM-1:0]          fu_lsq_i        ,   //  From FU
+    output  MEM_IN                                  lsq_entry_mem_o ,   //  To Memory/Cache
+    input   MEM_OUT                                 mem_lsq_i       ,   //  From Memory/Cache
+    input   logic                                   mem_grant_i     ,   //  Memory interface grant
+    output  FU_BC                                   lsq_entry_bc_o  ,   //  To Broadcaster
+    input   BC_FU                                   bc_lsq_entry_i  ,   //  From Broadcaster
+    input   ROB_LSQ                                 rob_lsq_i       ,   //  From ROB
+    // Entry contents
+    output  LSQ_ENTRY                               lsq_entry_o         //  The contents of this entry
 );
 
 // ====================================================================
@@ -74,8 +82,8 @@ module LSQ_entry_control # (
     end
 
     always_comb begin
-        nstate  =   cstate;
-        case (cstate)
+        next_lsq_entry  =   lsq_entry_o;
+        case (lsq_entry_o.state)
             // Idle state, this entry is available for new LOAD/STORE
             ST_IDLE     :   begin
                 // IF   this entry is selected to be allocated
@@ -197,7 +205,7 @@ module LSQ_entry_control # (
                     // AND  the rob_idx retired matches the rob_idx of this entry
                     // ->   Assert the retire bit of this entry
                     //      and wait to be selected to retire from LSQ
-                    if ((rt_idx < rob_lsq_i.rt_num) 
+                    if ((rt_idx < rob_lsq_i.rt_num)
                     && (rob_lsq_i.rob_idx[rt_idx] == lsq_entry_o.rob_idx)) begin
                         next_lsq_entry.retire   =   1'b1;
                     end
@@ -246,7 +254,6 @@ module LSQ_entry_control # (
                     next_lsq_entry.mem_tag      =   'd0         ;
                 end
             end
-            default: 
         endcase    
     end
 
@@ -354,6 +361,46 @@ module LSQ_entry_control # (
                     end
                 end
             end
+        end
+    end
+
+// --------------------------------------------------------------------
+// Memory/Cache Interface
+// --------------------------------------------------------------------
+    always_comb begin
+        lsq_entry_mem_o =   'd0 ;
+        case (lsq_entry_o.state)
+            ST_RD_MEM   :   begin
+                lsq_entry_mem_o.addr    =   lsq_entry_o.addr    ;
+                lsq_entry_mem_o.data    =   'b0                 ;
+                lsq_entry_mem_o.size    =   lsq_entry_o.mem_size;
+                lsq_entry_mem_o.command =   lsq_entry_o.cmd     ;
+            end
+            ST_WR_MEM   :   begin
+                lsq_entry_mem_o.addr    =   lsq_entry_o.addr    ;
+                lsq_entry_mem_o.data    =   lsq_entry_o.data    ;
+                lsq_entry_mem_o.size    =   lsq_entry_o.mem_size;
+                lsq_entry_mem_o.command =   lsq_entry_o.cmd     ;
+            end
+        endcase
+    end
+
+// --------------------------------------------------------------------
+// Broadcaster Interface
+// --------------------------------------------------------------------
+    always_comb begin
+        lsq_entry_bc_o  =   'b0;
+        if (lsq_entry_o.state == ST_LOAD_CP) begin
+            lsq_entry_bc_o.valid        =   1'b1                ;
+            lsq_entry_bc_o.pc           =   lsq_entry_o.pc      ;
+            lsq_entry_bc_o.write_reg    =   1'b1                ;
+            lsq_entry_bc_o.rd_value     =   lsq_entry_o.data    ;
+            lsq_entry_bc_o.tag          =   lsq_entry_o.tag     ;
+            lsq_entry_bc_o.br_inst      =   1'b0                ;
+            lsq_entry_bc_o.br_result    =   1'b0                ;
+            lsq_entry_bc_o.br_target    =   'd0                 ;
+            lsq_entry_bc_o.thread_idx   =   thread_idx_i        ;
+            lsq_entry_bc_o.rob_idx      =   lsq_entry_o.rob_idx ;
         end
     end
 
