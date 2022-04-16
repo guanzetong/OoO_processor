@@ -920,15 +920,15 @@ module FU #(
     generate
         for (idx = 0; idx < C_STORE_NUM; idx++) begin
             store store_unit (
-                clk_i           (clk_i                          ),
-                rst_i           (rst_i                          ),
-                ib_fu_i         (ib_fu_i[C_STORE_BASE+idx]      ),
-                fu_ib_o         (fu_ib_o[C_STORE_BASE+idx]      ),
-                fu_bc_o         (fu_bc_o[C_STORE_BASE+idx]      ),
-                bc_fu_i         (bc_fu_i[C_STORE_BASE+idx]      ),
-                fu_lsq_o        (fu_lsq_o[C_LSQ_STORE_BASE+idx] ),
-                br_mis_i        (br_mis_i                       ),
-                exception_i     (exception_i                    )
+                .clk_i          (clk_i                          ),
+                .rst_i          (rst_i                          ),
+                .ib_fu_i        (ib_fu_i[C_STORE_BASE+idx]      ),
+                .fu_ib_o        (fu_ib_o[C_STORE_BASE+idx]      ),
+                .fu_bc_o        (fu_bc_o[C_STORE_BASE+idx]      ),
+                .bc_fu_i        (bc_fu_i[C_STORE_BASE+idx]      ),
+                .fu_lsq_o       (fu_lsq_o[C_LSQ_STORE_BASE+idx] ),
+                .br_mis_i       (br_mis_i                       ),
+                .exception_i    (exception_i                    )
             );
         end
     endgenerate

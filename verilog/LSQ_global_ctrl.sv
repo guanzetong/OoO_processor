@@ -7,6 +7,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 module LSQ_global_ctrl #(
+    parameter   C_DP_NUM        =   `DP_NUM                     ,
     parameter   C_LSQ_ENTRY_NUM =   `LSQ_ENTRY_NUM              ,
     parameter   C_LSQ_IDX_WIDTH =   $clog2(C_LSQ_ENTRY_NUM)     ,
     parameter   C_LSQ_NUM_WIDTH =   $clog2(C_LSQ_ENTRY_NUM+1)
@@ -19,7 +20,7 @@ module LSQ_global_ctrl #(
     output  logic       [C_LSQ_IDX_WIDTH-1:0]   tail_o          ,
     output  logic       [C_LSQ_ENTRY_NUM-1:0]   dp_sel_o        ,
     output  logic       [C_LSQ_ENTRY_NUM-1:0]   rt_sel_o        ,
-    output  LSQ_DP      [C_LSQ_NUM_WIDTH-1:0]   lsq_dp_o        
+    output  LSQ_DP                              lsq_dp_o        
 );
 
 // ====================================================================
@@ -40,6 +41,7 @@ module LSQ_global_ctrl #(
     logic                           tail_rollover   ;
 
     // Numbers
+
     logic   [C_LSQ_NUM_WIDTH-1:0]   lsq_dp_num      ;
     logic   [C_LSQ_NUM_WIDTH-1:0]   lsq_rt_num      ;
     logic   [C_LSQ_NUM_WIDTH-1:0]   avail_num       ;
@@ -108,18 +110,18 @@ module LSQ_global_ctrl #(
 // Dipatch entry select
 // --------------------------------------------------------------------
     always_comb begin
-        dp_num      =   dp_lsq_i.dp_num;
+        lsq_dp_num  =   dp_lsq_i.dp_num;
         // Per-entry select bit for dispatch
         dp_sel_o    =   'b0;
-        if (tail_o + dp_num >= C_LSQ_ENTRY_NUM) begin
+        if (tail_o + lsq_dp_num >= C_LSQ_ENTRY_NUM) begin
             for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
-                if ((entry_idx >= tail_o) || (entry_idx < ((tail_o + dp_num) - C_LSQ_ENTRY_NUM))) begin
+                if ((entry_idx >= tail_o) || (entry_idx < ((tail_o + lsq_dp_num) - C_LSQ_ENTRY_NUM))) begin
                     dp_sel_o[entry_idx]   =   1'b1;
                 end
             end
         end else begin
             for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
-                if ((entry_idx >= tail_o) && (entry_idx < tail_o + dp_num)) begin
+                if ((entry_idx >= tail_o) && (entry_idx < tail_o + lsq_dp_num)) begin
                     dp_sel_o[entry_idx]   =   1'b1;
                 end
             end
@@ -199,6 +201,16 @@ module LSQ_global_ctrl #(
                         rt_sel_o[entry_idx] =   1'b1;
                     end
                 end 
+            end
+        end
+    end
+
+    // Retire entry number
+    always_comb begin
+        lsq_rt_num  =   'd0;
+        for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
+            if (rt_sel_o[entry_idx]) begin
+                lsq_rt_num  =   lsq_rt_num + 'd1;
             end
         end
     end

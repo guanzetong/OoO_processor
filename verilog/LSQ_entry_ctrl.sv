@@ -1,14 +1,18 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//  Modulename  :  LSQ_fsm.sv                                          //
+//  Modulename  :  LSQ_entry_ctrl.sv                                   //
 //                                                                     //
-//  Description :  LSQ_fsm                                             // 
+//  Description :  LSQ entry controller                                // 
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module LSQ_entry_control # (
+module LSQ_entry_ctrl # (
+    parameter   C_RT_NUM            =   `RT_NUM                 ,
     parameter   C_THREAD_NUM        =   `THREAD_NUM             ,
     parameter   C_LSQ_ENTRY_NUM     =   `LSQ_ENTRY_NUM          ,
+    parameter   C_LOAD_NUM          =   `LOAD_NUM               ,
+    parameter   C_STORE_NUM         =   `STORE_NUM              ,
+    parameter   C_LSQ_IN_NUM        =   C_LOAD_NUM + C_STORE_NUM,
     parameter   C_THREAD_IDX_WIDTH  =   $clog2(C_THREAD_NUM)    ,
     parameter   C_LSQ_IDX_WIDTH     =   $clog2(C_LSQ_ENTRY_NUM) 
 ) (
@@ -50,6 +54,7 @@ module LSQ_entry_control # (
     logic                               depend_flag         ;
     logic       [C_LSQ_IDX_WIDTH-1:0]   depend_idx          ;
     logic       [C_LSQ_ENTRY_NUM-1:0]   store_check         ;
+    logic                               older_store_known   ;
 
 // ====================================================================
 // Signal Declarations End
@@ -64,7 +69,7 @@ module LSQ_entry_control # (
 // --------------------------------------------------------------------
     always_ff @(posedge clk_i) begin
         if (rst_i) begin
-            lsq_entry_o.state       <=  `SD ST_IDLE     ;
+            lsq_entry_o.state       <=  `SD LSQ_ST_IDLE ;
             lsq_entry_o.cmd         <=  `SD BUS_NONE    ;
             lsq_entry_o.pc          <=  `SD 'd0         ;
             lsq_entry_o.tag         <=  `SD 'd0         ;
@@ -85,11 +90,11 @@ module LSQ_entry_control # (
         next_lsq_entry  =   lsq_entry_o;
         case (lsq_entry_o.state)
             // Idle state, this entry is available for new LOAD/STORE
-            ST_IDLE     :   begin
+            LSQ_ST_IDLE     :   begin
                 // IF   this entry is selected to be allocated
-                // ->   Go to ST_ADDR to wait for the result of address calculation
+                // ->   Go to LSQ_ST_ADDR to wait for the result of address calculation
                 if (dp_sel_i) begin
-                    next_lsq_entry.state    =   ST_ADDR;
+                    next_lsq_entry.state    =   LSQ_ST_ADDR;
                     if (lsq_idx_i < tail_i) begin
                         next_lsq_entry.cmd      =   dp_lsq_i.cmd     [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
                         next_lsq_entry.pc       =   dp_lsq_i.pc      [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
@@ -106,7 +111,7 @@ module LSQ_entry_control # (
                 end
             end
             // Wait for LOAD/STORE address from FU
-            ST_ADDR     :   begin
+            LSQ_ST_ADDR     :   begin
                 // LOAD
                 if (lsq_entry_o.cmd == BUS_LOAD) begin
                     // Loop over all the LOAD/STORE FU output
@@ -114,13 +119,13 @@ module LSQ_entry_control # (
                         // IF   the rob_idx of FU output matches the rob_idx of the entry
                         if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid) begin
                             // IF   All the older STORE addresses are known and there is no dependency
-                            // ->   Go to ST_RD_MEM to read from memory
+                            // ->   Go to LSQ_ST_RD_MEM to read from memory
                             if ((older_store_known == 1'b1) && (depend_flag == 1'b0)) begin
-                                next_lsq_entry.state    =   ST_RD_MEM   ;
+                                next_lsq_entry.state    =   LSQ_ST_RD_MEM   ;
                             // ELSE Any older STORE addresses unknown or there is a dependency
-                            // ->   Go to ST_DEPEND to wait for dependency resolution
+                            // ->   Go to LSQ_ST_DEPEND to wait for dependency resolution
                             end else begin
-                                next_lsq_entry.state    =   ST_DEPEND   ;
+                                next_lsq_entry.state    =   LSQ_ST_DEPEND   ;
                             end
                             next_lsq_entry.addr_valid   =   1'b1                    ;
                             next_lsq_entry.addr         =   fu_lsq_i[in_idx].addr   ;
@@ -131,9 +136,9 @@ module LSQ_entry_control # (
                     // Loop over all the LOAD/STORE FU output
                     for (int in_idx = 0; in_idx < C_LSQ_IN_NUM; in_idx++) begin
                         // IF   the rob_idx of FU output matches the rob_idx of the entry
-                        // ->   Go to ST_RETIRE to wait for retire
+                        // ->   Go to LSQ_ST_RETIRE to wait for retire
                         if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid) begin
-                            next_lsq_entry.state        =   ST_RETIRE               ;
+                            next_lsq_entry.state        =   LSQ_ST_RETIRE               ;
                             next_lsq_entry.data_valid   =   1'b1                    ;
                             next_lsq_entry.data         =   fu_lsq_i[in_idx].data   ;
                             next_lsq_entry.addr_valid   =   1'b1                    ;
@@ -145,60 +150,60 @@ module LSQ_entry_control # (
             // Check and Wait for depenency resolution (This state is only for LOAD instructions):
             // 1. Check if all older STORE address are known.
             // 2. Check if any older STORE write to the same address with same mem_size
-            ST_DEPEND   :   begin
+            LSQ_ST_DEPEND   :   begin
                 // IF   All the older STORE addresses are known
                 if (older_store_known == 1'b1) begin
                     // IF   There is no dependency
-                    // ->   Go to ST_RD_MEM to read from memory
+                    // ->   Go to LSQ_ST_RD_MEM to read from memory
                     if (depend_flag == 1'b0) begin
-                        next_lsq_entry.state    =   ST_RD_MEM   ;
+                        next_lsq_entry.state    =   LSQ_ST_RD_MEM   ;
                     // ELSE there is a dependency on older STORE
-                    // ->   Go to ST_LOAD_CP to complete LOAD instruction
+                    // ->   Go to LSQ_ST_LOAD_CP to complete LOAD instruction
                     // ->   Forward the nearest older STORE data
                     end else begin
-                        next_lsq_entry.state        =   ST_LOAD_CP                  ;
+                        next_lsq_entry.state        =   LSQ_ST_LOAD_CP                  ;
                         next_lsq_entry.data         =   lsq_array_i[depend_idx].data;
                         next_lsq_entry.data_valid   =   1'b1                        ;
                     end
                 end
             end
             // Send read request to memory/cache and wait for response
-            ST_RD_MEM   :   begin
+            LSQ_ST_RD_MEM   :   begin
                 // IF   The memory interface is granted to this entry 
                 // AND  The request is confirmed by memory
                 if ((mem_grant_i == 1'b1) && (mem_lsq_i.response != 'd0)) begin
                     // IF   Long Memory Latency or Cache miss
-                    // ->   Go to ST_WAIT_MEM
+                    // ->   Go to LSQ_ST_WAIT_MEM
                     if (mem_lsq_i.tag != mem_lsq_i.response) begin
-                        next_lsq_entry.state        =   ST_WAIT_MEM         ;
+                        next_lsq_entry.state        =   LSQ_ST_WAIT_MEM         ;
                         next_lsq_entry.mem_tag      =   mem_lsq_i.response  ;
                     // ELSE Cache hit
-                    // ->   Go to ST_RETIRE
+                    // ->   Go to LSQ_ST_RETIRE
                     end else begin
-                        next_lsq_entry.state        =   ST_LOAD_CP      ;
+                        next_lsq_entry.state        =   LSQ_ST_LOAD_CP      ;
                         next_lsq_entry.data_valid   =   1'b1            ;
                         next_lsq_entry.data         =   mem_lsq_i.data  ;
                     end
                 end
             end
             // Wait for memory/cache to return the data
-            ST_WAIT_MEM :   begin
+            LSQ_ST_WAIT_MEM :   begin
                 // IF   The memory return tag matches the mem_tag of this entry
                 // ->   The data returned from memory is for this entry
                 if (mem_lsq_i.tag == next_lsq_entry.mem_tag) begin
-                    next_lsq_entry.state        =   ST_LOAD_CP      ;
+                    next_lsq_entry.state        =   LSQ_ST_LOAD_CP      ;
                     next_lsq_entry.data_valid   =   1'b1            ;
                     next_lsq_entry.data         =   mem_lsq_i.data  ;
                 end
             end
             // Complete the LOAD, request CDB
-            ST_LOAD_CP  :   begin
+            LSQ_ST_LOAD_CP  :   begin
                 if (bc_lsq_entry_i.broadcasted == 1'b1) begin
-                    next_lsq_entry.state    =   ST_RETIRE   ;
+                    next_lsq_entry.state    =   LSQ_ST_RETIRE   ;
                 end
             end
             // Wait for ROB to retire the LOAD/STORE.
-            ST_RETIRE   :   begin
+            LSQ_ST_RETIRE   :   begin
                 // Loop over all the Retire channels
                 for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
                     // IF   the retire channel is valid
@@ -214,9 +219,9 @@ module LSQ_entry_control # (
                 // IF   Selected to retire from LSQ
                 if (rt_sel_i) begin
                     // IF   LOAD
-                    // ->   Clear the entry and go back to ST_IDLE
+                    // ->   Clear the entry and go back to LSQ_ST_IDLE
                     if (lsq_entry_o.cmd == BUS_LOAD) begin
-                        next_lsq_entry.state        =   ST_IDLE     ;
+                        next_lsq_entry.state        =   LSQ_ST_IDLE     ;
                         next_lsq_entry.cmd          =   BUS_NONE    ;
                         next_lsq_entry.pc           =   'd0         ;
                         next_lsq_entry.tag          =   'd0         ;
@@ -229,18 +234,18 @@ module LSQ_entry_control # (
                         next_lsq_entry.retire       =   1'b0        ;
                         next_lsq_entry.mem_tag      =   'd0         ;
                     // IF   STORE
-                    // ->   Go to ST_WR_MEM to write the data to memory/cache
+                    // ->   Go to LSQ_ST_WR_MEM to write the data to memory/cache
                     end else begin
-                        next_lsq_entry.state    =   ST_WR_MEM;
+                        next_lsq_entry.state    =   LSQ_ST_WR_MEM;
                     end
                 end
             end
             // Send write request to memory/cache and wait for response
-            ST_WR_MEM   :   begin
+            LSQ_ST_WR_MEM   :   begin
                 // IF   The write request is confirmed by memory/cache
-                // ->   Clear the entry and go back to ST_IDLE
+                // ->   Clear the entry and go back to LSQ_ST_IDLE
                 if (mem_lsq_i.response != 'd0) begin
-                    next_lsq_entry.state        =   ST_IDLE     ;
+                    next_lsq_entry.state        =   LSQ_ST_IDLE     ;
                     next_lsq_entry.cmd          =   BUS_NONE    ;
                     next_lsq_entry.pc           =   'd0         ;
                     next_lsq_entry.tag          =   'd0         ;
@@ -370,13 +375,13 @@ module LSQ_entry_control # (
     always_comb begin
         lsq_entry_mem_o =   'd0 ;
         case (lsq_entry_o.state)
-            ST_RD_MEM   :   begin
+            LSQ_ST_RD_MEM   :   begin
                 lsq_entry_mem_o.addr    =   lsq_entry_o.addr    ;
                 lsq_entry_mem_o.data    =   'b0                 ;
                 lsq_entry_mem_o.size    =   lsq_entry_o.mem_size;
                 lsq_entry_mem_o.command =   lsq_entry_o.cmd     ;
             end
-            ST_WR_MEM   :   begin
+            LSQ_ST_WR_MEM   :   begin
                 lsq_entry_mem_o.addr    =   lsq_entry_o.addr    ;
                 lsq_entry_mem_o.data    =   lsq_entry_o.data    ;
                 lsq_entry_mem_o.size    =   lsq_entry_o.mem_size;
@@ -390,7 +395,7 @@ module LSQ_entry_control # (
 // --------------------------------------------------------------------
     always_comb begin
         lsq_entry_bc_o  =   'b0;
-        if (lsq_entry_o.state == ST_LOAD_CP) begin
+        if (lsq_entry_o.state == LSQ_ST_LOAD_CP) begin
             lsq_entry_bc_o.valid        =   1'b1                ;
             lsq_entry_bc_o.pc           =   lsq_entry_o.pc      ;
             lsq_entry_bc_o.write_reg    =   1'b1                ;

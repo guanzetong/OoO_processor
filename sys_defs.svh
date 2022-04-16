@@ -69,6 +69,7 @@ typedef union packed {
 `define STORE_NUM       1
 `define FU_NUM          (`ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM)
 `define LSQ_IN_NUM      `LOAD_NUM + `STORE_NUM
+`define LSQ_OUT_NUM     (`THREAD_NUM) * (`LOAD_NUM)
 
 `define ALU_CYCLE       1
 `define MULT_CYCLE      3
@@ -375,14 +376,14 @@ typedef enum logic [2:0] {
 
 
 typedef enum logic [2:0] {
-    ST_IDLE     =   3'h0;
-    ST_ADDR     =   3'h1;
-    ST_DEPEND   =   3'h2;
-    ST_RD_MEM   =   3'h3;
-    ST_WAIT_MEM =   3'h4;
-    ST_LOAD_CP  =   3'h5;
-    ST_RETIRE   =   3'h6;
-    ST_WR_MEM   =   3'h7;
+    LSQ_ST_IDLE     =   3'h0    ,
+    LSQ_ST_ADDR     =   3'h1    ,
+    LSQ_ST_DEPEND   =   3'h2    ,
+    LSQ_ST_RD_MEM   =   3'h3    ,
+    LSQ_ST_WAIT_MEM =   3'h4    ,
+    LSQ_ST_LOAD_CP  =   3'h5    ,
+    LSQ_ST_RETIRE   =   3'h6    ,
+    LSQ_ST_WR_MEM   =   3'h7    
 } LSQ_STATE;
 
 //////////////////////////////////////////////
@@ -511,17 +512,18 @@ typedef struct packed {
 } CACHE_MEM_ENTRY;  // for each block
 
 typedef struct packed {
-    BUS_COMMAND                         cmd         ;
-    logic   [`XLEN-1:0]                 pc          ;   
-    logic   [`TAG_IDX_WIDTH-1:0]        tag         ;   
-    logic   [`ROB_IDX_WIDTH-1:0]        rob_idx     ;   
-    MEM_SIZE                            mem_size    ;
-    logic   [`XLEN-1:0]                 addr        ;   
-    logic                               addr_valid  ;   
-    logic   [`XLEN-1:0]                 data        ;   
-    logic                               data_valid  ;   
-    logic                               complete    ;   
-    logic                               retire      ;   
+    BUS_COMMAND                                     cmd         ;
+    logic   [`XLEN-1:0]                             pc          ;   
+    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;   
+    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;   
+    MEM_SIZE                                        mem_size    ;
+    logic   [`XLEN-1:0]                             addr        ;   
+    logic                                           addr_valid  ;   
+    logic   [`XLEN-1:0]                             data        ;   
+    logic                                           data_valid  ;   
+    logic                                           retire      ;  
+    logic   [`MSHR_IDX_WIDTH-1:0]                   mem_tag     ;
+    LSQ_STATE                                       state       ;
 } LSQ_ENTRY;
 // Array Entry Contents End
 
@@ -747,23 +749,6 @@ typedef struct packed {
 } DP_LSQ;
 
 typedef struct packed {
-    logic   [`XLEN-1:0]                             addr;
-    logic   [`XLEN-1:0]                             data;
-    logic                                           valid;
-    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx;
-} FU_LSQ;
-
-
-typedef struct packed {
-    logic       [`DP_NUM_WIDTH-1:0]                 dp_num      ;
-    BUS_COMMAND [`DP_NUM-1:0]                       cmd         ;
-    MEM_SIZE    [`DP_NUM-1:0]                       mem_size    ;
-    logic       [`DP_NUM-1:0][`ROB_IDX_WIDTH-1:0]   rob_idx     ;
-    logic       [`DP_NUM-1:0][`XLEN-1:0]            pc          ;
-    logic       [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]   tag         ;
-} DP_LSQ;
-
-typedef struct packed {
     logic   [`DP_NUM_WIDTH-1:0]                     avail_num   ;
 } LSQ_DP; 
 
@@ -772,20 +757,7 @@ typedef struct packed {
     logic   [`RT_NUM-1:0][`ROB_IDX_WIDTH-1:0]       rob_idx     ;
 } ROB_LSQ; // Combined
 
-typedef struct packed {
-    BUS_COMMAND                                     cmd         ;
-    logic   [`XLEN-1:0]                             pc          ;   
-    logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;   
-    logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;   
-    MEM_SIZE                                        mem_size    ;
-    logic   [`XLEN-1:0]                             addr        ;   
-    logic                                           addr_valid  ;   
-    logic   [`XLEN-1:0]                             data        ;   
-    logic                                           data_valid  ;   
-    logic                                           retire      ;  
-    logic   [`MSHR_IDX_WIDTH-1:0]                   mem_tag     ;
-    LSQ_STATE                                       state       ;
-} LSQ_ENTRY;
+
 
 // Interface End
 

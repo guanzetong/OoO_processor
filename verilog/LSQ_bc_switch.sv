@@ -95,7 +95,7 @@ module LSQ_bc_switch #(
             // Route the granted request to the Broadcaster Interface
             // Output response signals to the LSQ entries
             if (grant_valid[arbiter_idx]) begin
-                lsq_bc_o[arbiter_idx]   =   lsq_entry_bc_i[grand_idx[arbiter_idx]];
+                lsq_bc_o[arbiter_idx]   =   lsq_entry_bc_i[grant_idx[arbiter_idx]];
                 bc_lsq_entry_o[grant_idx[arbiter_idx]]  =   bc_lsq_i[arbiter_idx];
             end
 

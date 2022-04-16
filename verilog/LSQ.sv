@@ -23,6 +23,8 @@ module LSQ #(
 ) (
     // For testing
     output  LSQ_ENTRY   [C_LSQ_ENTRY_NUM-1:0]   lsq_array_mon_o ,
+    output  logic       [C_LSQ_IDX_WIDTH-1:0]   lsq_head_mon_o  ,
+    output  logic       [C_LSQ_IDX_WIDTH-1:0]   lsq_tail_mon_o  ,
     // Clock and Reset
     input   logic                               clk_i           ,   //  Clock
     input   logic                               rst_i           ,   //  Reset
@@ -80,24 +82,24 @@ module LSQ #(
     generate
         for (entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
             LSQ_entry_ctrl LSQ_entry_ctrl_inst (
-                .clk_i              (clk_i                      ),
-                .rst_i              (rst_i                      ),
-                .lsq_idx_i          (entry_idx                  ),
-                .thread_idx_i       (thread_idx_i               ),
-                .lsq_array_i        (lsq_array                  ),
-                .head_i             (head                       ),
-                .tail_i             (tail                       ),
-                .dp_sel_i           (dp_sel[entry_idx]          ),
-                .rt_sel_i           (rt_sel[entry_idx]          ),
-                .dp_lsq_i           (dp_lsq_i                   ),
-                .fu_lsq_i           (fu_lsq_i                   ),
-                .lsq_entry_mem_o    (lsq_entry_mem              ),
-                .mem_lsq_i          (mem_lsq_i                  ),
-                .mem_grant_i        (mem_grant[entry_idx]       ),
-                .lsq_entry_bc_o     (lsq_entry_bc[entry_idx]    ),
-                .bc_lsq_entry_i     (bc_lsq_i                   ),
-                .rob_lsq_i          (rob_lsq_i                  ),
-                .lsq_entry_o        (lsq_array[entry_idx]       )
+                .clk_i              (clk_i                          ),
+                .rst_i              (rst_i                          ),
+                .lsq_idx_i          (entry_idx[C_LSQ_IDX_WIDTH-1:0] ),
+                .thread_idx_i       (thread_idx_i                   ),
+                .lsq_array_i        (lsq_array                      ),
+                .head_i             (head                           ),
+                .tail_i             (tail                           ),
+                .dp_sel_i           (dp_sel[entry_idx]              ),
+                .rt_sel_i           (rt_sel[entry_idx]              ),
+                .dp_lsq_i           (dp_lsq_i                       ),
+                .fu_lsq_i           (fu_lsq_i                       ),
+                .lsq_entry_mem_o    (lsq_entry_mem[entry_idx]       ),
+                .mem_lsq_i          (mem_lsq_i                      ),
+                .mem_grant_i        (mem_grant[entry_idx]           ),
+                .lsq_entry_bc_o     (lsq_entry_bc[entry_idx]        ),
+                .bc_lsq_entry_i     (bc_lsq_i                       ),
+                .rob_lsq_i          (rob_lsq_i                      ),
+                .lsq_entry_o        (lsq_array[entry_idx]           )
             );
         end
     endgenerate
@@ -164,6 +166,8 @@ module LSQ #(
 // For Testing
 // --------------------------------------------------------------------
     assign  lsq_array_mon_o =   lsq_array   ;
+    assign  lsq_head_mon_o  =   head        ;
+    assign  lsq_tail_mon_o  =   tail        ;
 
 // ====================================================================
 // RTL Logic End

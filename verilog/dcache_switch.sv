@@ -43,10 +43,10 @@ module dcache_switch #(
 // Module Instantiations Start
 // ====================================================================
 // --------------------------------------------------------------------
-// Module name  :   LSQ_rr_arbiter
+// Module name  :   dcache_rr_arbiter
 // Description  :   Work-Conserving Round Robin Arbiter
 // --------------------------------------------------------------------
-    LSQ_rr_arbiter LSQ_rr_arbiter_inst (
+    dcache_rr_arbiter dcache_rr_arbiter_inst (
         .clk_i      (clk_i          ),
         .rst_i      (rst_i          ),
         .req_i      (arbiter_req    ),

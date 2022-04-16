@@ -1,17 +1,19 @@
 /////////////////////////////////////////////////////////////////////////
 //                                                                     //
-//  Modulename  :  pipeline_dp_smt.sv                                  //
+//  Modulename  :  pipeline_dp_lsq.sv                                  //
 //                                                                     //
 //  Description :  SMT pipline without fetch and LSQ                   // 
 //                                                                     //
 /////////////////////////////////////////////////////////////////////////
 
-module pipeline_dp_smt (
+module pipeline_dp_lsq (
     input   logic                                                       clk_i               ,   // Clock
     input   logic                                                       rst_i               ,   // Reset
     input   FIQ_DP                                                      fiq_dp              ,   // From FIQ to DP
     output  DP_FIQ                                                      dp_fiq              ,   // From DP to FIQ
     input   logic                                                       exception_i         ,   // External exception
+    output  MEM_IN                                                      proc2mem_o          ,   // From Processor to Memory
+    input   MEM_OUT                                                     mem2proc_i          ,   // From Memory to Processor
     // Testing
     //      Dispatch
     output  DP_RS                                                       dp_rs_mon_o         ,   // From Dispatcher to RS
@@ -60,9 +62,11 @@ module pipeline_dp_smt (
     output  logic       [`STORE_IDX_WIDTH-1:0]                          STORE_head_mon_o    ,   // IB queue pointer monitor
     output  logic       [`STORE_IDX_WIDTH-1:0]                          STORE_tail_mon_o    ,   // IB queue pointer monitor
     output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]                  prf_mon_o           ,   // Physical Register File monitor
-    output  LSQ_ENTRY   [C_LSQ_ENTRY_NUM-1:0]                           lsq_array_mon_o     ,   // LSQ monitor
-    output  MSHR_ENTRY      [C_MSHR_ENTRY_NUM-1:0]                      dmshr_array_mon_o   ,   
-    output  CACHE_MEM_ENTRY [C_CACHE_SET_NUM-1:0][C_CACHE_SASS-1:0]     dcache_array_mon_o
+    output  LSQ_ENTRY   [`THREAD_NUM-1:0][`LSQ_ENTRY_NUM-1:0]           lsq_array_mon_o     ,   // LSQ monitor
+    output  logic       [`THREAD_NUM-1:0][`LSQ_IDX_WIDTH-1:0]           lsq_head_mon_o      ,   // LSQ pointer monitor
+    output  logic       [`THREAD_NUM-1:0][`LSQ_IDX_WIDTH-1:0]           lsq_tail_mon_o      ,   // LSQ pointer monitor
+    output  MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                       dmshr_array_mon_o   ,   
+    output  CACHE_MEM_ENTRY [`DCACHE_SET_NUM-1:0][`DCACHE_SASS-1:0]     dcache_array_mon_o
 );
 
 // ====================================================================
@@ -110,12 +114,12 @@ module pipeline_dp_smt (
     BC_FU       [`FU_NUM-1:0]                               bc_fu           ;
     BC_PRF      [`CDB_NUM-1:0]                              bc_prf          ;
     CDB         [`CDB_NUM-1:0]                              cdb             ;
-    BC_LSQ      [`THREAD_NUM*`LOAD_NUM-1:0]                 bc_lsq          ;
 
     // From FU
     FU_IB       [`FU_NUM-1:0]                               fu_ib           ;
     FU_BC       [`FU_NUM-1:0]                               fu_bc           ;
     FU_LSQ      [`LSQ_IN_NUM-1:0]                           fu_lsq          ;
+    BC_FU       [`LSQ_OUT_NUM-1:0]                          bc_lsq          ;
 
     // From PRF
     PRF_RS      [`IS_NUM-1:0]                               prf_rs          ;
@@ -126,7 +130,7 @@ module pipeline_dp_smt (
 
     // From LSQ
     LSQ_DP      [`THREAD_NUM-1:0]                           lsq_dp          ;
-    LSQ_BC      [`THREAD_NUM*`LOAD_NUM-1:0]                 lsq_bc          ;
+    FU_BC       [`LSQ_OUT_NUM-1:0]                          lsq_bc          ;
     MEM_IN      [`THREAD_NUM-1:0]                           lsq_mem         ;
     MEM_IN                                                  proc2dcache     ;
 
@@ -134,6 +138,10 @@ module pipeline_dp_smt (
     logic       [`THREAD_NUM-1:0]                           dcache_grant    ;
     MEM_OUT                                                 dcache2proc     ;
     MEM_IN                                                  dcache2mem      ;
+
+    // From Memory
+    MEM_IN      [2-1:0]                                     req2mem         ;
+    logic       [2-1:0]                                     memory_grant    ;
 
     genvar thread_idx;
 
@@ -146,10 +154,10 @@ module pipeline_dp_smt (
 // ====================================================================
 
 // --------------------------------------------------------------------
-// Module name  :   DP_smt
-// Description  :   Dispatcher
+// Module name  :   DP_lsq
+// Description  :   Dispatcher that support LSQ and SMT
 // --------------------------------------------------------------------
-    DP_smt DP_smt_inst (
+    DP_lsq DP_lsq_inst (
         .rob_dp_i       (rob_dp             ),
         .dp_rob_o       (dp_rob             ),
         .mt_dp_i        (mt_dp              ),
@@ -159,7 +167,9 @@ module pipeline_dp_smt (
         .fiq_dp_i       (fiq_dp             ),
         .dp_fiq_o       (dp_fiq             ),
         .rs_dp_i        (rs_dp              ),
-        .dp_rs_o        (dp_rs              )
+        .dp_rs_o        (dp_rs              ),
+        .dp_lsq_o       (dp_lsq             ),
+        .lsq_dp_i       (lsq_dp             )
     );
 
 // --------------------------------------------------------------------
@@ -256,6 +266,8 @@ module pipeline_dp_smt (
         for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
             LSQ LSQ_inst (
                 .lsq_array_mon_o    (lsq_array_mon_o[thread_idx]                ),
+                .lsq_head_mon_o     (lsq_head_mon_o[thread_idx]                 ),
+                .lsq_tail_mon_o     (lsq_tail_mon_o[thread_idx]                 ),
                 .clk_i              (clk_i                                      ),
                 .rst_i              (rst_i                                      ),
                 .thread_idx_i       (thread_idx[`THREAD_IDX_WIDTH-1:0]          ),
@@ -263,8 +275,8 @@ module pipeline_dp_smt (
                 .lsq_dp_o           (lsq_dp[thread_idx]                         ),
                 .dp_lsq_i           (dp_lsq[thread_idx]                         ),
                 .fu_lsq_i           (fu_lsq                                     ),
-                .bc_lsq_i           (bc_lsq[thread_idx*C_LOAD_NUM+:C_LOAD_NUM]  ),
-                .lsq_bc_o           (lsq_bc[thread_idx*C_LOAD_NUM+:C_LOAD_NUM]  ),
+                .bc_lsq_i           (bc_lsq[thread_idx*`LOAD_NUM+:`LOAD_NUM]    ),
+                .lsq_bc_o           (lsq_bc[thread_idx*`LOAD_NUM+:`LOAD_NUM]    ),
                 .mem_enable_i       (dcache_grant[thread_idx]                   ),
                 .mem_lsq_i          (dcache2proc                                ),
                 .lsq_mem_o          (lsq_mem[thread_idx]                        )
@@ -350,7 +362,7 @@ module pipeline_dp_smt (
 
 // --------------------------------------------------------------------
 // Module name  :   FU
-// Description  :   Arch. Map Table
+// Description  :   Functional Units
 // --------------------------------------------------------------------
     FU FU_inst (
         .clk_i          (clk_i          ),
@@ -359,6 +371,9 @@ module pipeline_dp_smt (
         .fu_ib_o        (fu_ib          ),
         .fu_bc_o        (fu_bc          ),
         .bc_fu_i        (bc_fu          ),
+        .fu_lsq_o       (fu_lsq         ),
+        .lsq_bc_i       (lsq_bc         ),
+        .bc_lsq_o       (bc_lsq         ),
         .br_mis_i       (br_mis         ),
         .exception_i    (exception_i    )
     );
@@ -379,8 +394,8 @@ module pipeline_dp_smt (
 // --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
-// Module name  :   DC
-// Description  :   D-Cache
+// Module name  :   DC_SW
+// Description  :   D-Cache Interface arbitration
 // --------------------------------------------------------------------
     dcache_switch DC_SW_inst (
         .clk_i              (clk_i              ),
@@ -391,6 +406,10 @@ module pipeline_dp_smt (
         .lsq_dcache_o       (proc2dcache        )
     );
 
+// --------------------------------------------------------------------
+// Module name  :   DC
+// Description  :   D-Cache
+// --------------------------------------------------------------------
     dcache DC_inst (
         .mshr_array_mon_o   (dmshr_array_mon_o  ),
         .cache_array_mon_o  (dcache_array_mon_o ),
@@ -398,11 +417,26 @@ module pipeline_dp_smt (
         .rst_i              (rst_i              ),
         .proc2cache_i       (proc2dcache        ),
         .cache2proc_o       (dcache2proc        ),
-        .memory_enable_i    (1'b1               ),
+        .memory_enable_i    (memory_grant[0]    ),
         .cache2mem_o        (dcache2mem         ),
-        .mem2cache_i        (dmem2cache         )
+        .mem2cache_i        (mem2proc_i         )
     );
 // --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Module name  :   MEM_SW
+// Description  :   Memory Interface Switch
+// --------------------------------------------------------------------
+    mem_switch MEM_SW_inst (
+        .clk_i              (clk_i              ),
+        .rst_i              (rst_i              ),
+        .req2mem_i          (req2mem            ),
+        .mem2switch_i       (mem2proc_i         ),
+        .memory_grant_o     (memory_grant       ),
+        .switch2mem_o       (proc2mem_o         )
+    );
+// --------------------------------------------------------------------
+
 
 // ====================================================================
 // Module Instantiations End
@@ -411,6 +445,11 @@ module pipeline_dp_smt (
 // ====================================================================
 // RTL Logic Start
 // ====================================================================
+
+    assign  req2mem[0]  =   dcache2mem  ;
+    assign  req2mem[1]  =   'b0         ;
+
+
     // Testing
     //      Dispatch
     assign  dp_rs_mon_o     =   dp_rs       ;

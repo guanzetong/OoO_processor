@@ -12,7 +12,7 @@ module mem_switch #(
     input   logic                       clk_i           ,   //  Clock
     input   logic                       rst_i           ,   //  Reset
     input   MEM_IN  [C_REQ_NUM-1:0]     req2mem_i       ,
-    input   MEM_OUT                     mem2req_i       ,
+    input   MEM_OUT                     mem2switch_i       ,
     output  logic   [C_REQ_NUM-1:0]     memory_grant_o  ,
     output  MEM_IN                      switch2mem_o    
 );
@@ -71,7 +71,7 @@ module mem_switch #(
 
         // Generate acknowledge signal for arbiter to switch priority
         arbiter_ack     =   1'b0;
-        if ((grant_valid == 1'b1) && (mem2req_i.response != 'd0)) begin
+        if ((grant_valid == 1'b1) && (mem2switch_i.response != 'd0)) begin
             arbiter_ack     =   1'b1;
         end
 
