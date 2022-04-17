@@ -19,7 +19,7 @@ endclass // gen_item
 // Driver Start
 // ====================================================================
 class driver;
-    virtual pipeline_ss_smt                 vif                     ;
+    virtual pipeline_ss_smt_if              vif                     ;
     mailbox                                 drv_mbx                 ;
     event                                   drv_done                ;
     logic   [`THREAD_IDX_WIDTH-1:0]         thread_sel              ;
@@ -116,7 +116,7 @@ endclass //
 // Monitor Start
 // ====================================================================
 class monitor;
-    virtual pipeline_ss_smt             vif                             ;
+    virtual pipeline_ss_smt_if          vif                             ;
     mailbox                             scb_mbx                         ;
     logic   [`XLEN-1:0]                 wfi_pc      [`THREAD_NUM-1:0]   ;
     int                                 wb_fileno   [`THREAD_NUM-1:0]   ;
@@ -792,7 +792,7 @@ class env;
     mailbox                           scb_mbx     ;   // Connect monitor    <-> scoreboard
     event                             drv_done    ;   // Indicates when driver is done
 
-    virtual pipeline_ss_smt           vif         ;   // Virtual interface handle
+    virtual pipeline_ss_smt_if        vif         ;   // Virtual interface handle
 
     function new();
         d0          =   new         ;
@@ -848,7 +848,7 @@ endclass // test
 // ====================================================================
 // Interface Start
 // ====================================================================
-interface pipeline_ss_smt           (input bit clk_i);
+interface pipeline_ss_smt_if         (input bit clk_i);
     logic                                               rst_i               ;   // Reset
     FIQ_DP                                              fiq_dp              ;   // From FIQ to DP
     DP_FIQ                                              dp_fiq              ;   // From DP to FIQ
@@ -962,24 +962,23 @@ module pipeline_ss_smt_tb;
 // --------------------------------------------------------------------
 // Interface Instantiation
 // --------------------------------------------------------------------
-    pipeline_ss_smt         _if(clk_i);
+    pipeline_ss_smt_if         _if(clk_i);
 
 // --------------------------------------------------------------------
 // DUT Instantiation
 // --------------------------------------------------------------------
-    pipeline_ss_smt_no_lsq dut (
+    pipeline_ss_smt     dut (
         .clk_i              (   clk_i               ),
         .rst_i              (_if.rst_i              ),
 
         .mshr_array_mon_o   (_if.mshr_array_mon_o   ),
         .cache_array_mon_o  (_if.cache_array_mon_o  ),
         .memory_enable_i    (_if.memory_enable_i    ),
-        .exception_i        (_if.exception_i        ),
 
-        .exception_i        (_if.exception_i        ),
         .proc2mem_o         (_if.proc2mem_o         ),          // Connect memory to cache (vise versa)
         .mem2proc_i         (_if.mem2proc_i         ),
 
+        .exception_i        (_if.exception_i        ),
         .pc_en_i            (_if.pc_en_i            ),
         .rst_pc_i           (_if.rst_pc_i           ),
         .if_ic_o_t          (_if.if_ic_o_t          ),          // Exposes the instruction cache to
@@ -1037,7 +1036,6 @@ module pipeline_ss_smt_tb;
         .LOAD_tail_mon_o    (_if.LOAD_tail_mon_o    ),   // IB queue pointer monitor
         .STORE_head_mon_o   (_if.STORE_head_mon_o   ),   // IB queue pointer monitor
         .STORE_tail_mon_o   (_if.STORE_tail_mon_o   ),   // IB queue pointer monitor
-        .prf_mon_o          (_if.prf_mon_o          ),
         .prf_mon_o          (_if.prf_mon_o          ),
         .lsq_array_mon_o    (_if.lsq_array_mon_o    ),
         .lsq_head_mon_o     (_if.lsq_head_mon_o     ),

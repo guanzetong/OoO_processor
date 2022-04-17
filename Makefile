@@ -59,7 +59,7 @@ HEADERS     = $(wildcard *.svh)
 # TESTBENCH	= testbench/adder_tb.sv
 # TESTBENCH	= testbench/pe_mult_tb.sv
 # TESTBENCH	= testbench/IB_tb.sv
-TESTBENCH	= testbench/pipeline_dp_lsq_tb.sv
+TESTBENCH	= testbench/pipeline_ss_smt_tb.sv
 PIPEFILES   = $(wildcard verilog/*.sv)
 # TESTBENCH	= testbench/cache_test.sv
 # TESTBENCH	= testbench/cache_tb.sv
@@ -92,7 +92,7 @@ export PIPEFILES
 # export PIPELINE_NAME = binary_encoder
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
-export PIPELINE_NAME = pipeline_dp_lsq
+export PIPELINE_NAME = pipeline_ss_smt
 # export PIPELINE_NAME = cache
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
