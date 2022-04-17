@@ -171,7 +171,7 @@ module dcache_mem #(
                         next_cache_array[mem_idx][empty_way_idx[mem_idx]].valid =   1'b1;
                         next_cache_array[mem_idx][empty_way_idx[mem_idx]].data  =   cache_ctrl_mem_i.req_data_in;
                         next_cache_array[mem_idx][empty_way_idx[mem_idx]].tag   =   mem_tag;
-                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].dirty =   1'b1;
+                        next_cache_array[mem_idx][empty_way_idx[mem_idx]].dirty =   1'b0;
                         access[mem_idx][empty_way_idx[mem_idx]]                 =   1'b1;
                     // ELSE there is no empty way in the mapped set
                     end else begin
