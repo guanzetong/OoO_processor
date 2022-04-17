@@ -40,7 +40,7 @@ class driver;
 
         $display("T=%0t [Driver] Reading program.mem", $time);
         // $readmemh("program_smt.mem", program_mem);
-        $readmemh("program.mem", program_mem);
+        $readmemh("program_smt.mem", program_mem);
 
         forever begin
             // gen_item    item;
@@ -907,7 +907,7 @@ module pipeline_dp_lsq_tb;
 // Call test
 // --------------------------------------------------------------------
     initial begin
-		$readmemh("program.mem", memory.unified_memory);
+		$readmemh("program_smt.mem", memory.unified_memory);
 
         _if.rst_i       =   1;
         _if.fiq_dp      =   0;
