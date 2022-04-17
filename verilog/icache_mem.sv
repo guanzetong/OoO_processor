@@ -187,6 +187,7 @@ module icache_mem #(
                                 next_cache_array[mem_idx][way_idx].data     =   cache_ctrl_mem_i.req_data_in;
                                 next_cache_array[mem_idx][way_idx].tag      =   mem_tag;
                                 next_cache_array[mem_idx][way_idx].dirty    =   1'b0;
+                                access[mem_idx][way_idx]                    =   1'b1;
                             end
                         end
                     end
@@ -232,7 +233,8 @@ module icache_mem #(
                                 next_cache_array[mem_idx][way_idx].valid    =   1'b1;
                                 next_cache_array[mem_idx][way_idx].data     =   cache_ctrl_mem_i.req_data_in;
                                 next_cache_array[mem_idx][way_idx].tag      =   mem_tag;
-                                next_cache_array[mem_idx][way_idx].dirty    =   1'b0;
+                                next_cache_array[mem_idx][way_idx].dirty    =   1'b1;
+                                access[mem_idx][way_idx]                    =   1'b1;
                             end
                         end
                     end
