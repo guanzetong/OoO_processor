@@ -82,7 +82,9 @@ module alu #(
     // Latch valid instruction
     //
     always_ff @(posedge clk_i) begin
-        if (ex_start) begin
+        if (rst_i) begin
+            ib_fu   <=  `SD 'b0;
+        end else if (ex_start) begin
             ib_fu   <=  `SD ib_fu_i;
         end else begin
             ib_fu   <=  `SD ib_fu;
@@ -252,7 +254,9 @@ module mult #(
     // Latch valid instruction
     //
     always_ff @(posedge clk_i) begin
-        if (ex_start) begin
+        if (rst_i) begin
+            ib_fu   <=  `SD 'b0;
+        end else if (ex_start) begin
             ib_fu   <=  `SD ib_fu_i;
         end else begin
             ib_fu   <=  `SD ib_fu;
@@ -432,7 +436,9 @@ module branch #(
     // Latch valid instruction
     //
     always_ff @(posedge clk_i) begin
-        if (ex_start) begin
+        if (rst_i) begin
+            ib_fu   <=  `SD 'b0;
+        end else if (ex_start) begin
             ib_fu   <=  `SD ib_fu_i;
         end else begin
             ib_fu   <=  `SD ib_fu;
@@ -582,7 +588,9 @@ module load #(
     // Latch valid instruction
     //
     always_ff @(posedge clk_i) begin
-        if (ex_start) begin
+        if (rst_i) begin
+            ib_fu   <=  `SD 'b0;
+        end else if (ex_start) begin
             ib_fu   <=  `SD ib_fu_i;
         end else begin
             ib_fu   <=  `SD ib_fu;
@@ -712,7 +720,9 @@ module store #(
     // Latch valid instruction
     //
     always_ff @(posedge clk_i) begin
-        if (ex_start) begin
+        if (rst_i) begin
+            ib_fu   <=  `SD 'b0;
+        end else if (ex_start) begin
             ib_fu   <=  `SD ib_fu_i;
         end else begin
             ib_fu   <=  `SD ib_fu;

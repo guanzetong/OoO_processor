@@ -43,8 +43,8 @@ class driver;
         $readmemh("program.mem", program_mem);
 
         forever begin
-            gen_item    item;
-            drv_mbx.get(item);
+            // gen_item    item;
+            // drv_mbx.get(item);
 
 
             /////////////////////////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ class driver;
             vif.fiq_dp      =   0;
             vif.exception_i =   0;
             thread_sel      =   thread_sel + 'd1;
-            ->drv_done;
+            // ->drv_done;
         end
     endtask // run()
 
@@ -125,7 +125,7 @@ class monitor;
             wfi_flag[thread_idx]    =   1'b0        ;
         end
 
-        // wfi_flag[1] =   1'b1;
+        wfi_flag[1] =   1'b1;
 
         forever begin
             @(posedge vif.clk_i);
@@ -150,9 +150,10 @@ class monitor;
             print_mt(vif.mt_mon_o);
             print_amt(vif.amt_mon_o);
             print_prf(vif.prf_mon_o);
-            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
+            // print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
             // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
             // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
+            print_STORE_ib(vif.STORE_queue_mon_o, vif.STORE_valid_mon_o, vif.STORE_head_mon_o, vif.STORE_tail_mon_o);
             print_fl(vif.fl_mon_o);
             //print_vfl(vif.vfl_fl_mon_o);
             // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
@@ -357,6 +358,28 @@ class monitor;
         end
     endfunction
 
+    function void print_STORE_ib(
+        IS_INST     [`STORE_Q_SIZE-1:0]        STORE_queue_mon    , 
+        logic       [`STORE_Q_SIZE-1:0]        STORE_valid_mon    ,
+        logic       [`STORE_IDX_WIDTH-1:0]     STORE_head_mon     ,
+        logic       [`STORE_IDX_WIDTH-1:0]     STORE_tail_mon    
+    );
+        $display("T=%0t STORE IB Queue Contents", $time);
+        $display("head=%0d, tail=%0d", STORE_head_mon, STORE_tail_mon);
+        $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
+        for (int entry_idx = 0; entry_idx < `STORE_Q_SIZE; entry_idx++) begin
+            $display("%0d\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+            entry_idx,
+            STORE_valid_mon[entry_idx],
+            STORE_queue_mon[entry_idx].pc,
+            STORE_queue_mon[entry_idx].rs1_value,
+            STORE_queue_mon[entry_idx].rs2_value,
+            STORE_queue_mon[entry_idx].tag,
+            STORE_queue_mon[entry_idx].rob_idx
+            );
+        end
+    endfunction
+
     function void print_prf(logic   [`PHY_REG_NUM-1:0] [`XLEN-1:0] prf_mon_o);
         $display("T=%0t PRF Contents", $time);
         $display("addr\t|data\t\t|addr\t|data\t\t|addr\t|data\t\t|addr\t|data\t\t");
@@ -503,15 +526,16 @@ class monitor;
     function automatic string lsq_state_str_conv(input LSQ_STATE state);
         begin
             case (state)
-                LSQ_ST_IDLE     :   lsq_state_str_conv =   "ST_IDLE    ";
-                LSQ_ST_ADDR     :   lsq_state_str_conv =   "ST_ADDR    ";
-                LSQ_ST_DEPEND   :   lsq_state_str_conv =   "ST_DEPEND  ";
-                LSQ_ST_RD_MEM   :   lsq_state_str_conv =   "ST_RD_MEM  ";
-                LSQ_ST_WAIT_MEM :   lsq_state_str_conv =   "ST_WAIT_MEM";
-                LSQ_ST_LOAD_CP  :   lsq_state_str_conv =   "ST_LOAD_CP ";
-                LSQ_ST_RETIRE   :   lsq_state_str_conv =   "ST_RETIRE  ";
-                LSQ_ST_WR_MEM   :   lsq_state_str_conv =   "ST_WR_MEM  ";
-                default         :   lsq_state_str_conv =   "ERROR      ";
+                LSQ_ST_IDLE         :   lsq_state_str_conv =   "ST_IDLE      ";
+                LSQ_ST_ADDR         :   lsq_state_str_conv =   "ST_ADDR      ";
+                LSQ_ST_DEPEND       :   lsq_state_str_conv =   "ST_DEPEND    ";
+                LSQ_ST_RD_MEM       :   lsq_state_str_conv =   "ST_RD_MEM    ";
+                LSQ_ST_WAIT_MEM     :   lsq_state_str_conv =   "ST_WAIT_MEM  ";
+                LSQ_ST_LOAD_CP      :   lsq_state_str_conv =   "ST_LOAD_CP   ";
+                LSQ_ST_ROB_RETIRE   :   lsq_state_str_conv =   "ST_ROB_RETIRE";
+                LSQ_ST_WR_MEM       :   lsq_state_str_conv =   "ST_WR_MEM    ";
+                LSQ_ST_RETIRE       :   lsq_state_str_conv =   "ST_RETIRE    ";
+                default             :   lsq_state_str_conv =   "ERROR        ";
             endcase
         end
     endfunction
@@ -569,16 +593,17 @@ class monitor;
             for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
                 $display("T=%0t LSQ[%0d] Contents", $time, thread_idx);
                 $display("head=%0d, tail=%0d", lsq_head_mon[thread_idx], lsq_tail_mon[thread_idx]);
-                $display("Index\t|state\t|cmd\t|PC\t|tag\t|rob\t|size\t|addr\t|addrv\t|data\t|datav\t|rt\t|mtag\t|");
-                for (int entry_idx = 0; entry_idx < `ROB_ENTRY_NUM; entry_idx++) begin
+                $display("Index\t|state\t\t|cmd\t\t|PC\t\t|tag\t|rob\t|size\t|addr\t\t|addrv\t|data\t\t|datav\t|rt\t|mtag\t|");
+                for (int entry_idx = 0; entry_idx < `LSQ_ENTRY_NUM; entry_idx++) begin
                     state_str = lsq_state_str_conv(lsq_array_mon[thread_idx][entry_idx].state);
                     cmd_str =   cmd_str_conv(lsq_array_mon[thread_idx][entry_idx].cmd);
                     size_str = size_str_conv(lsq_array_mon[thread_idx][entry_idx].mem_size);
-                    $display("%0d\t|%s\t|%s\t|%0h\t|%0d\t|%s\t|%8h\t|%0b\t|%8h\t|%0b\t|%0b\t|%0d",
+                    $display("%0d\t|%s\t|%s\t|%8h\t|%0d\t|%0d\t|%s\t|%8h\t|%0b\t|%8h\t|%0b\t|%0b\t|%0d",
                     entry_idx                                       ,
                     state_str                                       ,
                     cmd_str                                         ,
                     lsq_array_mon[thread_idx][entry_idx].pc         ,
+                    lsq_array_mon[thread_idx][entry_idx].tag        ,
                     lsq_array_mon[thread_idx][entry_idx].rob_idx    ,
                     size_str                                        ,
                     lsq_array_mon[thread_idx][entry_idx].addr       ,
@@ -857,7 +882,7 @@ module pipeline_dp_lsq_tb;
     );
 
     // Instantiate the Data Memory
-    mem mem_inst (
+    mem memory (
         // Inputs
         .clk               (    clk_i                   ),
         .proc2mem_command  (_if.proc2mem_o.command      ),
@@ -882,6 +907,8 @@ module pipeline_dp_lsq_tb;
 // Call test
 // --------------------------------------------------------------------
     initial begin
+		$readmemh("program.mem", memory.unified_memory);
+
         _if.rst_i       =   1;
         _if.fiq_dp      =   0;
         _if.exception_i =   0;

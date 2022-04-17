@@ -74,11 +74,11 @@ module LSQ_bc_switch #(
         lsq_bc_o        =   'b0;
         bc_lsq_entry_o  =   'b0;
         arbiter_mask    =   'b0;
-        for (int unsigned arbiter_idx = 1; arbiter_idx < C_LOAD_NUM; arbiter_idx++) begin
+        for (int unsigned arbiter_idx = 0; arbiter_idx < C_LOAD_NUM; arbiter_idx++) begin
             // Generate requests to all the arbiters
             // The first arbiter
             if (arbiter_idx == 0) begin
-                for (int unsigned entry_idx = 1; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
+                for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
                     if (lsq_entry_bc_i[entry_idx].valid == 1'b1) begin
                         arbiter_req[arbiter_idx][entry_idx]  =   1'b1;
                     end

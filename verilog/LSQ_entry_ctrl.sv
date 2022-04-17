@@ -35,6 +35,7 @@ module LSQ_entry_ctrl # (
     output  FU_BC                                   lsq_entry_bc_o  ,   //  To Broadcaster
     input   BC_FU                                   bc_lsq_entry_i  ,   //  From Broadcaster
     input   ROB_LSQ                                 rob_lsq_i       ,   //  From ROB
+    input   logic                                   rollback_i      ,
     // Entry contents
     output  LSQ_ENTRY                               lsq_entry_o         //  The contents of this entry
 );
@@ -68,7 +69,7 @@ module LSQ_entry_ctrl # (
 // Entry contents update
 // --------------------------------------------------------------------
     always_ff @(posedge clk_i) begin
-        if (rst_i) begin
+        if (rst_i || rollback_i) begin
             lsq_entry_o.state       <=  `SD LSQ_ST_IDLE ;
             lsq_entry_o.cmd         <=  `SD BUS_NONE    ;
             lsq_entry_o.pc          <=  `SD 'd0         ;
@@ -136,9 +137,9 @@ module LSQ_entry_ctrl # (
                     // Loop over all the LOAD/STORE FU output
                     for (int in_idx = 0; in_idx < C_LSQ_IN_NUM; in_idx++) begin
                         // IF   the rob_idx of FU output matches the rob_idx of the entry
-                        // ->   Go to LSQ_ST_RETIRE to wait for retire
+                        // ->   Go to LSQ_ST_ROB_RETIRE to wait for retire
                         if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid) begin
-                            next_lsq_entry.state        =   LSQ_ST_RETIRE               ;
+                            next_lsq_entry.state        =   LSQ_ST_ROB_RETIRE       ;
                             next_lsq_entry.data_valid   =   1'b1                    ;
                             next_lsq_entry.data         =   fu_lsq_i[in_idx].data   ;
                             next_lsq_entry.addr_valid   =   1'b1                    ;
@@ -161,7 +162,7 @@ module LSQ_entry_ctrl # (
                     // ->   Go to LSQ_ST_LOAD_CP to complete LOAD instruction
                     // ->   Forward the nearest older STORE data
                     end else begin
-                        next_lsq_entry.state        =   LSQ_ST_LOAD_CP                  ;
+                        next_lsq_entry.state        =   LSQ_ST_LOAD_CP              ;
                         next_lsq_entry.data         =   lsq_array_i[depend_idx].data;
                         next_lsq_entry.data_valid   =   1'b1                        ;
                     end
@@ -175,12 +176,12 @@ module LSQ_entry_ctrl # (
                     // IF   Long Memory Latency or Cache miss
                     // ->   Go to LSQ_ST_WAIT_MEM
                     if (mem_lsq_i.tag != mem_lsq_i.response) begin
-                        next_lsq_entry.state        =   LSQ_ST_WAIT_MEM         ;
+                        next_lsq_entry.state        =   LSQ_ST_WAIT_MEM     ;
                         next_lsq_entry.mem_tag      =   mem_lsq_i.response  ;
                     // ELSE Cache hit
                     // ->   Go to LSQ_ST_RETIRE
                     end else begin
-                        next_lsq_entry.state        =   LSQ_ST_LOAD_CP      ;
+                        next_lsq_entry.state        =   LSQ_ST_LOAD_CP  ;
                         next_lsq_entry.data_valid   =   1'b1            ;
                         next_lsq_entry.data         =   mem_lsq_i.data  ;
                     end
@@ -199,11 +200,11 @@ module LSQ_entry_ctrl # (
             // Complete the LOAD, request CDB
             LSQ_ST_LOAD_CP  :   begin
                 if (bc_lsq_entry_i.broadcasted == 1'b1) begin
-                    next_lsq_entry.state    =   LSQ_ST_RETIRE   ;
+                    next_lsq_entry.state    =   LSQ_ST_ROB_RETIRE   ;
                 end
             end
             // Wait for ROB to retire the LOAD/STORE.
-            LSQ_ST_RETIRE   :   begin
+            LSQ_ST_ROB_RETIRE   :   begin
                 // Loop over all the Retire channels
                 for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
                     // IF   the retire channel is valid
@@ -212,16 +213,49 @@ module LSQ_entry_ctrl # (
                     //      and wait to be selected to retire from LSQ
                     if ((rt_idx < rob_lsq_i.rt_num)
                     && (rob_lsq_i.rob_idx[rt_idx] == lsq_entry_o.rob_idx)) begin
-                        next_lsq_entry.retire   =   1'b1;
+                        if (lsq_entry_o.cmd == BUS_LOAD) begin
+                            next_lsq_entry.retire   =   1'b1            ;
+                            next_lsq_entry.state    =   LSQ_ST_RETIRE   ;
+                        end else begin
+                            next_lsq_entry.state    =   LSQ_ST_WR_MEM   ;
+                        end
                     end
                 end
-
+            end
+            // Send write request to memory/cache and wait for response
+            LSQ_ST_WR_MEM   :   begin
+                // IF   The write request is confirmed by memory/cache
+                // ->   Go to LSQ_ST_RETIRE to retire from LSQ
+                if (mem_lsq_i.response != 'd0) begin
+                    next_lsq_entry.state    =   LSQ_ST_RETIRE   ;
+                    next_lsq_entry.retire   =   1'b1            ;
+                end
+            end
+            LSQ_ST_RETIRE   :   begin
                 // IF   Selected to retire from LSQ
                 if (rt_sel_i) begin
-                    // IF   LOAD
-                    // ->   Clear the entry and go back to LSQ_ST_IDLE
-                    if (lsq_entry_o.cmd == BUS_LOAD) begin
-                        next_lsq_entry.state        =   LSQ_ST_IDLE     ;
+                    if (dp_sel_i) begin
+                        next_lsq_entry.state        =   LSQ_ST_ADDR ;
+                        next_lsq_entry.addr_valid   =   1'b0        ;
+                        next_lsq_entry.data         =   'b0         ;
+                        next_lsq_entry.data_valid   =   1'b0        ;
+                        next_lsq_entry.retire       =   1'b0        ;
+                        next_lsq_entry.mem_tag      =   'd0         ;
+                        if (lsq_idx_i < tail_i) begin
+                            next_lsq_entry.cmd      =   dp_lsq_i.cmd     [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
+                            next_lsq_entry.pc       =   dp_lsq_i.pc      [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
+                            next_lsq_entry.tag      =   dp_lsq_i.tag     [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
+                            next_lsq_entry.rob_idx  =   dp_lsq_i.rob_idx [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
+                            next_lsq_entry.mem_size =   dp_lsq_i.mem_size[lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
+                        end else begin
+                            next_lsq_entry.cmd      =   dp_lsq_i.cmd     [lsq_idx_i-tail_i] ;
+                            next_lsq_entry.pc       =   dp_lsq_i.pc      [lsq_idx_i-tail_i] ;
+                            next_lsq_entry.tag      =   dp_lsq_i.tag     [lsq_idx_i-tail_i] ;
+                            next_lsq_entry.rob_idx  =   dp_lsq_i.rob_idx [lsq_idx_i-tail_i] ;
+                            next_lsq_entry.mem_size =   dp_lsq_i.mem_size[lsq_idx_i-tail_i] ;
+                        end
+                    end else begin
+                        next_lsq_entry.state        =   LSQ_ST_IDLE ;
                         next_lsq_entry.cmd          =   BUS_NONE    ;
                         next_lsq_entry.pc           =   'd0         ;
                         next_lsq_entry.tag          =   'd0         ;
@@ -233,30 +267,7 @@ module LSQ_entry_ctrl # (
                         next_lsq_entry.data_valid   =   1'b0        ;
                         next_lsq_entry.retire       =   1'b0        ;
                         next_lsq_entry.mem_tag      =   'd0         ;
-                    // IF   STORE
-                    // ->   Go to LSQ_ST_WR_MEM to write the data to memory/cache
-                    end else begin
-                        next_lsq_entry.state    =   LSQ_ST_WR_MEM;
                     end
-                end
-            end
-            // Send write request to memory/cache and wait for response
-            LSQ_ST_WR_MEM   :   begin
-                // IF   The write request is confirmed by memory/cache
-                // ->   Clear the entry and go back to LSQ_ST_IDLE
-                if (mem_lsq_i.response != 'd0) begin
-                    next_lsq_entry.state        =   LSQ_ST_IDLE     ;
-                    next_lsq_entry.cmd          =   BUS_NONE    ;
-                    next_lsq_entry.pc           =   'd0         ;
-                    next_lsq_entry.tag          =   'd0         ;
-                    next_lsq_entry.rob_idx      =   'd0         ;
-                    next_lsq_entry.mem_size     =   BYTE        ;
-                    next_lsq_entry.addr         =   'd0         ;
-                    next_lsq_entry.addr_valid   =   1'b0        ;
-                    next_lsq_entry.data         =   'b0         ;
-                    next_lsq_entry.data_valid   =   1'b0        ;
-                    next_lsq_entry.retire       =   1'b0        ;
-                    next_lsq_entry.mem_tag      =   'd0         ;
                 end
             end
         endcase    
@@ -279,7 +290,7 @@ module LSQ_entry_ctrl # (
             // ELSE the entry is LOAD
             // ->   Assert the bit to bypass this entry
             end else if (lsq_array_i[entry_idx].cmd == BUS_LOAD) begin
-                store_check[entry_idx]  =   1'b0;
+                store_check[entry_idx]  =   1'b1;
             end
         end
     end
@@ -314,8 +325,8 @@ module LSQ_entry_ctrl # (
                     end
                 end
             end
-        // ELSE there is a rollover in the queue (head_i > lsq_idx_i)
-        end else begin
+        // IF   there is a rollover in the queue (head_i > lsq_idx_i)
+        end else if (lsq_idx_i < head_i) begin
             // Should start checking from [head_i] to [C_LSQ_ENTRY_NUM-1],
             // rollover back to [0], and then continue checking to [lsq_idx_i-1]
 
@@ -367,6 +378,8 @@ module LSQ_entry_ctrl # (
                 end
             end
         end
+        // ELSE     head_o == lsq_idx_i
+        // ->       This entry is the oldest one in LSQ, so no dependency
     end
 
 // --------------------------------------------------------------------

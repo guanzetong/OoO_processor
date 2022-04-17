@@ -67,12 +67,12 @@ module dcache_switch #(
         // Pick the LSQ entries with valid Memory requests
         load_req    =   'b0;
         store_req   =   'b0;
-        for (int unsigned entry_idx = 1; entry_idx < C_THREAD_NUM; entry_idx++) begin
-            if (lsq_mem_i[entry_idx].command == BUS_LOAD) begin
-                load_req[entry_idx]     =   1'b1;
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            if (lsq_mem_i[thread_idx].command == BUS_LOAD) begin
+                load_req[thread_idx]     =   1'b1;
             end
-            if (lsq_mem_i[entry_idx].command == BUS_STORE) begin
-                store_req[entry_idx]    =   1'b1;
+            if (lsq_mem_i[thread_idx].command == BUS_STORE) begin
+                store_req[thread_idx]    =   1'b1;
             end
         end
 

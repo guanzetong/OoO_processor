@@ -63,7 +63,7 @@ module mem_switch #(
     always_comb begin
         // Pick the requesters with valid Memory requests
         arbiter_req =   'b0;
-        for (int unsigned req_idx = 1; req_idx < C_REQ_NUM; req_idx++) begin
+        for (int unsigned req_idx = 0; req_idx < C_REQ_NUM; req_idx++) begin
             if (req2mem_i[req_idx].command != BUS_NONE) begin
                 arbiter_req[req_idx]    =   1'b1;
             end

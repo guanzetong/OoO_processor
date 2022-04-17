@@ -64,11 +64,11 @@ module IB #(
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-    localparam  C_ALU_BASE      =   0                           ;
-    localparam  C_MULT_BASE     =   C_ALU_BASE + C_ALU_NUM      ;
-    localparam  C_BR_BASE       =   C_MULT_BASE + C_MULT_NUM    ;
-    localparam  C_LOAD_BASE     =   C_BR_BASE + C_BR_NUM        ;
-    localparam  C_STORE_BASE    =   C_LOAD_BASE + C_LOAD_NUM    ;
+    localparam  C_ALU_BASE          =   0                           ;
+    localparam  C_MULT_BASE         =   C_ALU_BASE + C_ALU_NUM      ;
+    localparam  C_BR_BASE           =   C_MULT_BASE + C_MULT_NUM    ;
+    localparam  C_STORE_BASE        =   C_BR_BASE + C_BR_NUM        ;
+    localparam  C_LOAD_BASE         =   C_STORE_BASE + C_STORE_NUM  ;
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================

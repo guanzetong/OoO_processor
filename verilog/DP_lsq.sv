@@ -245,7 +245,7 @@ module DP_lsq # (
                         if (lsq_cnt < lsq_avail_num) begin
                             legal_cnt++;
                             lsq_cnt++;
-                            if (dp_rs_o.dec_inst[dp_idx].rd_mem) begin
+                            if (dp_mt_o[thread_sel][dp_idx].rd != `ZERO_REG) begin
                                 fl_cnt++;
                             end
                         // ELSE The number of counted LOAD/STORE equals to the number of available LSQ entry
@@ -283,13 +283,12 @@ module DP_lsq # (
                     // IF   The channel is ready for dispatch
                     // AND  The instruction is LOAD/STORE
                     // ->   Route the instruction to a LSQ port.
-                    if((dp_idx < legal_dp_num) && (dp_rs_o.dec_inst[dp_idx].wr_mem 
-                    || dp_rs_o.dec_inst[dp_idx].rd_mem)) begin
+                    if((dp_idx < legal_dp_num) && (dp_rs_o.dec_inst[dp_idx].wr_mem || dp_rs_o.dec_inst[dp_idx].rd_mem)) begin
                         dp_lsq_o[thread_idx].cmd[lsq_route[dp_idx]]         =   (dp_rs_o.dec_inst[dp_idx].wr_mem) ? BUS_STORE : BUS_LOAD;
-                        dp_lsq_o[thread_idx].mem_size[lsq_route[dp_idx]]    =   MEM_SIZE'(fiq_dp_i.inst[dp_idx].r.funct3[1:0])          ;
-                        dp_lsq_o[thread_idx].pc[lsq_route[dp_idx]]          =   fiq_dp_i.pc[dp_idx]                                     ;
-                        dp_lsq_o[thread_idx].rob_idx[lsq_route[dp_idx]]     =   rob_dp_i[thread_sel].rob_idx[dp_idx]                    ;
-                        dp_lsq_o[thread_idx].tag[lsq_route[dp_idx]]         =   fl_dp_i.tag[lsq_route[dp_idx]]                          ;
+                        dp_lsq_o[thread_idx].mem_size[lsq_route[dp_idx]]    =   MEM_SIZE'(dp_rs_o.dec_inst[dp_idx].inst.r.funct3[1:0])  ;
+                        dp_lsq_o[thread_idx].pc[lsq_route[dp_idx]]          =   dp_rs_o.dec_inst[dp_idx].pc                             ;
+                        dp_lsq_o[thread_idx].rob_idx[lsq_route[dp_idx]]     =   dp_rs_o.dec_inst[dp_idx].rob_idx                        ;
+                        dp_lsq_o[thread_idx].tag[lsq_route[dp_idx]]         =   dp_rs_o.dec_inst[dp_idx].tag                            ;
                     end
                 end
             end

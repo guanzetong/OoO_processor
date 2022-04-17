@@ -68,7 +68,7 @@ module LSQ_memory_switch #(
         // Pick the LSQ entries with valid Memory requests
         load_req    =   'b0;
         store_req   =   'b0;
-        for (int unsigned entry_idx = 1; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
+        for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
             if (lsq_entry_mem_i[entry_idx].command == BUS_LOAD) begin
                 load_req[entry_idx]     =   1'b1;
             end

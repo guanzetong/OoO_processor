@@ -13,8 +13,10 @@
 #
 #
 
-SOURCE = test_progs/alexnet.c
+# SOURCE = test_progs/alexnet.c
 # SOURCE = test_progs/rv32_mult_no_lsq.s
+SOURCE = test_progs/rv32_mult.s
+
 
 CRT = crt.s
 LINKERS = linker.lds

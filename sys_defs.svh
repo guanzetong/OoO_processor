@@ -114,6 +114,7 @@ typedef union packed {
 `define RS_IDX_WIDTH        $clog2(`RS_ENTRY_NUM)
 `define THREAD_IDX_WIDTH    $clog2(`THREAD_NUM)
 `define FL_IDX_WIDTH        $clog2(`FL_ENTRY_NUM)
+`define LSQ_IDX_WIDTH       $clog2(`LSQ_ENTRY_NUM)
 
 `define ALU_IDX_WIDTH       $clog2(`ALU_Q_SIZE  )
 `define MULT_IDX_WIDTH      $clog2(`MULT_Q_SIZE )
@@ -375,15 +376,16 @@ typedef enum logic [2:0] {
 } MSHR_STATE;
 
 
-typedef enum logic [2:0] {
-    LSQ_ST_IDLE     =   3'h0    ,
-    LSQ_ST_ADDR     =   3'h1    ,
-    LSQ_ST_DEPEND   =   3'h2    ,
-    LSQ_ST_RD_MEM   =   3'h3    ,
-    LSQ_ST_WAIT_MEM =   3'h4    ,
-    LSQ_ST_LOAD_CP  =   3'h5    ,
-    LSQ_ST_RETIRE   =   3'h6    ,
-    LSQ_ST_WR_MEM   =   3'h7    
+typedef enum logic [3:0] {
+    LSQ_ST_IDLE         =   4'h0    ,
+    LSQ_ST_ADDR         =   4'h1    ,
+    LSQ_ST_DEPEND       =   4'h2    ,
+    LSQ_ST_RD_MEM       =   4'h3    ,
+    LSQ_ST_WAIT_MEM     =   4'h4    ,
+    LSQ_ST_LOAD_CP      =   4'h5    ,
+    LSQ_ST_ROB_RETIRE   =   4'h6    ,
+    LSQ_ST_WR_MEM       =   4'h7    ,
+    LSQ_ST_RETIRE       =   4'h8
 } LSQ_STATE;
 
 //////////////////////////////////////////////

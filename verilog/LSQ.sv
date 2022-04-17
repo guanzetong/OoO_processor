@@ -43,7 +43,9 @@ module LSQ #(
     // MEM
     input   logic                               mem_enable_i    ,
     input   MEM_OUT                             mem_lsq_i       ,
-    output  MEM_IN                              lsq_mem_o       
+    output  MEM_IN                              lsq_mem_o       ,
+    // Branch misprediction
+    input   BR_MIS                              br_mis_i        
 );
 
 // ====================================================================
@@ -58,6 +60,7 @@ module LSQ #(
     BC_FU       [C_LSQ_ENTRY_NUM-1:0]       bc_lsq_entry    ;
     MEM_IN      [C_LSQ_ENTRY_NUM-1:0]       lsq_entry_mem   ;
     logic       [C_LSQ_ENTRY_NUM-1:0]       mem_grant       ;
+    logic                                   rollback        ;
 
 // ====================================================================
 // Local Parameters Declarations End
@@ -99,7 +102,8 @@ module LSQ #(
                 .lsq_entry_bc_o     (lsq_entry_bc[entry_idx]        ),
                 .bc_lsq_entry_i     (bc_lsq_i                       ),
                 .rob_lsq_i          (rob_lsq_i                      ),
-                .lsq_entry_o        (lsq_array[entry_idx]           )
+                .lsq_entry_o        (lsq_array[entry_idx]           ),
+                .rollback_i         (rollback                       )
             );
         end
     endgenerate
@@ -115,13 +119,16 @@ module LSQ #(
     LSQ_global_ctrl LSQ_global_ctrl_inst (
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
+        .thread_idx_i   (thread_idx_i   ),
         .dp_lsq_i       (dp_lsq_i       ),
         .lsq_array_i    (lsq_array      ),
         .head_o         (head           ),
         .tail_o         (tail           ),
         .dp_sel_o       (dp_sel         ),
         .rt_sel_o       (rt_sel         ),
-        .lsq_dp_o       (lsq_dp_o       )
+        .lsq_dp_o       (lsq_dp_o       ),
+        .br_mis_i       (br_mis_i       ),
+        .rollback_o     (rollback       )
     );
 // --------------------------------------------------------------------
 

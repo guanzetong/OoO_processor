@@ -279,7 +279,8 @@ module pipeline_dp_lsq (
                 .lsq_bc_o           (lsq_bc[thread_idx*`LOAD_NUM+:`LOAD_NUM]    ),
                 .mem_enable_i       (dcache_grant[thread_idx]                   ),
                 .mem_lsq_i          (dcache2proc                                ),
-                .lsq_mem_o          (lsq_mem[thread_idx]                        )
+                .lsq_mem_o          (lsq_mem[thread_idx]                        ),
+                .br_mis_i           (br_mis                                     )
             );
         end
     endgenerate
