@@ -354,7 +354,7 @@ module next_state_insert_queue (
     // If the response == the tag
     assign cache_hit        = ic_if_i.response == ic_if_i.tag && ic_if_i.tag != 0; // if both are zero, then still isn't cache hit.
     assign data_as_inst     = ic_if_i.data;     // helps with indexing
-    assign inst_in_off_idx  = curr_context_i.PC_reg[`CACHE_OFFSET_WIDTH-1:0] >> `XLEN_BYTES; // Gives the offset to start inserting in the block from
+    assign inst_in_off_idx  = curr_context_i.PC_reg[`CACHE_OFFSET_WIDTH-1:0] >> $clog2(`XLEN_BYTES); // Gives the offset to start inserting in the block from
 // ====================================================================
 // Define how the thread_buff for the next state should be configured 
 // (pushing in elements after the tail)

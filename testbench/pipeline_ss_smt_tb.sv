@@ -1,7 +1,7 @@
 // ====================================================================
 // Transaction Object Start
 // ====================================================================
-`define SMT_EN
+// `define SMT_EN
 class gen_item; // GEN -> DRV
     rand int    dp_num  ;   // # Dispatch
     rand int    cp_num  ;   // # Complete
@@ -138,8 +138,9 @@ class monitor;
             wfi_pc[thread_idx]      =   32'hFFFFFFFF;
             wfi_flag[thread_idx]    =   1'b0        ;
         end
-
-        // wfi_flag[1] =   1'b1;
+`ifndef SMT_EN
+        wfi_flag[1] =   1'b1;
+`endif
 
 
         forever begin
@@ -169,12 +170,12 @@ class monitor;
 
             print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
             print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
-            // print_mt(vif.mt_mon_o);
+            print_mt(vif.mt_mon_o);
             // print_amt(vif.amt_mon_o);
-            // print_prf(vif.prf_mon_o);
-            // print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
+            print_prf(vif.prf_mon_o);
+            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
             // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
-            print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
+            // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
             // print_STORE_ib(vif.STORE_queue_mon_o, vif.STORE_valid_mon_o, vif.STORE_head_mon_o, vif.STORE_tail_mon_o);
             // print_fl(vif.fl_mon_o);
             //print_vfl(vif.vfl_fl_mon_o);
@@ -1083,7 +1084,7 @@ module pipeline_ss_smt_tb;
         end
         #50 _if.rst_i   =   0;
         // $display("tail_o=%0b", _if.tail_o);
-        $readmemh("program_smt.mem", memory.unified_memory);
+        $readmemh("program.mem", memory.unified_memory);
 
         t0  =   new;
         t0.e0.vif   =   _if;
