@@ -1,0 +1,45 @@
+Chronologic VCS simulator copyright 1991-2020
+Contains Synopsys proprietary information.
+Compiler version R-2020.12-SP2-1_Full64; Runtime version R-2020.12-SP2-1_Full64;  Apr 17 11:32 2022
+VCD+ Writer R-2020.12-SP2-1_Full64 Copyright (c) 1991-2020 by Synopsys Inc.
+@@
+@@
+@@                     0  Asserting System reset......
+@@                    36  Deasserting System reset......
+@@
+@@
+T=36 [Driver] starting ...
+T=36 [Monitor] starting ...
+T=515 [Monitor] WFI instruction retired at PC=44, exit thread 0
+All the threads are completed. exit program.
+@@@ Unified Memory contents hex on left, decimal on right: 
+@@@
+@@@ mem[    0] = 0000051300000013 : 5579162517523
+@@@ mem[    8] = 01a58593000035b7 : 118647831601886647
+@@@ mem[   16] = 0000113715600613 : 18928279488019
+@@@ mem[   24] = 00b1202380010113 : 49856407721279763
+@@@ mem[   32] = 00a6053300410113 : 46730562739699987
+@@@ mem[   40] = 00a1202300b60533 : 45352805958288691
+@@@ mem[   48] = 00012503ff010113 : 322174070096147
+@@@ mem[   56] = 0000001340a60533 : 82689000755
+@@@ mem[   64] = 1050007300000013 : 1175439996664938515
+@@@
+@@@ mem[ 2048] = 000000000003170a : 202506
+@@@
+@@@
+@@                   515 : System halted
+@@
+@@@ System halted on WFI instruction
+@@@
+@@
+@@  49 cycles / 18 instrs = 2.722222 CPI
+@@
+@@  480.00 ns total time to execute
+@@
+
+$finish called from file "testbench/pipeline_ss_smt_tb.sv", line 256.
+$finish at simulation time                  615
+           V C S   S i m u l a t i o n   R e p o r t 
+Time: 615
+CPU Time:      0.920 seconds;       Data structure size:   1.4Mb
+Sun Apr 17 11:32:52 2022

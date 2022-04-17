@@ -126,14 +126,30 @@ class monitor;
     logic   [`THREAD_NUM-1:0]           wfi_flag                        ;
     logic                               store_complete_flag             ;
 
+    logic   [32-1:0]                    clk_cnt                         ;
+    logic   [32-1:0]                    inst_cnt                        ;
+
     task run();
         // automatic string thrd_string;
         $display("T=%0t [Monitor] starting ...", $time);
-        
+
+        clk_cnt     =   0;
+        inst_cnt    =   0;
+    
         // Open writeback.out
         for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+`ifndef SMT_EN
+            if (thread_idx == 0) begin
+                wb_filename             =   {"writeback.out"};
+                wb_fileno[thread_idx]   =   $fopen(wb_filename);
+            end else begin
+                wb_filename             =   {"writeback_t", (thread_idx + 'd48), ".out"};
+                wb_fileno[thread_idx]   =   $fopen(wb_filename);
+            end
+`else
             wb_filename             =   {"writeback_t", (thread_idx + 'd48), ".out"};
             wb_fileno[thread_idx]   =   $fopen(wb_filename);
+`endif
         end
 
         // Initialize wfi_pc
@@ -148,6 +164,7 @@ class monitor;
 
         forever begin
             @(posedge vif.clk_i);
+            clk_cnt++;
             // If the first WFI instruction is dispatched, record its PC
             // wfi_pc is used to compare with the PC retired.
             // Testbench calls $finish if the retired PC match wfi_pc
@@ -204,6 +221,7 @@ class monitor;
                             $fdisplay(wb_fileno[thread_idx], "PC=%x, ---", 
                             (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100));
                         end
+                        inst_cnt++;
                     end
 
                     // Check if the retired PC matches wfi_pc.
@@ -224,15 +242,16 @@ class monitor;
             end
 
             if ((&wfi_flag == 1) && (store_complete_flag == 1)) begin
-                print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
-                print_dmshr(vif.dmshr_array_mon_o);
-                print_dcache_mem(vif.dcache_array_mon_o);
+                // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
+                // print_dmshr(vif.dmshr_array_mon_o);
+                // print_dcache_mem(vif.dcache_array_mon_o);
                 $display("All the threads are completed. exit program.");
                 $display("@@@ Unified Memory contents hex on left, decimal on right: ");
                 show_mem_with_decimal(0,`MEM_64BIT_LINES - 1); 
                 $display("@@  %t : System halted\n@@", $realtime);
                 $display("@@@ System halted on WFI instruction");
                 $display("@@@\n@@");
+                show_CPI;
                 $fclose(wb_fileno);
                 #100 $finish;
             end
@@ -282,6 +301,18 @@ class monitor;
             $display("@@@");
         end
     endtask  // task show_mem_with_decimal
+
+    task show_CPI;
+        real cpi;
+        
+        begin
+            cpi = (clk_cnt + 1.0) / inst_cnt;
+            $display("@@  %0d cycles / %0d instrs = %f CPI\n@@",
+                      clk_cnt+1, inst_cnt, cpi);
+            $display("@@  %4.2f ns total time to execute\n@@\n",
+                      clk_cnt*`VERILOG_CLOCK_PERIOD);
+        end
+    endtask  // task show_clk_count 
 
     function void print_IF (
         logic       [`THREAD_NUM-1:0]       pc_en           ,
@@ -1002,7 +1033,7 @@ module pipeline_ss_smt_tb;
 // --------------------------------------------------------------------
 // Local Parameters
 // --------------------------------------------------------------------
-    localparam  C_CLOCK_PERIOD  =   10;
+    localparam  C_CLOCK_PERIOD  =   `VERILOG_CLOCK_PERIOD;
 
 // --------------------------------------------------------------------
 // Signal Declarations
@@ -1015,7 +1046,7 @@ module pipeline_ss_smt_tb;
     initial begin
         clk_i   =   0;
         forever begin
-            #(C_CLOCK_PERIOD/2) clk_i   =   ~clk_i;
+            #(C_CLOCK_PERIOD/2.0) clk_i   =   ~clk_i;
         end
     end
 
