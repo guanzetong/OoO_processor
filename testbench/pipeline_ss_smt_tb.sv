@@ -56,8 +56,8 @@ class driver;
 
 
         forever begin
-            // gen_item    item;
-            // drv_mbx.get(item);
+            gen_item    item;
+            drv_mbx.get(item);
 
 
 /*
@@ -97,7 +97,7 @@ class driver;
             @(negedge vif.clk_i);
             vif.exception_i =   0;
             // thread_sel      =   thread_sel + 'd1;
-            // ->drv_done;
+            ->drv_done;
         end
     endtask // run()
 
@@ -197,6 +197,7 @@ class monitor;
             // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
             // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
             // print_STORE_ib(vif.STORE_queue_mon_o, vif.STORE_valid_mon_o, vif.STORE_head_mon_o, vif.STORE_tail_mon_o);
+            // print_LOAD_ib(vif.LOAD_queue_mon_o, vif.LOAD_valid_mon_o, vif.LOAD_head_mon_o, vif.LOAD_tail_mon_o);
             // print_fl(vif.fl_mon_o);
             //print_vfl(vif.vfl_fl_mon_o);
             // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
@@ -572,6 +573,28 @@ class monitor;
         end
     endfunction
 
+    function void print_LOAD_ib(
+        IS_INST     [`LOAD_Q_SIZE-1:0]        LOAD_queue_mon    , 
+        logic       [`LOAD_Q_SIZE-1:0]        LOAD_valid_mon    ,
+        logic       [`LOAD_IDX_WIDTH-1:0]     LOAD_head_mon     ,
+        logic       [`LOAD_IDX_WIDTH-1:0]     LOAD_tail_mon    
+    );
+        $display("T=%0t LOAD IB Queue Contents", $time);
+        $display("head=%0d, tail=%0d", LOAD_head_mon, LOAD_tail_mon);
+        $display("Index\t|valid\t|PC\t|rs1\t|rs2\t|tag\t|rob_idx\t");
+        for (int entry_idx = 0; entry_idx < `LOAD_Q_SIZE; entry_idx++) begin
+            $display("%0d\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t", 
+            entry_idx,
+            LOAD_valid_mon[entry_idx],
+            LOAD_queue_mon[entry_idx].pc,
+            LOAD_queue_mon[entry_idx].rs1_value,
+            LOAD_queue_mon[entry_idx].rs2_value,
+            LOAD_queue_mon[entry_idx].tag,
+            LOAD_queue_mon[entry_idx].rob_idx
+            );
+        end
+    endfunction
+
     function void print_prf(logic   [`PHY_REG_NUM-1:0] [`XLEN-1:0] prf_mon_o);
         $display("T=%0t PRF Contents", $time);
         $display("addr\t|data\t\t|addr\t|data\t\t|addr\t|data\t\t|addr\t|data\t\t");
@@ -785,18 +808,19 @@ class monitor;
             for(int thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
                 $display("T=%0t LSQ[%0d] Contents", $time, thread_idx);
                 $display("head=%0d, tail=%0d", lsq_head_mon[thread_idx], lsq_tail_mon[thread_idx]);
-                $display("Index\t|state\t\t|cmd\t\t|PC\t\t|tag\t|rob\t|size\t|addr\t\t|addrv\t|data\t\t|datav\t|rt\t|mtag\t|");
+                $display("Index\t|state\t\t|cmd\t\t|PC\t\t|tag\t|rob\t|sign\t|size\t|addr\t\t|addrv\t|data\t\t|datav\t|rt\t|mtag\t|");
                 for (int entry_idx = 0; entry_idx < `LSQ_ENTRY_NUM; entry_idx++) begin
                     state_str = lsq_state_str_conv(lsq_array_mon[thread_idx][entry_idx].state);
                     cmd_str =   cmd_str_conv(lsq_array_mon[thread_idx][entry_idx].cmd);
                     size_str = size_str_conv(lsq_array_mon[thread_idx][entry_idx].mem_size);
-                    $display("%0d\t|%s\t|%s\t|%8h\t|%0d\t|%0d\t|%s\t|%8h\t|%0b\t|%8h\t|%0b\t|%0b\t|%0d",
+                    $display("%0d\t|%s\t|%s\t|%8h\t|%0d\t|%0d\t|%0b\t|%s\t|%8h\t|%0b\t|%8h\t|%0b\t|%0b\t|%0d",
                     entry_idx                                       ,
                     state_str                                       ,
                     cmd_str                                         ,
                     lsq_array_mon[thread_idx][entry_idx].pc         ,
                     lsq_array_mon[thread_idx][entry_idx].tag        ,
                     lsq_array_mon[thread_idx][entry_idx].rob_idx    ,
+                    lsq_array_mon[thread_idx][entry_idx].sign       ,
                     size_str                                        ,
                     lsq_array_mon[thread_idx][entry_idx].addr       ,
                     lsq_array_mon[thread_idx][entry_idx].addr_valid ,
@@ -857,7 +881,7 @@ endclass:monitor
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   200;
+    int     num     =   600;
 
     task run();
         for (int i = 0; i < num; i++) begin

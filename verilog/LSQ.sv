@@ -100,7 +100,7 @@ module LSQ #(
                 .mem_lsq_i          (mem_lsq_i                      ),
                 .mem_grant_i        (mem_grant[entry_idx]           ),
                 .lsq_entry_bc_o     (lsq_entry_bc[entry_idx]        ),
-                .bc_lsq_entry_i     (bc_lsq_i                       ),
+                .bc_lsq_entry_i     (bc_lsq_entry[entry_idx]        ),
                 .rob_lsq_i          (rob_lsq_i                      ),
                 .lsq_entry_o        (lsq_array[entry_idx]           ),
                 .rollback_i         (rollback                       )

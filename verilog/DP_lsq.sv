@@ -286,6 +286,7 @@ module DP_lsq # (
                     if((dp_idx < legal_dp_num) && (dp_rs_o.dec_inst[dp_idx].wr_mem || dp_rs_o.dec_inst[dp_idx].rd_mem)) begin
                         dp_lsq_o[thread_idx].cmd[lsq_route[dp_idx]]         =   (dp_rs_o.dec_inst[dp_idx].wr_mem) ? BUS_STORE : BUS_LOAD;
                         dp_lsq_o[thread_idx].mem_size[lsq_route[dp_idx]]    =   MEM_SIZE'(dp_rs_o.dec_inst[dp_idx].inst.r.funct3[1:0])  ;
+                        dp_lsq_o[thread_idx].sign[lsq_route[dp_idx]]        =   dp_rs_o.dec_inst[dp_idx].inst.r.funct3[2]               ;
                         dp_lsq_o[thread_idx].pc[lsq_route[dp_idx]]          =   dp_rs_o.dec_inst[dp_idx].pc                             ;
                         dp_lsq_o[thread_idx].rob_idx[lsq_route[dp_idx]]     =   dp_rs_o.dec_inst[dp_idx].rob_idx                        ;
                         dp_lsq_o[thread_idx].tag[lsq_route[dp_idx]]         =   dp_rs_o.dec_inst[dp_idx].tag                            ;

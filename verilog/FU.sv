@@ -371,14 +371,13 @@ endmodule // mult
 //                 condition for the instruction; for branches this    //
 //                 condition will indicate whether the target is taken.//
 //                 This module is purely combinational.                //
-//                                                                     //
 /////////////////////////////////////////////////////////////////////////
 module branch_condition(// Inputs
-    input [`XLEN-1:0] rs1,    // Value to check against condition
-    input [`XLEN-1:0] rs2,
-    input  [2:0] func,  // Specifies which condition to check
+    input   logic   [`XLEN-1:0] rs1,    // Value to check against condition
+    input   logic   [`XLEN-1:0] rs2,
+    input   logic   [2:0]       func,  // Specifies which condition to check
 
-    output logic cond    // 0/1 condition result (False/True)
+    output  logic               cond    // 0/1 condition result (False/True)
 );
 
     logic signed [`XLEN-1:0] signed_rs1, signed_rs2;
@@ -419,7 +418,6 @@ module branch #(
     input   logic       exception_i 
 );
 
-    logic   [`XLEN-1:0]     rd_value        ;
     IB_FU                   ib_fu           ;
     logic   [C_CYCLE-1:0]   valid_sh        ;
     logic                   ex_start        ;

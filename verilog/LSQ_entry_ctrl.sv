@@ -7,6 +7,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 module LSQ_entry_ctrl # (
+    parameter   C_XLEN              =   `XLEN                   ,
     parameter   C_RT_NUM            =   `RT_NUM                 ,
     parameter   C_THREAD_NUM        =   `THREAD_NUM             ,
     parameter   C_LSQ_ENTRY_NUM     =   `LSQ_ENTRY_NUM          ,
@@ -76,6 +77,7 @@ module LSQ_entry_ctrl # (
             lsq_entry_o.tag         <=  `SD 'd0         ;
             lsq_entry_o.rob_idx     <=  `SD 'd0         ;
             lsq_entry_o.mem_size    <=  `SD BYTE        ;
+            lsq_entry_o.sign        <=  `SD 1'b0        ;
             lsq_entry_o.addr        <=  `SD 'd0         ;
             lsq_entry_o.addr_valid  <=  `SD 1'b0        ;
             lsq_entry_o.data        <=  `SD 'b0         ;
@@ -102,12 +104,14 @@ module LSQ_entry_ctrl # (
                         next_lsq_entry.tag      =   dp_lsq_i.tag     [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
                         next_lsq_entry.rob_idx  =   dp_lsq_i.rob_idx [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
                         next_lsq_entry.mem_size =   dp_lsq_i.mem_size[lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
+                        next_lsq_entry.sign     =   dp_lsq_i.sign    [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
                     end else begin
                         next_lsq_entry.cmd      =   dp_lsq_i.cmd     [lsq_idx_i-tail_i] ;
                         next_lsq_entry.pc       =   dp_lsq_i.pc      [lsq_idx_i-tail_i] ;
                         next_lsq_entry.tag      =   dp_lsq_i.tag     [lsq_idx_i-tail_i] ;
                         next_lsq_entry.rob_idx  =   dp_lsq_i.rob_idx [lsq_idx_i-tail_i] ;
                         next_lsq_entry.mem_size =   dp_lsq_i.mem_size[lsq_idx_i-tail_i] ;
+                        next_lsq_entry.sign     =   dp_lsq_i.sign    [lsq_idx_i-tail_i] ;
                     end
                 end
             end
@@ -162,9 +166,23 @@ module LSQ_entry_ctrl # (
                     // ->   Go to LSQ_ST_LOAD_CP to complete LOAD instruction
                     // ->   Forward the nearest older STORE data
                     end else begin
-                        next_lsq_entry.state        =   LSQ_ST_LOAD_CP              ;
-                        next_lsq_entry.data         =   lsq_array_i[depend_idx].data;
-                        next_lsq_entry.data_valid   =   1'b1                        ;
+                        next_lsq_entry.state        =   LSQ_ST_LOAD_CP;
+                        next_lsq_entry.data_valid   =   1'b1;
+                        // IF   it is a signed LOAD
+                        if (lsq_entry_o.sign == 1'b0) begin
+                            case (lsq_entry_o.mem_size)
+                                BYTE    :   next_lsq_entry.data =   {{(C_XLEN- 8){lsq_array_i[depend_idx].data[ 8-1]}}, lsq_array_i[depend_idx].data[ 8-1:0]};
+                                HALF    :   next_lsq_entry.data =   {{(C_XLEN-16){lsq_array_i[depend_idx].data[16-1]}}, lsq_array_i[depend_idx].data[16-1:0]};
+                                default :   next_lsq_entry.data =   lsq_array_i[depend_idx].data;
+                            endcase
+                        // ELSE it is an unsigned LOAD
+                        end else begin
+                            case (lsq_entry_o.mem_size)
+                                BYTE    :   next_lsq_entry.data =   {{(C_XLEN- 8){1'b0}}, lsq_array_i[depend_idx].data[ 8-1:0]};
+                                HALF    :   next_lsq_entry.data =   {{(C_XLEN-16){1'b0}}, lsq_array_i[depend_idx].data[16-1:0]};
+                                default :   next_lsq_entry.data =   lsq_array_i[depend_idx].data;
+                            endcase
+                        end
                     end
                 end
             end
@@ -183,7 +201,21 @@ module LSQ_entry_ctrl # (
                     end else begin
                         next_lsq_entry.state        =   LSQ_ST_LOAD_CP  ;
                         next_lsq_entry.data_valid   =   1'b1            ;
-                        next_lsq_entry.data         =   mem_lsq_i.data  ;
+                        // IF   it is a signed LOAD
+                        if (lsq_entry_o.sign == 1'b0) begin
+                            case (lsq_entry_o.mem_size)
+                                BYTE    :   next_lsq_entry.data =   {{(C_XLEN- 8){mem_lsq_i.data[ 8-1]}}, mem_lsq_i.data[ 8-1:0]};
+                                HALF    :   next_lsq_entry.data =   {{(C_XLEN-16){mem_lsq_i.data[16-1]}}, mem_lsq_i.data[16-1:0]};
+                                default :   next_lsq_entry.data =   mem_lsq_i.data;
+                            endcase
+                        // ELSE it is an unsigned LOAD
+                        end else begin
+                            case (lsq_entry_o.mem_size)
+                                BYTE    :   next_lsq_entry.data =   {{(C_XLEN- 8){1'b0}}, mem_lsq_i.data[ 8-1:0]};
+                                HALF    :   next_lsq_entry.data =   {{(C_XLEN-16){1'b0}}, mem_lsq_i.data[16-1:0]};
+                                default :   next_lsq_entry.data =   mem_lsq_i.data;
+                            endcase
+                        end
                     end
                 end
             end
@@ -192,9 +224,23 @@ module LSQ_entry_ctrl # (
                 // IF   The memory return tag matches the mem_tag of this entry
                 // ->   The data returned from memory is for this entry
                 if (mem_lsq_i.tag == next_lsq_entry.mem_tag) begin
-                    next_lsq_entry.state        =   LSQ_ST_LOAD_CP      ;
+                    next_lsq_entry.state        =   LSQ_ST_LOAD_CP  ;
                     next_lsq_entry.data_valid   =   1'b1            ;
-                    next_lsq_entry.data         =   mem_lsq_i.data  ;
+                    // IF   it is a signed LOAD
+                    if (lsq_entry_o.sign == 1'b0) begin
+                        case (lsq_entry_o.mem_size)
+                            BYTE    :   next_lsq_entry.data =   {{(C_XLEN- 8){mem_lsq_i.data[ 8-1]}}, mem_lsq_i.data[ 8-1:0]};
+                            HALF    :   next_lsq_entry.data =   {{(C_XLEN-16){mem_lsq_i.data[16-1]}}, mem_lsq_i.data[16-1:0]};
+                            default :   next_lsq_entry.data =   mem_lsq_i.data;
+                        endcase
+                    // ELSE it is an unsigned LOAD
+                    end else begin
+                        case (lsq_entry_o.mem_size)
+                            BYTE    :   next_lsq_entry.data =   {{(C_XLEN- 8){1'b0}}, mem_lsq_i.data[ 8-1:0]};
+                            HALF    :   next_lsq_entry.data =   {{(C_XLEN-16){1'b0}}, mem_lsq_i.data[16-1:0]};
+                            default :   next_lsq_entry.data =   mem_lsq_i.data;
+                        endcase
+                    end
                 end
             end
             // Complete the LOAD, request CDB
@@ -248,12 +294,14 @@ module LSQ_entry_ctrl # (
                             next_lsq_entry.tag      =   dp_lsq_i.tag     [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
                             next_lsq_entry.rob_idx  =   dp_lsq_i.rob_idx [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
                             next_lsq_entry.mem_size =   dp_lsq_i.mem_size[lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
+                            next_lsq_entry.sign     =   dp_lsq_i.sign    [lsq_idx_i+C_LSQ_ENTRY_NUM-tail_i] ;
                         end else begin
                             next_lsq_entry.cmd      =   dp_lsq_i.cmd     [lsq_idx_i-tail_i] ;
                             next_lsq_entry.pc       =   dp_lsq_i.pc      [lsq_idx_i-tail_i] ;
                             next_lsq_entry.tag      =   dp_lsq_i.tag     [lsq_idx_i-tail_i] ;
                             next_lsq_entry.rob_idx  =   dp_lsq_i.rob_idx [lsq_idx_i-tail_i] ;
                             next_lsq_entry.mem_size =   dp_lsq_i.mem_size[lsq_idx_i-tail_i] ;
+                            next_lsq_entry.sign     =   dp_lsq_i.sign    [lsq_idx_i-tail_i] ;
                         end
                     end else begin
                         next_lsq_entry.state        =   LSQ_ST_IDLE ;
@@ -262,6 +310,7 @@ module LSQ_entry_ctrl # (
                         next_lsq_entry.tag          =   'd0         ;
                         next_lsq_entry.rob_idx      =   'd0         ;
                         next_lsq_entry.mem_size     =   BYTE        ;
+                        next_lsq_entry.sign         =   1'b0        ;
                         next_lsq_entry.addr         =   'd0         ;
                         next_lsq_entry.addr_valid   =   1'b0        ;
                         next_lsq_entry.data         =   'b0         ;

@@ -15,7 +15,10 @@
 
 # SOURCE = test_progs/alexnet.c
 # SOURCE = test_progs/rv32_mult_no_lsq.s
-SOURCE = test_progs/rv32_mult.s
+# SOURCE = test_progs/rv32_mult.s
+# SOURCE = test_progs/rv32_halt.s
+# SOURCE = test_progs/rv32_parallel.s
+SOURCE = test_progs/sampler.s
 
 
 CRT = crt.s
@@ -107,6 +110,11 @@ SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 # export CACHE_NAME
 # CACHE     = $(SYNTH_DIR)/$(CACHE_NAME).vg 
 # SYNFILES  = $(CACHE) $(SYNTH_DIR)/$(CACHE_NAME)_svsim.sv
+
+DCACHE_NAME	= dcache
+ICACHE_NAME = icache
+export ICACHE_NAME
+export DCACHE_NAME
 
 
 # Passed through to .tcl scripts:

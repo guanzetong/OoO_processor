@@ -530,6 +530,7 @@ typedef struct packed {
     logic                                           retire      ;  
     logic   [`MSHR_IDX_WIDTH-1:0]                   mem_tag     ;
     LSQ_STATE                                       state       ;
+    logic                                           sign        ;
 } LSQ_ENTRY;
 // Array Entry Contents End
 
@@ -744,6 +745,7 @@ typedef struct packed {
     logic       [`DP_NUM-1:0][`ROB_IDX_WIDTH-1:0]   rob_idx     ;
     logic       [`DP_NUM-1:0][`XLEN-1:0]            pc          ;
     logic       [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]   tag         ;
+    logic       [`DP_NUM-1:0]                       sign        ;
 } DP_LSQ;
 
 typedef struct packed {
