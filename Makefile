@@ -131,7 +131,7 @@ sim:	simv
 	./simv -cm line+tgl | tee sim_program.out
 
 simv:	$(HEADERS) $(SIMFILES) $(TESTBENCH)
-	$(VCS) $^ -o simv -cm line+tgl
+	$(VCS) $^ -o simv -cm line+tgl +lint=TFIPC-L
 
 .PHONY: sim
 
