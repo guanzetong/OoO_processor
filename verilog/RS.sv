@@ -459,7 +459,8 @@ module RS #(
                 rs_array[idx].valid     <=  `SD 1'b0;
                 rs_array[idx].dec_inst  <=  `SD 'b0;
             // Squash at Branch Misprediction
-            end else if (br_mis_i.valid[rs_array[idx].dec_inst.thread_idx]) begin
+            end else if (br_mis_i.valid[rs_array[idx].dec_inst.thread_idx]
+            && (rs_array[idx].valid == 1'b1)) begin
                 rs_array[idx].valid     <=  `SD 1'b0;
                 rs_array[idx].dec_inst  <=  `SD 'b0;
             // Dispatch
