@@ -40,7 +40,8 @@ module ROB # (
     output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_head_mon_o  ,
     output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_tail_mon_o  ,
     output  logic   [C_RT_NUM-1:0][C_XLEN-1:0]  rt_pc_o         ,
-    output  logic   [C_RT_NUM-1:0]              rt_valid_o      
+    output  logic   [C_RT_NUM-1:0]              rt_valid_o      ,
+    output  logic   [C_RT_NUM-1:0]              rt_wfi_o        
 );
 
 //synopsys sync_set_reset ‘‘rst_i’’
@@ -245,14 +246,14 @@ module ROB # (
                 if (idx == 0) begin
                     rt_sel[0]   =   head_sel[0] ?
                                     rob_array[0].complete : 
-                                    rt_sel[C_ROB_ENTRY_NUM-1] & rob_array[0].complete;
+                                    (rt_sel[C_ROB_ENTRY_NUM-1] & rob_array[0].complete
+                                    & (~br_mispredict[C_ROB_ENTRY_NUM-1]));
                 // idx == 1 ~ (C_ROB_ENTRY_NUM-1)
                 end else begin
-                    if (rt_window[idx]) begin
-                        rt_sel[idx] =   head_sel[idx] ?
-                                        rob_array[idx].complete : 
-                                        rt_sel[idx-1] & rob_array[idx].complete;
-                    end
+                    rt_sel[idx] =   head_sel[idx] ?
+                                    rob_array[idx].complete : 
+                                    (rt_sel[idx-1] & rob_array[idx].complete
+                                    & (~br_mispredict[idx-1]));
                 end
             end
         end
@@ -332,12 +333,14 @@ module ROB # (
                     rob_array[idx].tag          <=  `SD dp_rob_i.tag       [idx+C_ROB_ENTRY_NUM-tail];
                     rob_array[idx].tag_old      <=  `SD dp_rob_i.tag_old   [idx+C_ROB_ENTRY_NUM-tail];
                     rob_array[idx].br_predict   <=  `SD dp_rob_i.br_predict[idx+C_ROB_ENTRY_NUM-tail];
+                    rob_array[idx].wfi          <=  `SD dp_rob_i.wfi       [idx+C_ROB_ENTRY_NUM-tail];
                 end else begin
                     rob_array[idx].pc           <=  `SD dp_rob_i.pc        [idx-tail];
                     rob_array[idx].rd           <=  `SD dp_rob_i.rd        [idx-tail];
                     rob_array[idx].tag          <=  `SD dp_rob_i.tag       [idx-tail];
                     rob_array[idx].tag_old      <=  `SD dp_rob_i.tag_old   [idx-tail];
                     rob_array[idx].br_predict   <=  `SD dp_rob_i.br_predict[idx-tail];
+                    rob_array[idx].wfi          <=  `SD dp_rob_i.wfi       [idx-tail];
                 end
             // Retire
             end else if (rt_sel[idx]) begin
@@ -405,9 +408,11 @@ module ROB # (
     always_comb begin
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin
             if (head + idx >= C_ROB_ENTRY_NUM) begin
-                rt_pc_o[idx]    =   rob_array[head+idx-C_ROB_ENTRY_NUM].pc;
+                rt_pc_o[idx]    =   rob_array[head+idx-C_ROB_ENTRY_NUM].pc  ;
+                rt_wfi_o[idx]   =   rob_array[head+idx-C_ROB_ENTRY_NUM].wfi ;
             end else begin
-                rt_pc_o[idx]    =   rob_array[head+idx].pc;
+                rt_pc_o[idx]    =   rob_array[head+idx].pc  ;
+                rt_wfi_o[idx]   =   rob_array[head+idx].wfi ;
             end
             
             if (idx < rt_num) begin

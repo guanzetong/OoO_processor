@@ -25,9 +25,9 @@ module pipeline_ss_smt (
     // Testing
     //      Instruction Cache
     output  MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                       imshr_array_mon_o   ,
-    output  CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`CACHE_SASS-1:0]      icache_array_mon_o  ,
-    output MEM_IN                                                       if_ic_o_t           ,   // Expose fetch to cache interface to the testbench.
-    output MEM_OUT                                                      ic_if_o_t           , 
+    output  CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`ICACHE_SASS-1:0]     icache_array_mon_o  ,
+    output  MEM_IN                                                      if_ic_o_t           ,   // Expose fetch to cache interface to the testbench.
+    output  MEM_OUT                                                     ic_if_o_t           , 
     //      Fetch
 `ifdef DEBUG
     output logic            [`THREAD_IDX_WIDTH-1:0]                     thread_idx_disp_o_t ,
@@ -49,6 +49,7 @@ module pipeline_ss_smt (
     //      Retire
     output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]       rt_pc_o             ,   // PC of retired instructions
     output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_valid_o          ,   // Retire valid
+    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_wfi_o            ,   // WFI
     output  ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rob_amt_mon_o       ,   // From ROB to AMT
     output  ROB_FL      [`THREAD_NUM-1:0]                               rob_fl_mon_o        ,   // From ROB to FL
     output  BR_MIS                                                      br_mis_mon_o        ,   // Branch Misprediction
@@ -282,7 +283,8 @@ module pipeline_ss_smt (
                 .rob_head_mon_o     (rob_head_mon_o[thread_idx]         ),
                 .rob_tail_mon_o     (rob_tail_mon_o[thread_idx]         ),
                 .rt_pc_o            (rt_pc_o[thread_idx]                ),
-                .rt_valid_o         (rt_valid_o[thread_idx]             )
+                .rt_valid_o         (rt_valid_o[thread_idx]             ),
+                .rt_wfi_o           (rt_wfi_o[thread_idx]               )
             );
         end// for threads
     endgenerate

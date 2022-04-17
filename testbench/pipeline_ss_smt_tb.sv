@@ -202,15 +202,15 @@ class monitor;
             // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
             // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
             // print_cdb(vif.cdb_mon_o);
-            print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
-            print_dmshr(vif.dmshr_array_mon_o);
-            print_dcache_mem(vif.dcache_array_mon_o);
+            // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
+            // print_dmshr(vif.dmshr_array_mon_o);
+            // print_dcache_mem(vif.dcache_array_mon_o);
 
             // Monitor Retire
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
                 for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
                 // Record write back of every retire to writeback.out
-                    if (vif.rt_valid_o[thread_idx][rt_idx]) begin
+                    if (vif.rt_valid_o[thread_idx][rt_idx] && (wfi_flag[thread_idx] == 1'b0)) begin
                         if ((vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg != `ZERO_REG)
                         && (vif.rob_amt_mon_o[thread_idx][rt_idx].wr_en == 1'b1)) begin
                             $fdisplay(wb_fileno[thread_idx], "PC=%x, REG[%d]=%x",
@@ -222,22 +222,26 @@ class monitor;
                             (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100));
                         end
                         inst_cnt++;
+                        if (vif.rt_wfi_o[thread_idx][rt_idx] == 1'b1) begin
+                            wfi_flag[thread_idx]    =   1'b1;
+                            $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, exit thread %0d", $time, vif.rt_pc_o[thread_idx][rt_idx], thread_idx);
+                        end
                     end
-
-                    // Check if the retired PC matches wfi_pc.
-                    // If matched, exit.
-                    if (vif.rt_valid_o[thread_idx][rt_idx]
-                    && vif.rt_pc_o[thread_idx][rt_idx] == wfi_pc[thread_idx]) begin
-                        wfi_flag[thread_idx]    =   1'b1;
-                        $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, exit thread %0d", $time, wfi_pc[thread_idx], thread_idx);
-                    end // if
                 end // for
             end // for
 
             store_complete_flag =   1;
+
             for (int unsigned idx = 0; idx < `MSHR_ENTRY_NUM; idx++) begin
                 if (vif.dmshr_array_mon_o[idx].state != ST_IDLE) begin
                     store_complete_flag =   0;
+                end
+            end
+            for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+                for (int unsigned lsq_idx = 0; lsq_idx < `LSQ_ENTRY_NUM; lsq_idx++) begin
+                    if (vif.lsq_array_mon_o[thread_idx][lsq_idx].state != LSQ_ST_IDLE) begin
+                        store_complete_flag =   0;
+                    end
                 end
             end
 
@@ -394,7 +398,7 @@ class monitor;
             $display("head=%0d, tail=%0d", rob_head_mon[thread_idx], rob_tail_mon[thread_idx]);
             $display("Index\t|valid\t|PC\t|rd\t|told\t|tag\t|br_predict\t|br_result\t|br_target\t|complete");      
             for (int entry_idx = 0; entry_idx < `ROB_ENTRY_NUM; entry_idx++) begin
-                $display("%0d\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t\t|%0d\t\t|%0d\t\t|%0d",
+                $display("%0d\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t\t|%0d\t\t|%0h\t\t|%0d",
                 entry_idx                                   ,
                 rob_mon[thread_idx][entry_idx].valid        ,
                 rob_mon[thread_idx][entry_idx].pc           ,
@@ -974,6 +978,7 @@ interface pipeline_ss_smt_if         (input bit clk_i);
     //      Retire
     logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]   rt_pc_o         ;   // PC of retired instructions
     logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]              rt_valid_o      ;   // Retire valid
+    logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]              rt_wfi_o        ;
     ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]          rob_amt_mon_o       ;   // From ROB to AMT
     ROB_FL      [`THREAD_NUM-1:0]                       rob_fl_mon_o        ;   // From ROB to FL
     //ROB_VFL                                           rob_vfl_mon_o       ;   // From ROB to VFL
@@ -1017,7 +1022,7 @@ interface pipeline_ss_smt_if         (input bit clk_i);
     MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                   dmshr_array_mon_o   ;   // DCache MSHR monitor
     CACHE_MEM_ENTRY [`DCACHE_SET_NUM-1:0][`DCACHE_SASS-1:0] dcache_array_mon_o  ;   // DCache Mem monitor
     MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                   imshr_array_mon_o   ;
-    CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`CACHE_SASS-1:0]  icache_array_mon_o  ;
+    CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`ICACHE_SASS-1:0] icache_array_mon_o  ;
     logic       [63:0]  unified_memory  [`MEM_64BIT_LINES - 1:0];
 
 endinterface // pipeline_dp_if
@@ -1088,6 +1093,7 @@ module pipeline_ss_smt_tb;
         .cdb_mon_o          (_if.cdb_mon_o          ),
         .rt_pc_o            (_if.rt_pc_o            ),
         .rt_valid_o         (_if.rt_valid_o         ),
+        .rt_wfi_o           (_if.rt_wfi_o           ),
         .rob_amt_mon_o      (_if.rob_amt_mon_o      ),
         .rob_fl_mon_o       (_if.rob_fl_mon_o       ),
         //.rob_vfl_mon_o      (_if.rob_vfl_mon_o      ),

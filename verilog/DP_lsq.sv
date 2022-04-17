@@ -367,6 +367,7 @@ module DP_lsq # (
                     dp_rob_o[thread_idx].br_predict[dp_idx] =   fiq_dp_i.br_predict[dp_idx]         ;
                     dp_rob_o[thread_idx].pc[dp_idx]         =   fiq_dp_i.pc[dp_idx]                 ;
                     dp_rob_o[thread_idx].rd[dp_idx]         =   dp_mt_o[thread_idx][dp_idx].rd      ;
+                    dp_rob_o[thread_idx].wfi[dp_idx]        =   dp_rs_o.dec_inst[dp_idx].halt       ;
                     if(dp_mt_o[thread_idx][dp_idx].rd == `ZERO_REG)begin
                         dp_rob_o[thread_idx].tag[dp_idx]    =   `ZERO_REG   ;
                     end else begin

@@ -18,3 +18,5 @@ synth/
 DVEfiles/
 inter.vpd
 cm.log
+attempt/
+verilog.dump

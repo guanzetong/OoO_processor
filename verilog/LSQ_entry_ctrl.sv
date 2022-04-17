@@ -224,9 +224,10 @@ module LSQ_entry_ctrl # (
             end
             // Send write request to memory/cache and wait for response
             LSQ_ST_WR_MEM   :   begin
-                // IF   The write request is confirmed by memory/cache
+                // IF   The memory interface is granted to this entry
+                // AND  The write request is confirmed by memory/cache
                 // ->   Go to LSQ_ST_RETIRE to retire from LSQ
-                if (mem_lsq_i.response != 'd0) begin
+                if ((mem_grant_i == 1'b1) && (mem_lsq_i.response != 'd0)) begin
                     next_lsq_entry.state    =   LSQ_ST_RETIRE   ;
                     next_lsq_entry.retire   =   1'b1            ;
                 end

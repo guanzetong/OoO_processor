@@ -471,6 +471,7 @@ typedef struct packed {
     logic                               br_result   ;
     logic   [`XLEN-1:0]                 br_target   ;
     logic                               complete    ;
+    logic                               wfi         ;
 } ROB_ENTRY;
 
 typedef struct packed {
@@ -545,17 +546,18 @@ typedef struct packed {
 //  be defined at port instantiation as the number of channels.
 
 typedef struct packed {
-    logic   [`DP_NUM_WIDTH-1:0]                     dp_num     ;
-    logic   [`DP_NUM-1:0][`XLEN-1:0]                pc         ;
-    logic   [`DP_NUM-1:0][`ARCH_REG_IDX_WIDTH-1:0]  rd         ;
-    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag        ;
-    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag_old    ;
-    logic   [`DP_NUM-1:0]                           br_predict ;
+    logic   [`DP_NUM_WIDTH-1:0]                     dp_num      ;
+    logic   [`DP_NUM-1:0][`XLEN-1:0]                pc          ;
+    logic   [`DP_NUM-1:0][`ARCH_REG_IDX_WIDTH-1:0]  rd          ;
+    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag         ;
+    logic   [`DP_NUM-1:0][`TAG_IDX_WIDTH-1:0]       tag_old     ;
+    logic   [`DP_NUM-1:0]                           br_predict  ;
+    logic   [`DP_NUM-1:0]                           wfi         ;
 } DP_ROB; // Combined
 
 typedef struct packed {
-    logic   [`DP_NUM_WIDTH-1:0]                     avail_num  ;
-    logic   [`DP_NUM-1:0][`ROB_IDX_WIDTH-1:0]       rob_idx    ;
+    logic   [`DP_NUM_WIDTH-1:0]                     avail_num   ;
+    logic   [`DP_NUM-1:0][`ROB_IDX_WIDTH-1:0]       rob_idx     ;
 } ROB_DP; // Combined
 
 typedef struct packed{
