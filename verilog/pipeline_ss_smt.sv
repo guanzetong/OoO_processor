@@ -14,7 +14,6 @@ module pipeline_ss_smt (
     output  DP_FIQ                                                      dp_fiq              ,   // From DP to FIQ
 
     // Memory Interface
-    input   logic                                                       memory_enable_i     ,
     output  MEM_IN                                                      proc2mem_o          ,   // From Processor to Memory
     input   MEM_OUT                                                     mem2proc_i          ,   // From Memory to Processor
 
@@ -23,23 +22,19 @@ module pipeline_ss_smt (
     input   logic           [`THREAD_NUM-1:0]                           pc_en_i             ,   // Used to control SMT (turn off a hart if necessary)
     input   logic           [`THREAD_NUM-1:0][`XLEN-1:0]                rst_pc_i            ,
 
-
     // Testing
-    // Instruction Cache
-    output  MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                       mshr_array_mon_o    ,
-    output  CACHE_MEM_ENTRY [(`CACHE_SIZE/`CACHE_BLOCK_SIZE/`CACHE_SASS )-1:0] 
-                            [`CACHE_SASS-1:0]                           cache_array_mon_o   ,
+    //      Instruction Cache
+    output  MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                       imshr_array_mon_o   ,
+    output  CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`CACHE_SASS-1:0]      icache_array_mon_o  ,
     output MEM_IN                                                       if_ic_o_t           ,   // Expose fetch to cache interface to the testbench.
     output MEM_OUT                                                      ic_if_o_t           , 
+    //      Fetch
 `ifdef DEBUG
     output logic            [`THREAD_IDX_WIDTH-1:0]                     thread_idx_disp_o_t ,
     output logic            [`THREAD_IDX_WIDTH-1:0]                     thread_to_ft_o_t    ,    
     output CONTEXT          [`THREAD_NUM-1:0]                           thread_data_o_t     ,
     output CONTEXT          [`THREAD_NUM-1:0]                           n_thread_data_o_t   ,
 `endif
-
-
-    // Testing
     //      Dispatch
     output  DP_RS                                                       dp_rs_mon_o         ,   // From Dispatcher to RS
     output  DP_MT       [`THREAD_NUM-1:0][`DP_NUM-1:0]                  dp_mt_mon_o         ,
@@ -188,15 +183,15 @@ module pipeline_ss_smt (
 // Description  :   Instruction Cache
 // --------------------------------------------------------------------
     icache IC (
-        .mshr_array_mon_o   ( mshr_array_mon_o  ),
-        .cache_array_mon_o  ( cache_array_mon_o ),
-        .clk_i              ( clk_i             ),
-        .rst_i              ( rst_i             ),
-        .proc2cache_i       ( if_ic             ),
-        .cache2proc_o       ( ic_if             ),
-        .memory_enable_i    ( memory_grant[1]   ),  
-        .cache2mem_o        ( icache2mem        ),
-        .mem2cache_i        ( mem2proc_i        )
+        .mshr_array_mon_o   (imshr_array_mon_o  ),
+        .cache_array_mon_o  (icache_array_mon_o ),
+        .clk_i              (clk_i              ),
+        .rst_i              (rst_i              ),
+        .proc2cache_i       (if_ic              ),
+        .cache2proc_o       (ic_if              ),
+        .memory_enable_i    (memory_grant[1]    ),  
+        .cache2mem_o        (icache2mem         ),
+        .mem2cache_i        (mem2proc_i         )
     );
 // --------------------------------------------------------------------
 

@@ -187,6 +187,7 @@ module dcache_mem #(
                                 next_cache_array[mem_idx][way_idx].data     =   cache_ctrl_mem_i.req_data_in;
                                 next_cache_array[mem_idx][way_idx].tag      =   mem_tag;
                                 next_cache_array[mem_idx][way_idx].dirty    =   1'b0;
+                                access[mem_idx][way_idx]                    =   1'b1;
                             end
                         end
                     end
@@ -200,10 +201,11 @@ module dcache_mem #(
                 for (int way_idx = 0; way_idx < C_CACHE_SASS; way_idx++) begin 
                     if (cache_array[mem_idx][way_idx].valid ==  1'b1 
                     && cache_array[mem_idx][way_idx].tag == mem_tag) begin  
-                        cache_mem_ctrl_o.req_hit                =   1'b1                                ;
-                        cache_mem_ctrl_o.req_data_out           =   cache_array[mem_idx][way_idx].data  ;
-                        next_cache_array[mem_idx][way_idx].data =   cache_ctrl_mem_i.req_data_in        ;
-                        access[mem_idx][way_idx]                =   1'b1                                ;
+                        cache_mem_ctrl_o.req_hit                    =   1'b1                                ;
+                        cache_mem_ctrl_o.req_data_out               =   cache_array[mem_idx][way_idx].data  ;
+                        next_cache_array[mem_idx][way_idx].data     =   cache_ctrl_mem_i.req_data_in        ;
+                        next_cache_array[mem_idx][way_idx].dirty    =   1'b1                                ;
+                        access[mem_idx][way_idx]                    =   1'b1                                ;
                     end
                 end
 
@@ -231,7 +233,8 @@ module dcache_mem #(
                                 next_cache_array[mem_idx][way_idx].valid    =   1'b1;
                                 next_cache_array[mem_idx][way_idx].data     =   cache_ctrl_mem_i.req_data_in;
                                 next_cache_array[mem_idx][way_idx].tag      =   mem_tag;
-                                next_cache_array[mem_idx][way_idx].dirty    =   1'b0;
+                                next_cache_array[mem_idx][way_idx].dirty    =   1'b1;
+                                access[mem_idx][way_idx]                    =   1'b1;
                             end
                         end
                     end

@@ -51,7 +51,9 @@ class driver;
 
         @(negedge vif.clk_i);
 
-        $display("T=%0t [Driver] Reading program.mem", $time);
+        // $display("T=%0t [Driver] Reading program.mem", $time);
+        // $readmemh("program.mem", program_mem);
+
 
         forever begin
             // gen_item    item;
@@ -122,6 +124,7 @@ class monitor;
     int                                 wb_fileno   [`THREAD_NUM-1:0]   ;
     string                              wb_filename                     ;
     logic   [`THREAD_NUM-1:0]           wfi_flag                        ;
+    logic                               store_complete_flag             ;
 
     task run();
         // automatic string thrd_string;
@@ -160,20 +163,20 @@ class monitor;
                 end
             end
 
-            $display("%0d", vif.fiq_dp.avail_num);
+            // $display("%0d", vif.fiq_dp.avail_num);
 
-            print_IF(vif.pc_en_i, vif.if_ic_o_t, vif.ic_if_o_t, vif.thread_idx_disp_o_t, vif.thread_to_ft_o_t, vif.thread_data_o_t );
-            print_icache_mem(vif.cache_array_mon_o);
-            print_imshr(vif.mshr_array_mon_o);
+            // print_IF(vif.pc_en_i, vif.if_ic_o_t, vif.ic_if_o_t, vif.thread_idx_disp_o_t, vif.thread_to_ft_o_t, vif.thread_data_o_t );
+            // print_icache_mem(vif.icache_array_mon_o);
+            // print_imshr(vif.imshr_array_mon_o);
             // print_vfl(vif.vfl_fl_mon_o);
 
 
-            print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
-            print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
-            print_mt(vif.mt_mon_o);
+            // print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
+            // print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
+            // print_mt(vif.mt_mon_o);
             // print_amt(vif.amt_mon_o);
-            print_prf(vif.prf_mon_o);
-            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
+            // print_prf(vif.prf_mon_o);
+            // print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
             // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
             // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
             // print_STORE_ib(vif.STORE_queue_mon_o, vif.STORE_valid_mon_o, vif.STORE_head_mon_o, vif.STORE_tail_mon_o);
@@ -181,10 +184,10 @@ class monitor;
             //print_vfl(vif.vfl_fl_mon_o);
             // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
             // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
-            print_cdb(vif.cdb_mon_o);
-            // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
-            // print_dmshr(vif.dmshr_array_mon_o);
-            // print_dcache_mem(vif.dcache_array_mon_o);
+            // print_cdb(vif.cdb_mon_o);
+            print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
+            print_dmshr(vif.dmshr_array_mon_o);
+            print_dcache_mem(vif.dcache_array_mon_o);
 
             // Monitor Retire
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
@@ -213,12 +216,72 @@ class monitor;
                 end // for
             end // for
 
-            if (&wfi_flag == 1) begin
+            store_complete_flag =   1;
+            for (int unsigned idx = 0; idx < `MSHR_ENTRY_NUM; idx++) begin
+                if (vif.dmshr_array_mon_o[idx].state != ST_IDLE) begin
+                    store_complete_flag =   0;
+                end
+            end
+
+            if ((&wfi_flag == 1) && (store_complete_flag == 1)) begin
+                print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
+                print_dmshr(vif.dmshr_array_mon_o);
+                print_dcache_mem(vif.dcache_array_mon_o);
                 $display("All the threads are completed. exit program.");
-                $finish;
+                $display("@@@ Unified Memory contents hex on left, decimal on right: ");
+                show_mem_with_decimal(0,`MEM_64BIT_LINES - 1); 
+                $display("@@  %t : System halted\n@@", $realtime);
+                $display("@@@ System halted on WFI instruction");
+                $display("@@@\n@@");
+                $fclose(wb_fileno);
+                #100 $finish;
             end
         end
     endtask
+
+    task show_mem_with_decimal;
+        input [31:0] start_addr;
+        input [31:0] end_addr;
+        int showing_data;
+        logic   [`DCACHE_IDX_WIDTH-1:0]  dcache_idx;
+        logic   [`DCACHE_TAG_WIDTH-1:0]  dcache_tag;
+        logic                            dcache_hit;
+        logic [64-1:0]  dcache_data;
+        begin
+            $display("@@@");
+            showing_data=0;
+            for(int k = start_addr; k <= end_addr; k = k +1) begin
+                dcache_hit  =   0;
+                dcache_idx  =   k[`DCACHE_IDX_WIDTH-1:0];
+                dcache_tag  =   k[`DCACHE_IDX_WIDTH+:`DCACHE_TAG_WIDTH];
+                // $display("tag = %0h, idx = %0h", dcache_tag, dcache_idx);
+                for (int unsigned way_idx = 0; way_idx < `DCACHE_SASS; way_idx++) begin
+                    // $display("cache tag = %0h", vif.dcache_array_mon_o[dcache_idx][way_idx].tag);
+                    if ((vif.dcache_array_mon_o[dcache_idx][way_idx].valid == 1'b1)
+                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].dirty == 1'b1)
+                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].tag == dcache_tag)
+                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].data != 0)) begin
+                        dcache_data =   vif.dcache_array_mon_o[dcache_idx][way_idx].data;
+                        dcache_hit  =   1;
+                        break;
+                    end
+                end
+                if (dcache_hit) begin
+                    $display("@@@ mem[%5d] = %x : %0d", k*8, dcache_data, 
+                                                            dcache_data);
+                    showing_data=1;
+                end else if (vif.unified_memory[k] != 0) begin
+                    $display("@@@ mem[%5d] = %x : %0d", k*8, vif.unified_memory[k], 
+                                                            vif.unified_memory[k]);
+                    showing_data=1;
+                end else if(showing_data!=0) begin
+                    $display("@@@");
+                    showing_data=0;
+                end
+            end
+            $display("@@@");
+        end
+    endtask  // task show_mem_with_decimal
 
     function void print_IF (
         logic       [`THREAD_NUM-1:0]       pc_en           ,
@@ -759,12 +822,7 @@ endclass:monitor
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-<<<<<<< HEAD
     int     num     =   200;
-=======
-    // int     num     =   1000;
-    int     num = 200;
->>>>>>> 3e7654cb569c9da38f50d3cb78d5da317a94ff29
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -855,14 +913,9 @@ endclass // test
 // ====================================================================
 interface pipeline_ss_smt_if         (input bit clk_i);
     logic                                               rst_i               ;   // Reset
-    FIQ_DP                                              fiq_dp              ;   // From FIQ to DP
-    DP_FIQ                                              dp_fiq              ;   // From DP to FIQ
+    // FIQ_DP                                              fiq_dp              ;   // From FIQ to DP
+    // DP_FIQ                                              dp_fiq              ;   // From DP to FIQ
     logic                                               exception_i         ;   // External exception
-
-
-    // Testing
-
-    
     // Memory Interface
     logic                                               memory_enable_i     ;
     MEM_IN                                              proc2mem_o          ;
@@ -932,9 +985,10 @@ interface pipeline_ss_smt_if         (input bit clk_i);
     logic       [`THREAD_NUM-1:0][`LSQ_IDX_WIDTH-1:0]   lsq_tail_mon_o      ;   // LSQ pointer monitor
     MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                   dmshr_array_mon_o   ;   // DCache MSHR monitor
     CACHE_MEM_ENTRY [`DCACHE_SET_NUM-1:0][`DCACHE_SASS-1:0] dcache_array_mon_o  ;   // DCache Mem monitor
-
     MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                   imshr_array_mon_o   ;
     CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`CACHE_SASS-1:0]  icache_array_mon_o  ;
+    logic       [63:0]  unified_memory  [`MEM_64BIT_LINES - 1:0];
+
 endinterface // pipeline_dp_if
 // ====================================================================
 // Interface End
@@ -977,8 +1031,6 @@ module pipeline_ss_smt_tb;
         .clk_i              (   clk_i               ),
         .rst_i              (_if.rst_i              ),
 
-        .memory_enable_i    (_if.memory_enable_i    ),
-
         .proc2mem_o         (_if.proc2mem_o         ),          // Connect memory to cache (vise versa)
         .mem2proc_i         (_if.mem2proc_i         ),
 
@@ -994,8 +1046,8 @@ module pipeline_ss_smt_tb;
         .n_thread_data_o_t  (                       ),          // DC right now
 `endif
 
-        .fiq_dp             (_if.fiq_dp             ),
-        .dp_fiq             (_if.dp_fiq             ),
+        // .fiq_dp             (_if.fiq_dp             ),
+        // .dp_fiq             (_if.dp_fiq             ),
         .dp_rs_mon_o        (_if.dp_rs_mon_o        ),
         .dp_mt_mon_o        (_if.dp_mt_mon_o        ),
         .mt_dp_mon_o        (_if.mt_dp_mon_o        ),
@@ -1054,22 +1106,26 @@ module pipeline_ss_smt_tb;
 // --------------------------------------------------------------------
 // Memory Instantiation
 // --------------------------------------------------------------------
-	// Instantiate the Data Memory
+    // Instantiate the Data Memory
     mem memory (
-		// Inputs
-		.clk               ( clk_i                    ),
-		.proc2mem_command  ( _if.proc2mem_o.command  ),
-		.proc2mem_addr     ( _if.proc2mem_o.addr     ),
-		.proc2mem_data     ( _if.proc2mem_o.data     ),
+        // Inputs
+        .clk               ( clk_i                    ),
+        .proc2mem_command  ( _if.proc2mem_o.command  ),
+        .proc2mem_addr     ( _if.proc2mem_o.addr     ),
+        .proc2mem_data     ( _if.proc2mem_o.data     ),
 `ifndef CACHE_MODE
-		.proc2mem_size     ( _if.proc2mem_o.size     ),
+        .proc2mem_size     ( _if.proc2mem_o.size     ),
 `endif
 
-		// Outputs (to processor)
-		.mem2proc_response ( _if.mem2proc_i.response ),
-		.mem2proc_data     ( _if.mem2proc_i.data     ),
-		.mem2proc_tag      ( _if.mem2proc_i.tag      )
+        // Outputs (to processor)
+        .mem2proc_response ( _if.mem2proc_i.response ),
+        .mem2proc_data     ( _if.mem2proc_i.data     ),
+        .mem2proc_tag      ( _if.mem2proc_i.tag      )
     );
+
+    assign  _if.unified_memory  =   memory.unified_memory;
+    
+// --------------------------------------------------------------------
 
 // --------------------------------------------------------------------
 // Test Instantiation
@@ -1084,7 +1140,7 @@ module pipeline_ss_smt_tb;
 
         $display("@@\n@@\n@@  %t  Asserting System reset......", $realtime);
         _if.rst_i       =   1;
-        _if.fiq_dp      =   0;
+        // _if.fiq_dp      =   0;
         _if.exception_i =   0;
 
         for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
@@ -1095,7 +1151,7 @@ module pipeline_ss_smt_tb;
         @(posedge clk_i);
         @(posedge clk_i);
 
-        $readmemh("program_smt.mem", memory.unified_memory);
+        $readmemh("program.mem", memory.unified_memory);
 
         @(posedge clk_i);
         @(posedge clk_i);

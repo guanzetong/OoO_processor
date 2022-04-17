@@ -125,7 +125,7 @@ module IF # (
         begin
             if ( rst_i )
             begin
-                $display( "Resetting FIQ_NUM == %0d", C_FIQ_NUM );
+                // $display( "Resetting FIQ_NUM == %0d", C_FIQ_NUM );
                 thread_data[ n ].PC_reg     <= `SD rst_pc_i[ n ];
                 thread_data[ n ].inst_buff  <= `SD 0;
                 thread_data[ n ].avail_size <= `SD C_FIQ_NUM;
@@ -404,7 +404,7 @@ module next_state_insert_queue (
                         n_fetch_buff_o[ idx ].pc            = curr_context_i.PC_reg + ( inst_i_idx << 2 );
                         n_fetch_buff_o[ idx ].mem_tag       = ( cache_hit ) ? 0 : ic_if_i.response;   // Keep track for transaction since data isn't ready.
                         n_fetch_buff_o[ idx ].br_predict    = 1'b0;
-                        $display( "(Entry: %0d)PC at inst_i_idx: %0d -> PC: %0d", idx, inst_i_idx, n_fetch_buff_o[idx].pc );
+                        // $display( "(Entry: %0d)PC at inst_i_idx: %0d -> PC: %0d", idx, inst_i_idx, n_fetch_buff_o[idx].pc );
                         // invarients[ idx ] = 1'b1;
                     end
                 end // for
@@ -420,10 +420,10 @@ module next_state_insert_queue (
             begin
                 // This memory is for us!
                 // Index into the right bits to receive.
-                $display( "Inserting indx: %0d",  curr_context_i.inst_buff[ idx ].pc[`CACHE_OFFSET_WIDTH-1:0] >> $clog2( `XLEN_BYTES ) );
-                $display( "Intruction: %0h", data_as_inst[ 
-                                        curr_context_i.inst_buff[ idx ].pc[`CACHE_OFFSET_WIDTH-1:0] >> $clog2( `XLEN_BYTES ) 
-                                        ] );
+                // $display( "Inserting indx: %0d",  curr_context_i.inst_buff[ idx ].pc[`CACHE_OFFSET_WIDTH-1:0] >> $clog2( `XLEN_BYTES ) );
+                // $display( "Intruction: %0h", data_as_inst[ 
+                //                         curr_context_i.inst_buff[ idx ].pc[`CACHE_OFFSET_WIDTH-1:0] >> $clog2( `XLEN_BYTES ) 
+                //                         ] );
                 n_fetch_buff_o[ idx ].inst = data_as_inst[ 
                                         curr_context_i.inst_buff[ idx ].pc[`CACHE_OFFSET_WIDTH-1:0] >> $clog2( `XLEN_BYTES ) 
                                         ];
@@ -459,7 +459,7 @@ module next_pc_logic (
     always_comb
     begin
         if ( br_mis_v_i ) begin
-            $display( "Branch mispredict! Br_target: %h", br_mis_pc_i );
+            // $display( "Branch mispredict! Br_target: %h", br_mis_pc_i );
             next_PC_o = br_mis_pc_i;
         end else if ( pc_en_i ) begin
             // We need to increment the PC by 4 times the inst_fetched 
@@ -493,8 +493,8 @@ module get_valid_bit_window # (
     always_comb
     begin
         // Invariants (^window_num_i does a bitwise xor. Thus don't check condition when to_insert_num_i is X ).
-        assert ( ^window_num_i === 1'bx || window_num_i <= C_NUM ) 
-            else $display( "Expected LTEQ: %d, Got: %d", C_NUM, window_num_i  ); // Is the amount that will be inserted within the maximum?
+        // assert ( ^window_num_i === 1'bx || window_num_i <= C_NUM ) 
+        //     else $display( "Expected LTEQ: %d, Got: %d", C_NUM, window_num_i  ); // Is the amount that will be inserted within the maximum?
 
         // Applies various conditionals depending on whether a loop around occured.
         // E.g. if none, we can conclude that it's valid iff T <= idx < IE. [0, 0, T(1), 1, 1, IE(0) ].
