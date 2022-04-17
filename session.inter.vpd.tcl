@@ -1,29 +1,25 @@
 # Begin_DVE_Session_Save_Info
 # DVE full session
-# Saved on Sat Apr 16 19:00:40 2022
+# Saved on Sun Apr 17 02:27:37 2022
 # Designs open: 1
 #   Sim: simv
 # Toplevel windows open: 2
 # 	TopLevel.1
 # 	TopLevel.2
-#   Source.1: pipeline_dp_lsq_tb
-#   Wave.1: 163 signals
-#   Group count = 8
-#   Group genblk4[0].LSQ_inst signal count = 37
-#   Group LSQ_memory_switch_inst signal count = 16
-#   Group LSQ_rr_arbiter_inst signal count = 13
+#   Source.1: pipeline_ss_smt_tb
+#   Wave.1: 67 signals
+#   Group count = 4
+#   Group IC signal count = 17
+#   Group IF_inst signal count = 26
 #   Group MEM_SW_inst signal count = 13
-#   Group DC_inst signal count = 17
-#   Group DC_SW_inst signal count = 15
-#   Group genblk1[3].LSQ_entry_ctrl_inst signal count = 32
-#   Group genblk4[0].store_unit signal count = 20
+#   Group mem_fixed_priority_arbiter_inst signal count = 11
 # End_DVE_Session_Save_Info
 
 # DVE version: R-2020.12-SP2-1_Full64
 # DVE build date: Jul 18 2021 21:21:42
 
 
-#<Session mode="Full" path="/afs/umich.edu/user/z/t/ztguan/group6w22/session.inter.vpd.tcl" type="Debug">
+#<Session mode="Full" path="/afs/umich.edu/user/z/t/ztguan/group6w22_2/session.inter.vpd.tcl" type="Debug">
 
 gui_set_loading_session_type Post
 gui_continuetime_set
@@ -75,7 +71,7 @@ if {![gui_exist_window -window TopLevel.1]} {
 } else { 
     set TopLevel.1 TopLevel.1
 }
-gui_show_window -window ${TopLevel.1} -show_state normal -rect {{672 231} {1627 971}}
+gui_show_window -window ${TopLevel.1} -show_state normal -rect {{186 170} {1725 971}}
 
 # ToolBar settings
 gui_set_toolbar_attributes -toolbar {TimeOperations} -dock_state top
@@ -122,28 +118,28 @@ gui_show_toolbar -toolbar {Testbench}
 # End ToolBar settings
 
 # Docked window settings
-set HSPane.1 [gui_create_window -type HSPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 300]
+set HSPane.1 [gui_create_window -type HSPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 283]
 catch { set Hier.1 [gui_share_window -id ${HSPane.1} -type Hier] }
 catch { set Stack.1 [gui_share_window -id ${HSPane.1} -type Stack -silent] }
 catch { set Class.1 [gui_share_window -id ${HSPane.1} -type Class -silent] }
 catch { set Object.1 [gui_share_window -id ${HSPane.1} -type Object -silent] }
-gui_set_window_pref_key -window ${HSPane.1} -key dock_width -value_type integer -value 300
+gui_set_window_pref_key -window ${HSPane.1} -key dock_width -value_type integer -value 283
 gui_set_window_pref_key -window ${HSPane.1} -key dock_height -value_type integer -value -1
 gui_set_window_pref_key -window ${HSPane.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${HSPane.1} {{left 0} {top 0} {width 299} {height 455} {dock_state left} {dock_on_new_line true} {child_hier_colhier 242} {child_hier_coltype 86} {child_hier_colpd 0} {child_hier_col1 0} {child_hier_col2 1} {child_hier_col3 -1}}
-set DLPane.1 [gui_create_window -type DLPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 269]
+gui_update_layout -id ${HSPane.1} {{left 0} {top 0} {width 282} {height 557} {dock_state left} {dock_on_new_line true} {child_hier_colhier 242} {child_hier_coltype 86} {child_hier_colpd 0} {child_hier_col1 0} {child_hier_col2 1} {child_hier_col3 -1}}
+set DLPane.1 [gui_create_window -type DLPane -parent ${TopLevel.1} -dock_state left -dock_on_new_line true -dock_extent 252]
 catch { set Data.1 [gui_share_window -id ${DLPane.1} -type Data] }
 catch { set Local.1 [gui_share_window -id ${DLPane.1} -type Local -silent] }
 catch { set Member.1 [gui_share_window -id ${DLPane.1} -type Member -silent] }
-gui_set_window_pref_key -window ${DLPane.1} -key dock_width -value_type integer -value 269
-gui_set_window_pref_key -window ${DLPane.1} -key dock_height -value_type integer -value 455
+gui_set_window_pref_key -window ${DLPane.1} -key dock_width -value_type integer -value 252
+gui_set_window_pref_key -window ${DLPane.1} -key dock_height -value_type integer -value 557
 gui_set_window_pref_key -window ${DLPane.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${DLPane.1} {{left 0} {top 0} {width 268} {height 455} {dock_state left} {dock_on_new_line true} {child_data_colvariable 196} {child_data_colvalue 103} {child_data_coltype 101} {child_data_col1 0} {child_data_col2 1} {child_data_col3 2}}
-set Console.1 [gui_create_window -type Console -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line true -dock_extent 163]
-gui_set_window_pref_key -window ${Console.1} -key dock_width -value_type integer -value 958
-gui_set_window_pref_key -window ${Console.1} -key dock_height -value_type integer -value 163
+gui_update_layout -id ${DLPane.1} {{left 0} {top 0} {width 251} {height 557} {dock_state left} {dock_on_new_line true} {child_data_colvariable 196} {child_data_colvalue 103} {child_data_coltype 101} {child_data_col1 0} {child_data_col2 1} {child_data_col3 2}}
+set Console.1 [gui_create_window -type Console -parent ${TopLevel.1} -dock_state bottom -dock_on_new_line true -dock_extent 146]
+gui_set_window_pref_key -window ${Console.1} -key dock_width -value_type integer -value 1540
+gui_set_window_pref_key -window ${Console.1} -key dock_height -value_type integer -value 146
 gui_set_window_pref_key -window ${Console.1} -key dock_offset -value_type integer -value 0
-gui_update_layout -id ${Console.1} {{left 0} {top 0} {width 955} {height 162} {dock_state bottom} {dock_on_new_line true}}
+gui_update_layout -id ${Console.1} {{left 0} {top 0} {width 1539} {height 145} {dock_state bottom} {dock_on_new_line true}}
 #### Start - Readjusting docked view's offset / size
 set dockAreaList { top left right bottom }
 foreach dockArea $dockAreaList {
@@ -180,7 +176,7 @@ if {![gui_exist_window -window TopLevel.2]} {
 } else { 
     set TopLevel.2 TopLevel.2
 }
-gui_show_window -window ${TopLevel.2} -show_state maximized -rect {{150 169} {1877 1076}}
+gui_show_window -window ${TopLevel.2} -show_state normal -rect {{1 38} {1545 859}}
 
 # ToolBar settings
 gui_set_toolbar_attributes -toolbar {TimeOperations} -dock_state top
@@ -232,7 +228,7 @@ gui_sync_global -id ${TopLevel.2} -option true
 # MDI window settings
 set Wave.1 [gui_create_window -type {Wave}  -parent ${TopLevel.2}]
 gui_show_window -window ${Wave.1} -show_state maximized
-gui_update_layout -id ${Wave.1} {{show_state maximized} {dock_state undocked} {dock_on_new_line false} {child_wave_left 756} {child_wave_right 966} {child_wave_colname 228} {child_wave_colvalue 523} {child_wave_col1 0} {child_wave_col2 1}}
+gui_update_layout -id ${Wave.1} {{show_state maximized} {dock_state undocked} {dock_on_new_line false} {child_wave_left 448} {child_wave_right 1091} {child_wave_colname 213} {child_wave_colvalue 231} {child_wave_col1 0} {child_wave_col2 1}}
 
 # End MDI window settings
 
@@ -253,11 +249,11 @@ gui_update_statusbar_target_frame ${TopLevel.2}
 # DVE Open design session: 
 
 if { [llength [lindex [gui_get_db -design Sim] 0]] == 0 } {
-gui_set_env SIMSETUP::SIMARGS {{ -ucligui}}
-gui_set_env SIMSETUP::SIMEXE {simv}
+gui_set_env SIMSETUP::SIMARGS {{}}
+gui_set_env SIMSETUP::SIMEXE {./simv}
 gui_set_env SIMSETUP::ALLOW_POLL {0}
 if { ![gui_is_db_opened -db {simv}] } {
-gui_sim_run Ucli -exe simv -args { -ucligui} -dir ../group6w22 -nosource
+gui_sim_run Ucli -exe simv -args { -ucligui} -dir ../group6w22_2 -nosource
 }
 }
 if { ![gui_sim_state -check active] } {error "Simulator did not start correctly" error}
@@ -279,133 +275,65 @@ gui_set_time_units 1s
 # Global: Signal Compare
 
 # Global: Signal Groups
-gui_load_child_values {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst}
-gui_load_child_values {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst}
-gui_load_child_values {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst}
-gui_load_child_values {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit}
-gui_load_child_values {pipeline_dp_lsq_tb.dut.DC_inst}
-gui_load_child_values {pipeline_dp_lsq_tb.dut.DC_SW_inst}
-gui_load_child_values {pipeline_dp_lsq_tb.dut.MEM_SW_inst}
-gui_load_child_values {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst}
+gui_load_child_values {pipeline_ss_smt_tb.dut.MEM_SW_inst}
+gui_load_child_values {pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst}
+gui_load_child_values {pipeline_ss_smt_tb.dut.IF_inst}
+gui_load_child_values {pipeline_ss_smt_tb.dut.IC}
 
 
-set _session_group_1 {genblk4[0].LSQ_inst}
+set _session_group_1 IC
 gui_sg_create "$_session_group_1"
-set {genblk4[0].LSQ_inst} "$_session_group_1"
+set IC "$_session_group_1"
 
-gui_sg_addsignal -group "$_session_group_1" { {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.$unit} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_DP_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_DP_NUM_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LOAD_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_ENTRY_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_IDX_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_IN_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_ROB_IDX_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_RT_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_STORE_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_TAG_IDX_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_THREAD_IDX_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_THREAD_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.bc_lsq_entry} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.bc_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.clk_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.dp_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.dp_sel} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.fu_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.head} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_array} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_array_mon_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_bc_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_dp_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_entry_bc} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_entry_mem} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_head_mon_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_mem_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.lsq_tail_mon_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.mem_enable_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.mem_grant} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.mem_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.rob_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.rst_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.rt_sel} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.tail} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.thread_idx_i} }
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_DP_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_DP_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_DP_NUM_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_DP_NUM_WIDTH}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LOAD_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LOAD_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_ENTRY_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_ENTRY_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_IDX_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_IDX_WIDTH}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_IN_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_LSQ_IN_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_ROB_IDX_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_ROB_IDX_WIDTH}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_RT_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_RT_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_STORE_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_STORE_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_TAG_IDX_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_TAG_IDX_WIDTH}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_THREAD_IDX_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_THREAD_IDX_WIDTH}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_THREAD_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.C_THREAD_NUM}}
+gui_sg_addsignal -group "$_session_group_1" { pipeline_ss_smt_tb.dut.IC.C_CACHE_SIZE pipeline_ss_smt_tb.dut.IC.proc2cache_i pipeline_ss_smt_tb.dut.IC.cache2proc_o pipeline_ss_smt_tb.dut.IC.cache_ctrl_mem pipeline_ss_smt_tb.dut.IC.C_CACHE_SASS pipeline_ss_smt_tb.dut.IC.mem2cache_i pipeline_ss_smt_tb.dut.IC.cache2mem_o pipeline_ss_smt_tb.dut.IC.memory_enable_i pipeline_ss_smt_tb.dut.IC.cache_mem_ctrl pipeline_ss_smt_tb.dut.IC.cache_array_mon_o pipeline_ss_smt_tb.dut.IC.mshr_array_mon_o pipeline_ss_smt_tb.dut.IC.C_CACHE_SET_NUM pipeline_ss_smt_tb.dut.IC.C_MSHR_ENTRY_NUM pipeline_ss_smt_tb.dut.IC.rst_i pipeline_ss_smt_tb.dut.IC.C_CACHE_BLOCK_SIZE {pipeline_ss_smt_tb.dut.IC.$unit} pipeline_ss_smt_tb.dut.IC.clk_i }
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_CACHE_SIZE}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_CACHE_SIZE}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_CACHE_SASS}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_CACHE_SASS}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_CACHE_SET_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_CACHE_SET_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_MSHR_ENTRY_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_MSHR_ENTRY_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_CACHE_BLOCK_SIZE}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IC.C_CACHE_BLOCK_SIZE}
 
-set _session_group_2 LSQ_memory_switch_inst
+set _session_group_2 IF_inst
 gui_sg_create "$_session_group_2"
-set LSQ_memory_switch_inst "$_session_group_2"
+set IF_inst "$_session_group_2"
 
-gui_sg_addsignal -group "$_session_group_2" { {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.$unit} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.C_LSQ_ENTRY_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.C_LSQ_IDX_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.arbiter_ack} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.arbiter_req} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.clk_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.grant_idx} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.grant_valid} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.load_req} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.lsq_entry_mem_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.lsq_mem_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.mem_enable_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.mem_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.memory_grant_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.rst_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.store_req} }
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.C_LSQ_ENTRY_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.C_LSQ_ENTRY_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.C_LSQ_IDX_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.C_LSQ_IDX_WIDTH}}
+gui_sg_addsignal -group "$_session_group_2" { pipeline_ss_smt_tb.dut.IF_inst.dp_fiq_i pipeline_ss_smt_tb.dut.IF_inst.thread_data_o_t pipeline_ss_smt_tb.dut.IF_inst.inst_num_sel pipeline_ss_smt_tb.dut.IF_inst.thread_to_ft_o_t pipeline_ss_smt_tb.dut.IF_inst.n_thread_data pipeline_ss_smt_tb.dut.IF_inst.C_THREAD_IDX_WIDTH pipeline_ss_smt_tb.dut.IF_inst.C_DP_NUM_WIDTH pipeline_ss_smt_tb.dut.IF_inst.if_ic_o pipeline_ss_smt_tb.dut.IF_inst.fiq_dp_o pipeline_ss_smt_tb.dut.IF_inst.n_thread_data_o_t pipeline_ss_smt_tb.dut.IF_inst.br_mis_i pipeline_ss_smt_tb.dut.IF_inst.thread_idx_disp pipeline_ss_smt_tb.dut.IF_inst.C_THREAD_NUM pipeline_ss_smt_tb.dut.IF_inst.pc_en_i pipeline_ss_smt_tb.dut.IF_inst.ic_if_i pipeline_ss_smt_tb.dut.IF_inst.thread_to_ft pipeline_ss_smt_tb.dut.IF_inst.pc_en pipeline_ss_smt_tb.dut.IF_inst.rst_i pipeline_ss_smt_tb.dut.IF_inst.thread_data pipeline_ss_smt_tb.dut.IF_inst.C_DP_NUM pipeline_ss_smt_tb.dut.IF_inst.rst_pc_i {pipeline_ss_smt_tb.dut.IF_inst.$unit} pipeline_ss_smt_tb.dut.IF_inst.C_IF_NUM pipeline_ss_smt_tb.dut.IF_inst.C_FIQ_NUM pipeline_ss_smt_tb.dut.IF_inst.thread_idx_disp_o_t pipeline_ss_smt_tb.dut.IF_inst.clk_i }
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_THREAD_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_THREAD_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_DP_NUM_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_DP_NUM_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_THREAD_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_THREAD_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_DP_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_DP_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_IF_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_IF_NUM}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_FIQ_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.IF_inst.C_FIQ_NUM}
 
-set _session_group_3 LSQ_rr_arbiter_inst
+set _session_group_3 MEM_SW_inst
 gui_sg_create "$_session_group_3"
-set LSQ_rr_arbiter_inst "$_session_group_3"
+set MEM_SW_inst "$_session_group_3"
 
-gui_sg_addsignal -group "$_session_group_3" { {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.$unit} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.C_REQ_IDX_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.C_REQ_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.ack_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.clk_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.grant_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.grant_rank} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.next_top_idx} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.req_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.req_rank} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.rst_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.top_idx} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.valid_o} }
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.C_REQ_IDX_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.C_REQ_IDX_WIDTH}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.C_REQ_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.LSQ_memory_switch_inst.LSQ_rr_arbiter_inst.C_REQ_NUM}}
+gui_sg_addsignal -group "$_session_group_3" { pipeline_ss_smt_tb.dut.MEM_SW_inst.mem2switch_i pipeline_ss_smt_tb.dut.MEM_SW_inst.arbiter_ack pipeline_ss_smt_tb.dut.MEM_SW_inst.switch2mem_o pipeline_ss_smt_tb.dut.MEM_SW_inst.grant_idx pipeline_ss_smt_tb.dut.MEM_SW_inst.grant_valid pipeline_ss_smt_tb.dut.MEM_SW_inst.memory_grant_o pipeline_ss_smt_tb.dut.MEM_SW_inst.C_REQ_IDX_WIDTH pipeline_ss_smt_tb.dut.MEM_SW_inst.rst_i pipeline_ss_smt_tb.dut.MEM_SW_inst.req2mem_i pipeline_ss_smt_tb.dut.MEM_SW_inst.arbiter_req {pipeline_ss_smt_tb.dut.MEM_SW_inst.$unit} pipeline_ss_smt_tb.dut.MEM_SW_inst.C_REQ_NUM pipeline_ss_smt_tb.dut.MEM_SW_inst.clk_i }
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.MEM_SW_inst.C_REQ_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.MEM_SW_inst.C_REQ_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.MEM_SW_inst.C_REQ_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.MEM_SW_inst.C_REQ_NUM}
 
-set _session_group_4 MEM_SW_inst
+set _session_group_4 mem_fixed_priority_arbiter_inst
 gui_sg_create "$_session_group_4"
-set MEM_SW_inst "$_session_group_4"
+set mem_fixed_priority_arbiter_inst "$_session_group_4"
 
-gui_sg_addsignal -group "$_session_group_4" { {pipeline_dp_lsq_tb.dut.MEM_SW_inst.$unit} pipeline_dp_lsq_tb.dut.MEM_SW_inst.C_REQ_IDX_WIDTH pipeline_dp_lsq_tb.dut.MEM_SW_inst.C_REQ_NUM pipeline_dp_lsq_tb.dut.MEM_SW_inst.arbiter_ack pipeline_dp_lsq_tb.dut.MEM_SW_inst.arbiter_req pipeline_dp_lsq_tb.dut.MEM_SW_inst.clk_i pipeline_dp_lsq_tb.dut.MEM_SW_inst.grant_idx pipeline_dp_lsq_tb.dut.MEM_SW_inst.grant_valid pipeline_dp_lsq_tb.dut.MEM_SW_inst.mem2switch_i pipeline_dp_lsq_tb.dut.MEM_SW_inst.memory_grant_o pipeline_dp_lsq_tb.dut.MEM_SW_inst.req2mem_i pipeline_dp_lsq_tb.dut.MEM_SW_inst.rst_i pipeline_dp_lsq_tb.dut.MEM_SW_inst.switch2mem_o }
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.MEM_SW_inst.C_REQ_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.MEM_SW_inst.C_REQ_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.MEM_SW_inst.C_REQ_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.MEM_SW_inst.C_REQ_NUM}
-
-set _session_group_5 DC_inst
-gui_sg_create "$_session_group_5"
-set DC_inst "$_session_group_5"
-
-gui_sg_addsignal -group "$_session_group_5" { {pipeline_dp_lsq_tb.dut.DC_inst.$unit} pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_BLOCK_SIZE pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SASS pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SET_NUM pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SIZE pipeline_dp_lsq_tb.dut.DC_inst.C_MSHR_ENTRY_NUM pipeline_dp_lsq_tb.dut.DC_inst.cache2mem_o pipeline_dp_lsq_tb.dut.DC_inst.cache2proc_o pipeline_dp_lsq_tb.dut.DC_inst.cache_array_mon_o pipeline_dp_lsq_tb.dut.DC_inst.cache_ctrl_mem pipeline_dp_lsq_tb.dut.DC_inst.cache_mem_ctrl pipeline_dp_lsq_tb.dut.DC_inst.clk_i pipeline_dp_lsq_tb.dut.DC_inst.mem2cache_i pipeline_dp_lsq_tb.dut.DC_inst.memory_enable_i pipeline_dp_lsq_tb.dut.DC_inst.mshr_array_mon_o pipeline_dp_lsq_tb.dut.DC_inst.proc2cache_i pipeline_dp_lsq_tb.dut.DC_inst.rst_i }
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_BLOCK_SIZE}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_BLOCK_SIZE}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SASS}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SASS}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SET_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SET_NUM}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SIZE}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_CACHE_SIZE}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_MSHR_ENTRY_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_inst.C_MSHR_ENTRY_NUM}
-
-set _session_group_6 DC_SW_inst
-gui_sg_create "$_session_group_6"
-set DC_SW_inst "$_session_group_6"
-
-gui_sg_addsignal -group "$_session_group_6" { {pipeline_dp_lsq_tb.dut.DC_SW_inst.$unit} pipeline_dp_lsq_tb.dut.DC_SW_inst.C_THREAD_IDX_WIDTH pipeline_dp_lsq_tb.dut.DC_SW_inst.C_THREAD_NUM pipeline_dp_lsq_tb.dut.DC_SW_inst.arbiter_ack pipeline_dp_lsq_tb.dut.DC_SW_inst.arbiter_req pipeline_dp_lsq_tb.dut.DC_SW_inst.clk_i pipeline_dp_lsq_tb.dut.DC_SW_inst.dcache_grant_o pipeline_dp_lsq_tb.dut.DC_SW_inst.dcache_lsq_i pipeline_dp_lsq_tb.dut.DC_SW_inst.grant_idx pipeline_dp_lsq_tb.dut.DC_SW_inst.grant_valid pipeline_dp_lsq_tb.dut.DC_SW_inst.load_req pipeline_dp_lsq_tb.dut.DC_SW_inst.lsq_dcache_o pipeline_dp_lsq_tb.dut.DC_SW_inst.lsq_mem_i pipeline_dp_lsq_tb.dut.DC_SW_inst.rst_i pipeline_dp_lsq_tb.dut.DC_SW_inst.store_req }
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_SW_inst.C_THREAD_IDX_WIDTH}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_SW_inst.C_THREAD_IDX_WIDTH}
-gui_set_radix -radix {decimal} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_SW_inst.C_THREAD_NUM}
-gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_dp_lsq_tb.dut.DC_SW_inst.C_THREAD_NUM}
-
-set _session_group_7 {genblk1[3].LSQ_entry_ctrl_inst}
-gui_sg_create "$_session_group_7"
-set {genblk1[3].LSQ_entry_ctrl_inst} "$_session_group_7"
-
-gui_sg_addsignal -group "$_session_group_7" { {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.$unit} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LOAD_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_ENTRY_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_IDX_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_IN_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_RT_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_STORE_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_THREAD_IDX_WIDTH} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_THREAD_NUM} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.bc_lsq_entry_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.clk_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.depend_flag} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.depend_idx} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.dp_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.dp_sel_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.fu_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.head_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.lsq_array_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.lsq_entry_bc_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.lsq_entry_mem_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.lsq_entry_o} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.lsq_idx_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.mem_grant_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.mem_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.next_lsq_entry} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.older_store_known} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.rob_lsq_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.rst_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.rt_sel_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.store_check} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.tail_i} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.thread_idx_i} }
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LOAD_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LOAD_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_ENTRY_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_ENTRY_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_IDX_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_IDX_WIDTH}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_IN_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_LSQ_IN_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_RT_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_RT_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_STORE_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_STORE_NUM}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_THREAD_IDX_WIDTH}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_THREAD_IDX_WIDTH}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_THREAD_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.C_THREAD_NUM}}
-
-set _session_group_8 {genblk4[0].store_unit}
-gui_sg_create "$_session_group_8"
-set {genblk4[0].store_unit} "$_session_group_8"
-
-gui_sg_addsignal -group "$_session_group_8" { {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.ex_start} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.fu_bc_o} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.opb_mux_out} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.squash} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.fu_lsq_o} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.C_CYCLE} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.br_mis_i} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.C_THREAD_NUM} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.ib_fu_i} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.fu_ib_o} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.rst_i} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.valid_sh} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.ib_fu} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.store_addr} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.$unit} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.opa_mux_out} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.ex_end} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.exception_i} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.clk_i} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.bc_fu_i} }
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.C_CYCLE}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.C_CYCLE}}
-gui_set_radix -radix {decimal} -signals {{Sim:pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.C_THREAD_NUM}}
-gui_set_radix -radix {twosComplement} -signals {{Sim:pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.C_THREAD_NUM}}
+gui_sg_addsignal -group "$_session_group_4" { pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.next_grant pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.grant_o pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.ack_i pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.next_valid pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.C_REQ_IDX_WIDTH pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.valid_o pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.rst_i {pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.$unit} pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.C_REQ_NUM pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.req_i pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.clk_i }
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.C_REQ_IDX_WIDTH}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.C_REQ_IDX_WIDTH}
+gui_set_radix -radix {decimal} -signals {Sim:pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.C_REQ_NUM}
+gui_set_radix -radix {twosComplement} -signals {Sim:pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.C_REQ_NUM}
 
 # Global: Highlighting
 
@@ -415,7 +343,7 @@ gui_change_stack_mode -mode list
 # Post database loading setting...
 
 # Restore C1 time
-gui_set_time -C1_only 576
+gui_set_time -C1_only 2110
 
 
 
@@ -440,18 +368,17 @@ gui_list_set_filter -id ${Hier.1} -list { {Package 1} {All 0} {Process 1} {VirtP
 gui_list_set_filter -id ${Hier.1} -text {*}
 gui_hier_list_init -id ${Hier.1}
 gui_change_design -id ${Hier.1} -design Sim
-catch {gui_list_expand -id ${Hier.1} pipeline_dp_lsq_tb}
-catch {gui_list_expand -id ${Hier.1} pipeline_dp_lsq_tb.dut}
-catch {gui_list_expand -id ${Hier.1} pipeline_dp_lsq_tb.dut.FU_inst}
-catch {gui_list_select -id ${Hier.1} {{pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit}}}
-gui_view_scroll -id ${Hier.1} -vertical -set 209
+catch {gui_list_expand -id ${Hier.1} pipeline_ss_smt_tb}
+catch {gui_list_expand -id ${Hier.1} pipeline_ss_smt_tb.dut}
+catch {gui_list_expand -id ${Hier.1} pipeline_ss_smt_tb.dut.MEM_SW_inst}
+catch {gui_list_select -id ${Hier.1} {pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst}}
+gui_view_scroll -id ${Hier.1} -vertical -set 160
 gui_view_scroll -id ${Hier.1} -horizontal -set 0
 
 # Class 'Class.1'
 gui_list_set_filter -id ${Class.1} -list { {OVM 1} {VMM 1} {All 1} {Object 1} {UVM 1} {RVM 1} }
 gui_list_set_filter -id ${Class.1} -text {*}
 gui_change_design -id ${Class.1} -design Sim
-# Warning: Class view not found.
 
 # Member 'Member.1'
 gui_list_set_filter -id ${Member.1} -list { {InternalMember 0} {RandMember 1} {All 0} {BaseMember 0} {PrivateMember 1} {LibBaseMember 0} {AutomaticMember 1} {VirtualMember 1} {PublicMember 1} {ProtectedMember 1} {OverRiddenMember 0} {InterfaceClassMember 1} {StaticMember 1} }
@@ -460,20 +387,21 @@ gui_list_set_filter -id ${Member.1} -text {*}
 # Data 'Data.1'
 gui_list_set_filter -id ${Data.1} -list { {Buffer 1} {Input 1} {Others 1} {Linkage 1} {Output 1} {LowPower 1} {Parameter 1} {All 1} {Aggregate 1} {LibBaseMember 1} {Event 1} {Assertion 1} {Constant 1} {Interface 1} {BaseMembers 1} {Signal 1} {$unit 1} {Inout 1} {Variable 1} }
 gui_list_set_filter -id ${Data.1} -text {*}
-gui_list_show_data -id ${Data.1} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit}
+gui_list_show_data -id ${Data.1} {pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst}
 gui_view_scroll -id ${Data.1} -vertical -set 0
 gui_view_scroll -id ${Data.1} -horizontal -set 0
-gui_view_scroll -id ${Hier.1} -vertical -set 209
+gui_view_scroll -id ${Hier.1} -vertical -set 160
 gui_view_scroll -id ${Hier.1} -horizontal -set 0
 
 # Source 'Source.1'
 gui_src_value_annotate -id ${Source.1} -switch false
 gui_set_env TOGGLE::VALUEANNOTATE 0
-gui_open_source -id ${Source.1}  -replace -active pipeline_dp_lsq_tb testbench/pipeline_dp_lsq_tb.sv
+gui_open_source -id ${Source.1}  -replace -active pipeline_ss_smt_tb testbench/pipeline_ss_smt_tb.sv
 gui_src_value_annotate -id ${Source.1} -switch true
 gui_set_env TOGGLE::VALUEANNOTATE 1
-gui_view_scroll -id ${Source.1} -vertical -set 2910
+gui_view_scroll -id ${Source.1} -vertical -set 3225
 gui_src_set_reusable -id ${Source.1}
+# Warning: Class view not found.
 
 # View 'Wave.1'
 gui_wv_sync -id ${Wave.1} -switch false
@@ -484,24 +412,21 @@ gui_list_set_height -id Wave -height 25
 set origGroupCreationState [gui_list_create_group_when_add -wave]
 gui_list_create_group_when_add -wave -disable
 gui_marker_set_ref -id ${Wave.1}  C1
-gui_wv_zoom_timerange -id ${Wave.1} 434 750
-gui_list_add_group -id ${Wave.1} -after {New Group} {{genblk4[0].LSQ_inst}}
-gui_list_add_group -id ${Wave.1} -after {New Group} {LSQ_memory_switch_inst}
-gui_list_add_group -id ${Wave.1} -after {New Group} {LSQ_rr_arbiter_inst}
+gui_wv_zoom_timerange -id ${Wave.1} 0 116
+gui_list_add_group -id ${Wave.1} -after {New Group} {IC}
+gui_list_add_group -id ${Wave.1} -after {New Group} {IF_inst}
 gui_list_add_group -id ${Wave.1} -after {New Group} {MEM_SW_inst}
-gui_list_add_group -id ${Wave.1} -after {New Group} {DC_inst}
-gui_list_add_group -id ${Wave.1} -after {New Group} {DC_SW_inst}
-gui_list_add_group -id ${Wave.1} -after {New Group} {{genblk1[3].LSQ_entry_ctrl_inst}}
-gui_list_add_group -id ${Wave.1} -after {New Group} {{genblk4[0].store_unit}}
-gui_list_collapse -id ${Wave.1} {genblk4[0].LSQ_inst}
-gui_list_collapse -id ${Wave.1} LSQ_memory_switch_inst
-gui_list_collapse -id ${Wave.1} LSQ_rr_arbiter_inst
-gui_list_collapse -id ${Wave.1} MEM_SW_inst
-gui_list_collapse -id ${Wave.1} DC_inst
-gui_list_collapse -id ${Wave.1} DC_SW_inst
-gui_list_expand -id ${Wave.1} {pipeline_dp_lsq_tb.dut.genblk4[0].LSQ_inst.genblk1[3].LSQ_entry_ctrl_inst.lsq_entry_o}
-gui_list_expand -id ${Wave.1} {pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.br_mis_i}
-gui_list_select -id ${Wave.1} {{pipeline_dp_lsq_tb.dut.FU_inst.genblk4[0].store_unit.br_mis_i.valid} }
+gui_list_add_group -id ${Wave.1} -after {New Group} {mem_fixed_priority_arbiter_inst}
+gui_list_expand -id ${Wave.1} pipeline_ss_smt_tb.dut.IC.proc2cache_i
+gui_list_expand -id ${Wave.1} pipeline_ss_smt_tb.dut.IC.cache2proc_o
+gui_list_expand -id ${Wave.1} pipeline_ss_smt_tb.dut.IC.mem2cache_i
+gui_list_expand -id ${Wave.1} pipeline_ss_smt_tb.dut.IC.cache2mem_o
+gui_list_expand -id ${Wave.1} pipeline_ss_smt_tb.dut.MEM_SW_inst.switch2mem_o
+gui_list_expand -id ${Wave.1} pipeline_ss_smt_tb.dut.MEM_SW_inst.memory_grant_o
+gui_list_expand -id ${Wave.1} pipeline_ss_smt_tb.dut.MEM_SW_inst.req2mem_i
+gui_list_expand -id ${Wave.1} {pipeline_ss_smt_tb.dut.MEM_SW_inst.req2mem_i[1]}
+gui_list_expand -id ${Wave.1} pipeline_ss_smt_tb.dut.MEM_SW_inst.arbiter_req
+gui_list_select -id ${Wave.1} {pipeline_ss_smt_tb.dut.MEM_SW_inst.mem_fixed_priority_arbiter_inst.clk_i }
 gui_seek_criteria -id ${Wave.1} {Any Edge}
 
 
@@ -517,21 +442,21 @@ if { $groupExD } {
 }
 gui_list_set_filter -id ${Wave.1} -list { {Buffer 1} {Input 1} {Others 1} {Linkage 1} {Output 1} {Parameter 1} {All 1} {Aggregate 1} {LibBaseMember 1} {Event 1} {Assertion 1} {Constant 1} {Interface 1} {BaseMembers 1} {Signal 1} {$unit 1} {Inout 1} {Variable 1} }
 gui_list_set_filter -id ${Wave.1} -text {*}
-gui_list_set_insertion_bar  -id ${Wave.1} -group {genblk4[0].store_unit}  -position in
+gui_list_set_insertion_bar  -id ${Wave.1} -group mem_fixed_priority_arbiter_inst  -position in
 
-gui_marker_move -id ${Wave.1} {C1} 576
-gui_view_scroll -id ${Wave.1} -vertical -set 1076
+gui_marker_move -id ${Wave.1} {C1} 2110
+gui_view_scroll -id ${Wave.1} -vertical -set 1887
 gui_show_grid -id ${Wave.1} -enable false
 # Restore toplevel window zorder
 # The toplevel window could be closed if it has no view/pane
-if {[gui_exist_window -window ${TopLevel.2}]} {
-	gui_set_active_window -window ${TopLevel.2}
-	gui_set_active_window -window ${Wave.1}
-}
 if {[gui_exist_window -window ${TopLevel.1}]} {
 	gui_set_active_window -window ${TopLevel.1}
 	gui_set_active_window -window ${Source.1}
 	gui_set_active_window -window ${HSPane.1}
+}
+if {[gui_exist_window -window ${TopLevel.2}]} {
+	gui_set_active_window -window ${TopLevel.2}
+	gui_set_active_window -window ${Wave.1}
 }
 #</Session>
 

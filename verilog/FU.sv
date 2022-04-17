@@ -507,7 +507,8 @@ module branch #(
         // System reset
         if (rst_i) begin
             valid_sh    <=  `SD 'b0;
-        end else if (squash || exception_i) begin
+        // Squash
+        end else if (exception_i) begin
             valid_sh    <=  `SD 'b0;
         // Stall if result is valid but broadcaster is not ready, i.e. CDB structural hazard
         end else if (fu_bc_o.valid && (!bc_fu_i.broadcasted)) begin
@@ -516,6 +517,8 @@ module branch #(
         end else begin
             if (C_CYCLE == 1) begin
                 valid_sh    <=  `SD ex_start;
+            end else if (squash) begin
+                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
             end else begin
                 valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
             end

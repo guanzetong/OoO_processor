@@ -54,8 +54,8 @@ class driver;
         $display("T=%0t [Driver] Reading program.mem", $time);
 
         forever begin
-            gen_item    item;
-            drv_mbx.get(item);
+            // gen_item    item;
+            // drv_mbx.get(item);
 
 
 /*
@@ -95,7 +95,7 @@ class driver;
             @(negedge vif.clk_i);
             vif.exception_i =   0;
             // thread_sel      =   thread_sel + 'd1;
-            ->drv_done;
+            // ->drv_done;
         end
     endtask // run()
 
@@ -169,21 +169,21 @@ class monitor;
 
             print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
             print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
-            print_mt(vif.mt_mon_o);
-            print_amt(vif.amt_mon_o);
-            print_prf(vif.prf_mon_o);
+            // print_mt(vif.mt_mon_o);
+            // print_amt(vif.amt_mon_o);
+            // print_prf(vif.prf_mon_o);
             // print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
             // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
-            // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
-            print_STORE_ib(vif.STORE_queue_mon_o, vif.STORE_valid_mon_o, vif.STORE_head_mon_o, vif.STORE_tail_mon_o);
-            print_fl(vif.fl_mon_o);
+            print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
+            // print_STORE_ib(vif.STORE_queue_mon_o, vif.STORE_valid_mon_o, vif.STORE_head_mon_o, vif.STORE_tail_mon_o);
+            // print_fl(vif.fl_mon_o);
             //print_vfl(vif.vfl_fl_mon_o);
             // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
             // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
             print_cdb(vif.cdb_mon_o);
-            print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
-            print_dmshr(vif.dmshr_array_mon_o);
-            print_dcache_mem(vif.dcache_array_mon_o);
+            // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
+            // print_dmshr(vif.dmshr_array_mon_o);
+            // print_dcache_mem(vif.dcache_array_mon_o);
 
             // Monitor Retire
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin

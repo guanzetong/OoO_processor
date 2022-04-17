@@ -70,10 +70,12 @@ module mem_switch #(
         end
 
         // Generate acknowledge signal for arbiter to switch priority
-        arbiter_ack     =   1'b0;
-        if ((grant_valid == 1'b1) && (mem2switch_i.response != 'd0)) begin
-            arbiter_ack     =   1'b1;
-        end
+        arbiter_ack     =   1'b1;
+        // if ((grant_valid == 1'b1) && (mem2switch_i.response != 'd0)) begin
+        //     arbiter_ack     =   1'b1;
+        // end else if (grant_valid == 1'b0) begin
+        //     arbiter_ack     =   1'b1;
+        // end
 
         // Route the granted request to the proc Interface
         // Output grant signals to the MSHR entries
