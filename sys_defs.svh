@@ -49,8 +49,8 @@ typedef union packed {
 // Architecture Parameters
 // 
 //////////////////////////////////////////////
-`define FETCH_NUM       8   // The number of fetch channels.
-`define IF_NUM          16  // The number of instructions buffered.
+`define IF_NUM          2   // The number of (F)etch channels per cycle. ( Used for fetching from instruction cache )		
+`define FIQ_NUM         16  // The numb
 `define DP_NUM          2   // The number of Dispatch channels.
 `define IS_NUM          2   // The number of Issue channels.
 `define CDB_NUM         2   // The number of CDB/Complete channels.
@@ -103,8 +103,10 @@ typedef union packed {
 // 
 //////////////////////////////////////////////
 `define IF_IDX_WIDTH        $clog2(`IF_NUM)
+`define FIQ_IDX_WIDTH       $clog2(`FIQ_NUM)
 
 `define IF_NUM_WIDTH        $clog2(`IF_NUM+1)
+`define FIQ_NUM_WIDTH       $clog2(`FIQ_NUM+1)
 `define DP_NUM_WIDTH        $clog2(`DP_NUM+1)
 `define RT_NUM_WIDTH        $clog2(`RT_NUM+1)
 
@@ -261,7 +263,7 @@ typedef enum logic [1:0] {
 
 // RISCV ISA SPEC
 `define XLEN 32
-`define XLEN_BYTES  `XLEN >> 3
+`define XLEN_BYTES  `XLEN >> 3 // e.g. if XLEN == 32, 32 / 2^3 = 4
 
 typedef union packed {
     logic [31:0] inst;
@@ -396,19 +398,20 @@ typedef enum logic [3:0] {
 
 // Array Entry Contents Start
 
-// Struct that holds both the PC and the 
-typedef struct packed {
-    INST                                inst                ;
-    logic   [`XLEN-1:0]                 pc                  ;
-} INST_PC;
-
-// Per-thread data structures.
-typedef struct packed {
-    logic   [`XLEN-1:0]                 PC_reg             ;
-    INST_PC [`IF_NUM-1:0]               inst_buff          ;           // Instruction buffer (remember doesn't have logic since we're using a user defined type)
-    logic   [`IF_NUM_WIDTH-1:0]         avail_size         ;           // Essentially size of buff where can fetch (used to indicate 
-    logic   [`IF_IDX_WIDTH:0]           hd_ptr             ;           // Points to the front of the queue (extra bit for wrapping around).
-    logic   [`IF_IDX_WIDTH:0]           tail_ptr           ;           // Points to the back of the queue.
+// Struct which holds all relevant information.	
+typedef struct packed {		
+    INST                                inst                ;		
+    logic   [`XLEN-1:0]                 pc                  ;		
+    logic   [`MSHR_IDX_WIDTH-1:0]       mem_tag             ;		
+    logic                               br_predict          ;   // Branch predict bit here.		
+} FIQ_ENTRY; // (F)etched (I)nstruction (Q)ueue Entry		
+// Per-thread data structures.		
+typedef struct packed {		
+    logic    [`XLEN-1:0]                 PC_reg             ;		
+    FIQ_ENTRY[`FIQ_NUM-1:0]              inst_buff          ;           // Instruction buffer (remember doesn't have logic since we're using a user defined type)		
+    logic    [`FIQ_NUM_WIDTH-1:0]        avail_size         ;           // Essentially size of buff where can fetch (used to indicate the free space)		
+    logic    [`FIQ_IDX_WIDTH:0]          hd_ptr             ;           // Points to the front of the queue (extra bit for wrapping around).		
+    logic    [`FIQ_IDX_WIDTH:0]          tail_ptr           ;           // Points to the back of the queue.		
 } CONTEXT;
 
 typedef struct packed {
@@ -604,15 +607,6 @@ typedef struct packed {
     logic	[`DP_NUM-1:0][`THREAD_IDX_WIDTH-1:0]                 thread_idx  ;
 } DP_FL; // Combined
 
-typedef struct packed {
-    logic [`THREAD_NUM-1:0][`XLEN-1:0]              addr            ;
-    logic [`THREAD_NUM-1:0][`IF_NUM_WIDTH-1:0]      inst_num_to_ft  ; // Number of instructions to fetch (obtain) relative to pc.
-} IF_IC;
-
-typedef struct packed {
-    logic [`THREAD_NUM-1:0][`IF_NUM-1:0][`XLEN-1:0] data            ;
-    logic [`THREAD_NUM-1:0][`IF_NUM_WIDTH-1:0]      inst_num_fted   ; // Number of instructions fetched relative to pc.
-} IC_IF;
 
 typedef struct packed {
     logic   [`DP_NUM_WIDTH-1:0]                     avail_num   ;

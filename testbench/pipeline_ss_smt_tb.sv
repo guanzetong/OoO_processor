@@ -1,6 +1,7 @@
 // ====================================================================
 // Transaction Object Start
 // ====================================================================
+// `define SMT_EN
 class gen_item; // GEN -> DRV
     rand int    dp_num  ;   // # Dispatch
     rand int    cp_num  ;   // # Complete
@@ -18,7 +19,7 @@ endclass // gen_item
 // Driver Start
 // ====================================================================
 class driver;
-    virtual pipeline_dp_if                  vif                     ;
+    virtual pipeline_ss_smt_if              vif                     ;
     mailbox                                 drv_mbx                 ;
     event                                   drv_done                ;
     logic   [`THREAD_IDX_WIDTH-1:0]         thread_sel              ;
@@ -31,22 +32,33 @@ class driver;
     task run();
         $display("T=%0t [Driver] starting ...", $time);
 
+        // Control Signals for which thread context can be utilized.
+
+        vif.pc_en_i[ 0 ] = 1'b1;    // Enable PC (and keep it enabled)
+`ifdef SMT_EN
+        vif.pc_en_i[ 1 ] = 1'b1;    // Enable the other hart.
+`else
+        vif.pc_en_i[ 1 ] = 1'b0;
+`endif
+        // @(negedge vif.clk_i); // Already at the zero of clock period
+        /* (already done in the top-level test module)
         for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-            pc[thread_idx]  =   thread_idx * 'h1900;
+            vif_.rst_pc_i[thread_idx]  =   thread_idx * 'h100;
         end
+        */
+
         thread_sel  =   0;
 
         @(negedge vif.clk_i);
 
         $display("T=%0t [Driver] Reading program.mem", $time);
-        // $readmemh("program_smt.mem", program_mem);
-        $readmemh("program_smt.mem", program_mem);
 
         forever begin
             // gen_item    item;
             // drv_mbx.get(item);
 
 
+/*
             /////////////////////////////////////////////////////////////////////////
             vif.fiq_dp.avail_num =   `DP_NUM;
             for (int unsigned dp_idx = 0; dp_idx < `DP_NUM; dp_idx++) begin
@@ -78,10 +90,11 @@ class driver;
 
             $display("T=%0t [Driver] PC=%0h, dp_num=%0d", $time, pc, vif.dp_fiq.dp_num);
 
-            @(negedge vif.clk_i);
             vif.fiq_dp      =   0;
+*/
+            @(negedge vif.clk_i);
             vif.exception_i =   0;
-            thread_sel      =   thread_sel + 'd1;
+            // thread_sel      =   thread_sel + 'd1;
             // ->drv_done;
         end
     endtask // run()
@@ -103,14 +116,15 @@ endclass //
 // Monitor Start
 // ====================================================================
 class monitor;
-    virtual pipeline_dp_if      vif                             ;
-    mailbox                     scb_mbx                         ;
-    logic   [`XLEN-1:0]         wfi_pc      [`THREAD_NUM-1:0]   ;
-    int                         wb_fileno   [`THREAD_NUM-1:0]   ;
-    string                      wb_filename                     ;
-    logic   [`THREAD_NUM-1:0]   wfi_flag                        ;
+    virtual pipeline_ss_smt_if          vif                             ;
+    mailbox                             scb_mbx                         ;
+    logic   [`XLEN-1:0]                 wfi_pc      [`THREAD_NUM-1:0]   ;
+    int                                 wb_fileno   [`THREAD_NUM-1:0]   ;
+    string                              wb_filename                     ;
+    logic   [`THREAD_NUM-1:0]           wfi_flag                        ;
 
     task run();
+        // automatic string thrd_string;
         $display("T=%0t [Monitor] starting ...", $time);
         
         // Open writeback.out
@@ -124,8 +138,10 @@ class monitor;
             wfi_pc[thread_idx]      =   32'hFFFFFFFF;
             wfi_flag[thread_idx]    =   1'b0        ;
         end
-
+`ifndef SMT_EN
         wfi_flag[1] =   1'b1;
+`endif
+
 
         forever begin
             @(posedge vif.clk_i);
@@ -145,23 +161,30 @@ class monitor;
             end
 
             $display("%0d", vif.fiq_dp.avail_num);
+
+            print_IF(vif.pc_en_i, vif.if_ic_o_t, vif.ic_if_o_t, vif.thread_idx_disp_o_t, vif.thread_to_ft_o_t, vif.thread_data_o_t );
+            print_icache_mem(vif.cache_array_mon_o);
+            print_imshr(vif.mshr_array_mon_o);
+            // print_vfl(vif.vfl_fl_mon_o);
+
+
             print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
             print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
             print_mt(vif.mt_mon_o);
-            print_amt(vif.amt_mon_o);
+            // print_amt(vif.amt_mon_o);
             print_prf(vif.prf_mon_o);
-            // print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
+            print_ALU_ib(vif.ALU_queue_mon_o, vif.ALU_valid_mon_o, vif.ALU_head_mon_o, vif.ALU_tail_mon_o);
             // print_MULT_ib(vif.MULT_queue_mon_o, vif.MULT_valid_mon_o, vif.MULT_head_mon_o, vif.MULT_tail_mon_o);
             // print_BR_ib(vif.BR_queue_mon_o, vif.BR_valid_mon_o, vif.BR_head_mon_o, vif.BR_tail_mon_o);
-            print_STORE_ib(vif.STORE_queue_mon_o, vif.STORE_valid_mon_o, vif.STORE_head_mon_o, vif.STORE_tail_mon_o);
-            print_fl(vif.fl_mon_o);
+            // print_STORE_ib(vif.STORE_queue_mon_o, vif.STORE_valid_mon_o, vif.STORE_head_mon_o, vif.STORE_tail_mon_o);
+            // print_fl(vif.fl_mon_o);
             //print_vfl(vif.vfl_fl_mon_o);
             // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
-            print_cdb(vif.cdb_mon_o);
             // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o);
-            print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
-            print_dmshr(vif.dmshr_array_mon_o);
-            print_dcache_mem(vif.dcache_array_mon_o);
+            print_cdb(vif.cdb_mon_o);
+            // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
+            // print_dmshr(vif.dmshr_array_mon_o);
+            // print_dcache_mem(vif.dcache_array_mon_o);
 
             // Monitor Retire
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
@@ -186,61 +209,86 @@ class monitor;
                     && vif.rt_pc_o[thread_idx][rt_idx] == wfi_pc[thread_idx]) begin
                         wfi_flag[thread_idx]    =   1'b1;
                         $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, exit thread %0d", $time, wfi_pc[thread_idx], thread_idx);
-                    end
-                end
-            end
+                    end // if
+                end // for
+            end // for
 
             if (&wfi_flag == 1) begin
                 $display("All the threads are completed. exit program.");
-                $display("@@@ Unified Memory contents hex on left, decimal on right: ");
-                show_mem_with_decimal(0,`MEM_64BIT_LINES - 1); 
-				$display("@@  %t : System halted\n@@", $realtime);
-                $display("@@@ System halted on WFI instruction");
-				$display("@@@\n@@");
-				$fclose(wb_fileno);
-                #100 $finish;
+                $finish;
             end
         end
     endtask
 
-    task show_mem_with_decimal;
-        input [31:0] start_addr;
-        input [31:0] end_addr;
-        int showing_data;
-        int dcache_idx;
-        int dcache_hit;
-        logic [64-1:0]  dcache_data;
+    function void print_IF (
+        logic       [`THREAD_NUM-1:0]       pc_en           ,
+        MEM_IN                              if_ic           ,
+        MEM_OUT                             ic_if           ,
+        logic       [`THREAD_IDX_WIDTH-1:0] thread_idx_disp ,
+        logic       [`THREAD_IDX_WIDTH-1:0] thread_to_ft    ,
+        CONTEXT     [`THREAD_NUM-1:0]       thread_data     
+    );
+        int valid_entries;
+        int ptr;
+        $display( "T=%0t IF Contents", $time );    // %d displays uses fixed width to accomodate largest possible value
+        $display( "Instruction Buffers\n" );
+        for ( int thrd_idx = 0; thrd_idx < `THREAD_NUM; ++thrd_idx )
         begin
-            $display("@@@");
-            showing_data=0;
-            for(int k=start_addr;k<=end_addr; k=k+1)
-                dcache_idx   =   k[`CACHE_OFFSET_WIDTH+:`DCACHE_IDX_WIDTH];
-                for (int unsigned way_idx = 0; way_idx < `DCACHE_SASS; way_idx++) begin
-                    if ((vif.dcache_array_mon_o[dcache_idx][way_idx].valid == 1'b1)
-                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].dirty == 1'b1)
-                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].tag == addr[`XLEN-:`DCACHE_TAG_WIDTH])
-                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].data != 0)) begin
-                        dcache_data =   vif.dcache_array_mon_o[dcache_idx][way_idx].data;
-                        dcache_hit  =   1;
-                        break;
-                    end
-                end
+                                                                    // %0d displays the minimum width.
+            $display( "Thread %0d, pc_en:%0d", thrd_idx, pc_en[ thrd_idx ] ); // Thread idx
+            $display( "head=%0d, tail=%0d, Avail_size:%0d, PC_reg:%0d", thread_data[ thrd_idx ].hd_ptr[`FIQ_IDX_WIDTH-1:0], 
+                                                            thread_data[ thrd_idx ].tail_ptr[`FIQ_IDX_WIDTH-1:0], 
+                                                            thread_data[ thrd_idx ].avail_size,
+                                                            thread_data[ thrd_idx ].PC_reg );
+            // Calulate the number of entries in the fetch buffer.
+            if ( thread_data[ thrd_idx ].hd_ptr[`FIQ_IDX_WIDTH-1:0] < thread_data[ thrd_idx ].tail_ptr[`FIQ_IDX_WIDTH-1:0] ) begin
+                valid_entries = thread_data[ thrd_idx ].tail_ptr[`FIQ_IDX_WIDTH-1:0] - thread_data[ thrd_idx ].hd_ptr[`FIQ_IDX_WIDTH-1:0];
+            end else if ( thread_data[ thrd_idx ].hd_ptr[`FIQ_IDX_WIDTH-1:0] != thread_data[ thrd_idx ].tail_ptr[`FIQ_IDX_WIDTH-1:0] ) begin
+                valid_entries = `FIQ_NUM - thread_data[ thrd_idx ].hd_ptr[`FIQ_IDX_WIDTH-1:0] + thread_data[ thrd_idx ].tail_ptr[`FIQ_IDX_WIDTH-1:0];
+            end else if ( !( thread_data[ thrd_idx ].hd_ptr[`FIQ_IDX_WIDTH-1:0] ^ thread_data[ thrd_idx ].tail_ptr[`FIQ_IDX_WIDTH-1:0] ) ) begin  // Need to check if full or not
+                valid_entries = `FIQ_NUM;
+            end else begin
+                valid_entries = 0;
+            end // else
+            /*
+            if ( valid_entries != `FIQ_NUM - thread_data[ thrd_idx ].avail_size ) begin
+                $display( "Size doesn't match! (aborting)" );
+                $finish;
+            end // if
+            */
+            $display("Index\t|PC\t|Inst\t|Mem_tag\t|br_predict");
+            for ( logic [`FIQ_NUM_WIDTH-1:0] entry = 0; entry < `FIQ_NUM; ++entry )
+            begin
+                $display( "%d\t|%h\t|%h\t|%d|\t%d", entry, 
+                                        thread_data[ thrd_idx ].inst_buff[entry].pc, 
+                                        thread_data[ thrd_idx ].inst_buff[entry].inst,
+                                        thread_data[ thrd_idx ].inst_buff[entry].mem_tag,
+                                        thread_data[ thrd_idx ].inst_buff[entry].br_predict );
+            end // for
+        end // for  
+        $display( "Thread_idx_disp: %0d", thread_idx_disp );
+        $display( "Thread_idx_ft: %0d", thread_to_ft );
+        
 
-                if (dcache_hit) begin
-                    $display("@@@ mem[%5d] = %x : %0d", k*8, dcache_data, 
-                                                            dcache_data);
-                    showing_data=1;
-                end else if (memory.unified_memory[k] != 0) begin
-                    $display("@@@ mem[%5d] = %x : %0d", k*8, memory.unified_memory[k], 
-                                                            memory.unified_memory[k]);
-                    showing_data=1;
-                end else if(showing_data!=0) begin
-                    $display("@@@");
-                    showing_data=0;
-                end
-            $display("@@@");
-        end
-    endtask  // task show_mem_with_decimal
+        // print out IF_IC and IC_IF 
+        $display( "IF_IC(MEM_IN)" );
+        $display("T=%0t addr=%0d, data=%0d, size=%0d, command=%0d\n",	
+                $time           , 	
+                if_ic.addr      ,	
+                if_ic.data      ,	
+                if_ic.size      ,	
+                if_ic.command   
+                );
+        
+
+        $display( "IC_IF(MEM_OUT)" );
+        $display("T=%0t response=%0d, data=%0h, tag=%0d\n",	
+                $time           , 	
+                ic_if.response  ,	
+                ic_if.data      ,	
+                ic_if.tag       	
+                );
+    endfunction:print_IF
 
     function void print_rob(
         ROB_ENTRY   [`THREAD_NUM-1:0][`ROB_ENTRY_NUM-1:0]    rob_mon         ,
@@ -295,6 +343,7 @@ class monitor;
             end else begin
                 op_string   =   "-";
             end
+            // $display("ALU=%0b, CSR=%0b", rs_mon[entry_idx].dec_inst.alu, rs_mon[entry_idx].dec_inst.csr_op);
             $display("%0d\t|%s\t|%0d\t|%0h\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d\t|%0d",
             entry_idx                               ,
             op_string                               ,
@@ -590,7 +639,7 @@ class monitor;
         string  size_str    ;
         string  state_str   ;
         begin
-            $display("T=%0t MSHR Contents", $time);
+            $display("T=%0t DCache MSHR Contents", $time);
             $display("index\t|state\t\t|cmd\t\t|req_addr\t|req_data\t\t|req_size\t|evict_addr\t|evict_data\t\t|evict_dirty\t|link_idx\t|linked\t|mem_tag");
             for (int entry_idx = 0; entry_idx < `MSHR_ENTRY_NUM; entry_idx++) begin
                 state_str   =   mshr_state_str_conv(dmshr_array_mon[entry_idx].state);
@@ -609,7 +658,7 @@ class monitor;
 
     function void print_dcache_mem(input CACHE_MEM_ENTRY [`DCACHE_SET_NUM-1:0][`DCACHE_SASS-1:0] dcache_array_mon);
         begin
-            $display("T=%0t Cache Mem Contents", $time);
+            $display("T=%0t DCache Mem Contents", $time);
             $display("index\t|valid\t|dirty\t|lru\t|tag\t|data\t\t\t|\t|index\t|valid\t|dirty\t|lru\t|tag\t|data\t\t\t|\t|index\t|valid\t|dirty\t|lru\t|tag\t|data\t\t\t|\t|index\t|valid\t|dirty\t|lru\t|tag\t|data\t\t\t|\t");
             for (int set_idx = 0; set_idx < `DCACHE_SET_NUM; set_idx++) begin
                 $display("%2h\t|%0b\t|%0b\t|%0b\t|%6h\t|%16h\t|\t|%2h\t|%0b\t|%0b\t|%0b\t|%6h\t|%16h\t|\t|%2h\t|%0b\t|%0b\t|%0b\t|%6h\t|%16h\t|\t|%2h\t|%0b\t|%0b\t|%0b\t|%6h\t|%16h\t|\t|",
@@ -663,7 +712,43 @@ class monitor;
         end
     endfunction
 
-endclass
+    function void print_imshr(input MSHR_ENTRY [`MSHR_ENTRY_NUM-1:0] mshr_array_mon);
+        string  cmd_str     ;
+        string  size_str    ;
+        string  state_str   ;
+        begin
+            $display("T=%0t ICache MSHR Contents", $time);
+            $display("index\t|state\t\t|cmd\t\t|req_addr\t|req_data\t\t|req_size\t|evict_addr\t|evict_data\t\t|evict_dirty\t|link_idx\t|linked\t|mem_tag");
+            for (int entry_idx = 0; entry_idx < `MSHR_ENTRY_NUM; entry_idx++) begin
+                state_str   =   mshr_state_str_conv(mshr_array_mon[entry_idx].state);
+                cmd_str     =   cmd_str_conv(mshr_array_mon[entry_idx].cmd);
+                size_str    =   size_str_conv(mshr_array_mon[entry_idx].req_size);
+                $display("%0d\t|%s\t|%s\t|%8h\t|%16h\t|%s\t\t|%8h\t|%16h\t|%0b\t\t|%0d\t\t|%0b\t|%0d",
+                entry_idx, state_str, cmd_str, mshr_array_mon[entry_idx].req_addr,
+                mshr_array_mon[entry_idx].req_data, size_str, mshr_array_mon[entry_idx].evict_addr,
+                mshr_array_mon[entry_idx].evict_data, mshr_array_mon[entry_idx].evict_dirty,
+                mshr_array_mon[entry_idx].link_idx, mshr_array_mon[entry_idx].linked, 
+                mshr_array_mon[entry_idx].mem_tag
+                );
+            end
+        end
+    endfunction
+
+    function void print_icache_mem(input CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`ICACHE_SASS-1:0] cache_array_mon);
+        begin
+            $display("T=%0t ICache Mem Contents", $time);
+            $display("index\t|valid\t|dirty\t|lru\t|tag\t|data\t\t\t|\t\t|index\t|valid\t|dirty\t|lru\t|tag\t|data\t");
+            for (int set_idx = 0; set_idx < `ICACHE_SET_NUM; set_idx++) begin
+                $display("%2h\t|%0b\t|%0b\t|%0b\t|%6h\t|%16h\t|\t\t|%2h\t|%0b\t|%0b\t|%0b\t|%6h\t|%16h\t",
+                set_idx, cache_array_mon[set_idx][0].valid, cache_array_mon[set_idx][0].dirty, cache_array_mon[set_idx][0].lru,
+                cache_array_mon[set_idx][0].tag, cache_array_mon[set_idx][0].data,
+                set_idx, cache_array_mon[set_idx][1].valid, cache_array_mon[set_idx][1].dirty, cache_array_mon[set_idx][1].lru,
+                cache_array_mon[set_idx][1].tag, cache_array_mon[set_idx][1].data);
+            end
+        end
+    endfunction
+
+endclass:monitor
 // ====================================================================
 // Monitor End
 // ====================================================================
@@ -674,7 +759,12 @@ endclass
 class generator;
     mailbox drv_mbx;
     event   drv_done;
+<<<<<<< HEAD
     int     num     =   200;
+=======
+    // int     num     =   1000;
+    int     num = 200;
+>>>>>>> 3e7654cb569c9da38f50d3cb78d5da317a94ff29
 
     task run();
         for (int i = 0; i < num; i++) begin
@@ -698,16 +788,16 @@ endclass
 // Environment Start
 // ====================================================================
 class env;
-    driver          d0          ;   // driver     handle
-    monitor         m0          ;   // monitor    handle
-    generator       g0          ;   // generator  handle
+    driver                            d0          ;   // driver     handle
+    monitor                           m0          ;   // monitor    handle
+    generator                         g0          ;   // generator  handle
     // scoreboard      s0          ;   // scoreboard handle
 
-    mailbox         drv_mbx     ;   // Connect generator  <-> driver
-    mailbox         scb_mbx     ;   // Connect monitor    <-> scoreboard
-    event           drv_done    ;   // Indicates when driver is done
+    mailbox                           drv_mbx     ;   // Connect generator  <-> driver
+    mailbox                           scb_mbx     ;   // Connect monitor    <-> scoreboard
+    event                             drv_done    ;   // Indicates when driver is done
 
-    virtual pipeline_dp_if  vif ;   // Virtual interface handle
+    virtual pipeline_ss_smt_if        vif         ;   // Virtual interface handle
 
     function new();
         d0          =   new         ;
@@ -763,14 +853,29 @@ endclass // test
 // ====================================================================
 // Interface Start
 // ====================================================================
-interface pipeline_dp_if (input bit clk_i);
+interface pipeline_ss_smt_if         (input bit clk_i);
     logic                                               rst_i               ;   // Reset
     FIQ_DP                                              fiq_dp              ;   // From FIQ to DP
     DP_FIQ                                              dp_fiq              ;   // From DP to FIQ
     logic                                               exception_i         ;   // External exception
+
+
+    // Testing
+
+    
+    // Memory Interface
+    logic                                               memory_enable_i     ;
     MEM_IN                                              proc2mem_o          ;
     MEM_OUT                                             mem2proc_i          ;
-    // Testing
+    //      Fetch
+    logic       [`THREAD_NUM-1:0]                       pc_en_i             ;                               
+    logic       [`THREAD_NUM-1:0][`XLEN-1:0]            rst_pc_i            ;
+    MEM_IN                                              if_ic_o_t           ;
+    MEM_OUT                                             ic_if_o_t           ;
+    logic       [`THREAD_IDX_WIDTH-1:0]                 thread_idx_disp_o_t ;
+    logic       [`THREAD_IDX_WIDTH-1:0]                 thread_to_ft_o_t    ;   
+    CONTEXT     [`THREAD_NUM-1:0]                       thread_data_o_t     ;
+
     //      Dispatch
     DP_RS                                               dp_rs_mon_o         ;   // From Dispatcher to RS
     DP_MT       [`THREAD_NUM-1:0][`DP_NUM-1:0]          dp_mt_mon_o         ;
@@ -783,8 +888,8 @@ interface pipeline_dp_if (input bit clk_i);
     FU_BC                                               fu_bc_mon_o         ;   // From FU to BC
     CDB         [`CDB_NUM-1:0]                          cdb_mon_o           ;   // CDB
     //      Retire
-    logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]   rt_pc_o             ;   // PC of retired instructions
-    logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]              rt_valid_o          ;   // Retire valid
+    logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]   rt_pc_o         ;   // PC of retired instructions
+    logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]              rt_valid_o      ;   // Retire valid
     ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]          rob_amt_mon_o       ;   // From ROB to AMT
     ROB_FL      [`THREAD_NUM-1:0]                       rob_fl_mon_o        ;   // From ROB to FL
     //ROB_VFL                                           rob_vfl_mon_o       ;   // From ROB to VFL
@@ -827,6 +932,9 @@ interface pipeline_dp_if (input bit clk_i);
     logic       [`THREAD_NUM-1:0][`LSQ_IDX_WIDTH-1:0]   lsq_tail_mon_o      ;   // LSQ pointer monitor
     MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                   dmshr_array_mon_o   ;   // DCache MSHR monitor
     CACHE_MEM_ENTRY [`DCACHE_SET_NUM-1:0][`DCACHE_SASS-1:0] dcache_array_mon_o  ;   // DCache Mem monitor
+
+    MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                   imshr_array_mon_o   ;
+    CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`CACHE_SASS-1:0]  icache_array_mon_o  ;
 endinterface // pipeline_dp_if
 // ====================================================================
 // Interface End
@@ -860,20 +968,34 @@ module pipeline_ss_smt_tb;
 // --------------------------------------------------------------------
 // Interface Instantiation
 // --------------------------------------------------------------------
-    pipeline_dp_if  _if(clk_i);
+    pipeline_ss_smt_if         _if(clk_i);
 
 // --------------------------------------------------------------------
 // DUT Instantiation
 // --------------------------------------------------------------------
-    pipeline_dp_lsq dut (
+    pipeline_ss_smt     dut (
         .clk_i              (   clk_i               ),
         .rst_i              (_if.rst_i              ),
-        .fiq_dp             (_if.fiq_dp             ),
-        .dp_fiq             (_if.dp_fiq             ),
-        .exception_i        (_if.exception_i        ),
-        .proc2mem_o         (_if.proc2mem_o         ),
+
+        .memory_enable_i    (_if.memory_enable_i    ),
+
+        .proc2mem_o         (_if.proc2mem_o         ),          // Connect memory to cache (vise versa)
         .mem2proc_i         (_if.mem2proc_i         ),
 
+        .exception_i        (_if.exception_i        ),
+        .pc_en_i            (_if.pc_en_i            ),
+        .rst_pc_i           (_if.rst_pc_i           ),
+        .if_ic_o_t          (_if.if_ic_o_t          ),          // Exposes the instruction cache to
+        .ic_if_o_t          (_if.ic_if_o_t          ),
+`ifdef DEBUG
+        .thread_idx_disp_o_t(_if.thread_idx_disp_o_t),
+        .thread_to_ft_o_t   (_if.thread_to_ft_o_t   ),
+        .thread_data_o_t    (_if.thread_data_o_t    ),
+        .n_thread_data_o_t  (                       ),          // DC right now
+`endif
+
+        .fiq_dp             (_if.fiq_dp             ),
+        .dp_fiq             (_if.dp_fiq             ),
         .dp_rs_mon_o        (_if.dp_rs_mon_o        ),
         .dp_mt_mon_o        (_if.dp_mt_mon_o        ),
         .mt_dp_mon_o        (_if.mt_dp_mon_o        ),
@@ -923,25 +1045,31 @@ module pipeline_ss_smt_tb;
         .lsq_head_mon_o     (_if.lsq_head_mon_o     ),
         .lsq_tail_mon_o     (_if.lsq_tail_mon_o     ),
         .dmshr_array_mon_o  (_if.dmshr_array_mon_o  ),
-        .dcache_array_mon_o (_if.dcache_array_mon_o )
-    );
-
-    // Instantiate the Data Memory
-    mem memory (
-        // Inputs
-        .clk               (    clk_i                   ),
-        .proc2mem_command  (_if.proc2mem_o.command      ),
-        .proc2mem_addr     (_if.proc2mem_o.addr         ),
-        .proc2mem_data     (_if.proc2mem_o.data         ),
-`ifndef CACHE_MODE
-        .proc2mem_size     (_if.proc2mem_o.size         ),
-`endif
-        // Outputs
-        .mem2proc_response (_if.mem2proc_i.response     ),
-        .mem2proc_data     (_if.mem2proc_i.data         ),
-        .mem2proc_tag      (_if.mem2proc_i.tag          )
+        .dcache_array_mon_o (_if.dcache_array_mon_o ),
+        .imshr_array_mon_o  (_if.imshr_array_mon_o  ),
+        .icache_array_mon_o (_if.icache_array_mon_o )
     );
 // --------------------------------------------------------------------
+
+// --------------------------------------------------------------------
+// Memory Instantiation
+// --------------------------------------------------------------------
+	// Instantiate the Data Memory
+    mem memory (
+		// Inputs
+		.clk               ( clk_i                    ),
+		.proc2mem_command  ( _if.proc2mem_o.command  ),
+		.proc2mem_addr     ( _if.proc2mem_o.addr     ),
+		.proc2mem_data     ( _if.proc2mem_o.data     ),
+`ifndef CACHE_MODE
+		.proc2mem_size     ( _if.proc2mem_o.size     ),
+`endif
+
+		// Outputs (to processor)
+		.mem2proc_response ( _if.mem2proc_i.response ),
+		.mem2proc_data     ( _if.mem2proc_i.data     ),
+		.mem2proc_tag      ( _if.mem2proc_i.tag      )
+    );
 
 // --------------------------------------------------------------------
 // Test Instantiation
@@ -958,6 +1086,11 @@ module pipeline_ss_smt_tb;
         _if.rst_i       =   1;
         _if.fiq_dp      =   0;
         _if.exception_i =   0;
+
+        for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+            // _if.rst_pc_i[thread_idx]  =   thread_idx * 'h1900;
+            _if.rst_pc_i[thread_idx]  =   thread_idx * 'h100;
+        end
 
         @(posedge clk_i);
         @(posedge clk_i);
@@ -980,6 +1113,11 @@ module pipeline_ss_smt_tb;
         $display("@@PASSED");
         #50 $finish;
     end
+
+    // initial begin
+    //     $dumpvars;
+    //     $dumpfile("dump.vcd");
+    // end
 
 endmodule // pipeline_ss_smt_tb
 
