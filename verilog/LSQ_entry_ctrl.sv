@@ -323,6 +323,21 @@ module LSQ_entry_ctrl # (
                     end
                 end
             end
+            default: begin
+                next_lsq_entry.state        =   LSQ_ST_IDLE ;
+                next_lsq_entry.cmd          =   BUS_NONE    ;
+                next_lsq_entry.pc           =   'd0         ;
+                next_lsq_entry.tag          =   'd0         ;
+                next_lsq_entry.rob_idx      =   'd0         ;
+                next_lsq_entry.mem_size     =   BYTE        ;
+                next_lsq_entry.sign         =   1'b0        ;
+                next_lsq_entry.addr         =   'd0         ;
+                next_lsq_entry.addr_valid   =   1'b0        ;
+                next_lsq_entry.data         =   'b0         ;
+                next_lsq_entry.data_valid   =   1'b0        ;
+                next_lsq_entry.retire       =   1'b0        ;
+                next_lsq_entry.mem_tag      =   'd0         ;
+            end
         endcase    
     end
 

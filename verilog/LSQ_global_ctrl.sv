@@ -75,10 +75,10 @@ module LSQ_global_ctrl #(
         end else begin
             head_o  <=  `SD next_head;
             tail_o  <=  `SD next_tail;
-            if (head_o + lsq_rt_num   >= C_LSQ_ENTRY_NUM) begin
+            if (head_o + lsq_rt_num >= C_LSQ_ENTRY_NUM) begin
                 head_rollover   <=  `SD ~head_rollover;
             end
-            if (tail_o + lsq_dp_num   >= C_LSQ_ENTRY_NUM) begin
+            if (tail_o + lsq_dp_num >= C_LSQ_ENTRY_NUM) begin
                 tail_rollover   <=  `SD ~tail_rollover;
             end
         end
@@ -86,15 +86,15 @@ module LSQ_global_ctrl #(
 
     // Next state
     always_comb begin
-        if (head_o + lsq_rt_num   >= C_LSQ_ENTRY_NUM) begin
-            next_head   =   head_o + lsq_rt_num   - C_LSQ_ENTRY_NUM;
+        if (head_o + lsq_rt_num >= C_LSQ_ENTRY_NUM) begin
+            next_head   =   head_o + lsq_rt_num - C_LSQ_ENTRY_NUM;
         end else begin
-            next_head   =   head_o + lsq_rt_num  ;
+            next_head   =   head_o + lsq_rt_num ;
         end
-        if (tail_o + lsq_dp_num   >= C_LSQ_ENTRY_NUM) begin
-            next_tail   =   tail_o + lsq_dp_num   - C_LSQ_ENTRY_NUM;
+        if (tail_o + lsq_dp_num >= C_LSQ_ENTRY_NUM) begin
+            next_tail   =   tail_o + lsq_dp_num - C_LSQ_ENTRY_NUM;
         end else begin
-            next_tail   =   tail_o + lsq_dp_num  ;
+            next_tail   =   tail_o + lsq_dp_num ;
         end
     end
 

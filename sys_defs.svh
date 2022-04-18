@@ -520,19 +520,19 @@ typedef struct packed {
 } CACHE_MEM_ENTRY;  // for each block
 
 typedef struct packed {
+    LSQ_STATE                                       state       ;
     BUS_COMMAND                                     cmd         ;
     logic   [`XLEN-1:0]                             pc          ;   
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;   
     logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;   
     MEM_SIZE                                        mem_size    ;
-    logic   [`XLEN-1:0]                             addr        ;   
+    logic                                           sign        ;
+    logic   [`XLEN-1:0]                             addr        ;
     logic                                           addr_valid  ;   
     logic   [`XLEN-1:0]                             data        ;   
     logic                                           data_valid  ;   
     logic                                           retire      ;  
     logic   [`MSHR_IDX_WIDTH-1:0]                   mem_tag     ;
-    LSQ_STATE                                       state       ;
-    logic                                           sign        ;
 } LSQ_ENTRY;
 // Array Entry Contents End
 

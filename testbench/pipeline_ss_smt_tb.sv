@@ -1157,7 +1157,7 @@ module pipeline_ss_smt_tb;
 // Call test
 // --------------------------------------------------------------------
     initial begin
-        $dumpvars;
+        // $dumpvars;
 
         $display("@@\n@@\n@@  %t  Asserting System reset......", $realtime);
         _if.rst_i       =   1;
