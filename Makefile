@@ -18,7 +18,9 @@
 # SOURCE = test_progs/rv32_mult.s
 # SOURCE = test_progs/rv32_halt.s
 # SOURCE = test_progs/rv32_parallel.s
-SOURCE = test_progs/sampler.s
+# SOURCE = test_progs/sampler.s
+# SOURCE = test_progs/rv32_btest1.s
+SOURCE = test_progs/rv32_fib_rec.s
 
 
 CRT = crt.s

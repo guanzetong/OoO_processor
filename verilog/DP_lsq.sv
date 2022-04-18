@@ -67,6 +67,7 @@ module DP_lsq # (
     int unsigned    fl_cnt              ;
     int unsigned    illegal_flag        ;
     int unsigned    lsq_hazard_flag     ;
+    int unsigned    wfi_flag            ;
 // ====================================================================
 // Signal Declarations End
 // ====================================================================
@@ -226,20 +227,25 @@ module DP_lsq # (
         fl_cnt          =   'd0 ;
         illegal_flag    =   'd0 ;
         lsq_hazard_flag =   'd0 ;
+        wfi_flag        =   'd0 ;
         lsq_avail_num   =   lsq_dp_i[thread_sel].avail_num;
         for (int unsigned dp_idx = 0 ; dp_idx < C_DP_NUM ; dp_idx++) begin
             // IF   The instruction is a valid dispatch (dp_idx < dp_num)
             // AND  No illegal instruction is met
             // AND  LSQ hazard is not met
-            if ((dp_idx < dp_num) && (illegal_flag == 'd0) && (lsq_hazard_flag == 'd0)) begin
+            if ((dp_idx < dp_num) && (illegal_flag == 'd0) && (lsq_hazard_flag == 'd0) && (wfi_flag == 'd0)) begin
                 // IF   The instruction is illegal
                 // ->   Assert illegal_flag, no younger instructions can be dispathed in this cycle
                 if (dp_rs_o.dec_inst[dp_idx].illegal) begin
                     illegal_flag    =   'd1;
                 // ELSE The instruction is legal
                 end else begin
+                    // IF   the instruction is WFI
+                    if (dp_rs_o.dec_inst[dp_idx].halt) begin
+                        legal_cnt++;
+                        wfi_flag    =   'd1;
                     // IF   The instruction is LOAD/STORE 
-                    if(dp_rs_o.dec_inst[dp_idx].wr_mem || dp_rs_o.dec_inst[dp_idx].rd_mem)begin
+                    end else if(dp_rs_o.dec_inst[dp_idx].wr_mem || dp_rs_o.dec_inst[dp_idx].rd_mem)begin
                         // IF   The number of valid LOAD/STORE is less than the number of available LSQ entry
                         // ->   increment counters
                         if (lsq_cnt < lsq_avail_num) begin

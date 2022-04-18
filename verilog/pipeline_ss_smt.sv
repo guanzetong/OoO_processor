@@ -8,33 +8,18 @@
 `define DEBUG
 
 module pipeline_ss_smt (
-    input   logic                                                       clk_i               ,   // Clock
-    input   logic                                                       rst_i               ,   // Reset
-    output  FIQ_DP                                                      fiq_dp              ,   // From FIQ to DP
-    output  DP_FIQ                                                      dp_fiq              ,   // From DP to FIQ
-
-    // Memory Interface
-    output  MEM_IN                                                      proc2mem_o          ,   // From Processor to Memory
-    input   MEM_OUT                                                     mem2proc_i          ,   // From Memory to Processor
-
-    // Pipeline Control Signals
-    input   logic                                                       exception_i         ,   // External exception
-    input   logic           [`THREAD_NUM-1:0]                           pc_en_i             ,   // Used to control SMT (turn off a hart if necessary)
-    input   logic           [`THREAD_NUM-1:0][`XLEN-1:0]                rst_pc_i            ,
-
-    // Testing
+  // Testing
+`ifdef DEBUG
     //      Instruction Cache
     output  MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                       imshr_array_mon_o   ,
     output  CACHE_MEM_ENTRY [`ICACHE_SET_NUM-1:0][`ICACHE_SASS-1:0]     icache_array_mon_o  ,
     output  MEM_IN                                                      if_ic_o_t           ,   // Expose fetch to cache interface to the testbench.
     output  MEM_OUT                                                     ic_if_o_t           , 
     //      Fetch
-`ifdef DEBUG
     output logic            [`THREAD_IDX_WIDTH-1:0]                     thread_idx_disp_o_t ,
     output logic            [`THREAD_IDX_WIDTH-1:0]                     thread_to_ft_o_t    ,    
     output CONTEXT          [`THREAD_NUM-1:0]                           thread_data_o_t     ,
     output CONTEXT          [`THREAD_NUM-1:0]                           n_thread_data_o_t   ,
-`endif
     //      Dispatch
     output  DP_RS                                                       dp_rs_mon_o         ,   // From Dispatcher to RS
     output  DP_MT       [`THREAD_NUM-1:0][`DP_NUM-1:0]                  dp_mt_mon_o         ,
@@ -47,9 +32,6 @@ module pipeline_ss_smt (
     output  FU_BC                                                       fu_bc_mon_o         ,   // From FU to BC
     output  CDB         [`CDB_NUM-1:0]                                  cdb_mon_o           ,   // CDB
     //      Retire
-    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]       rt_pc_o             ,   // PC of retired instructions
-    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_valid_o          ,   // Retire valid
-    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_wfi_o            ,   // WFI
     output  ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rob_amt_mon_o       ,   // From ROB to AMT
     output  ROB_FL      [`THREAD_NUM-1:0]                               rob_fl_mon_o        ,   // From ROB to FL
     output  BR_MIS                                                      br_mis_mon_o        ,   // Branch Misprediction
@@ -60,7 +42,6 @@ module pipeline_ss_smt (
     output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]                             rs_mon_o            ,   // RS contents monitor
     output  logic       [$clog2(`RS_ENTRY_NUM)-1:0]                     rs_cod_mon_o        ,
     output  MT_ENTRY    [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]            mt_mon_o            ,   // Map Table contents monitor
-    output  AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]            amt_mon_o           ,   // Arch Map Table contents monitor
     output  FL_ENTRY    [`FL_ENTRY_NUM-1:0]                             fl_mon_o            ,   // Freelist monitor
     output  IS_INST     [`ALU_Q_SIZE  -1:0]                             ALU_queue_mon_o     ,   // IB queue monitor
     output  IS_INST     [`MULT_Q_SIZE -1:0]                             MULT_queue_mon_o    ,   // IB queue monitor
@@ -82,12 +63,31 @@ module pipeline_ss_smt (
     output  logic       [`LOAD_IDX_WIDTH -1:0]                          LOAD_tail_mon_o     ,   // IB queue pointer monitor
     output  logic       [`STORE_IDX_WIDTH-1:0]                          STORE_head_mon_o    ,   // IB queue pointer monitor
     output  logic       [`STORE_IDX_WIDTH-1:0]                          STORE_tail_mon_o    ,   // IB queue pointer monitor
-    output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]                  prf_mon_o           ,   // Physical Register File monitor
     output  LSQ_ENTRY   [`THREAD_NUM-1:0][`LSQ_ENTRY_NUM-1:0]           lsq_array_mon_o     ,   // LSQ monitor
     output  logic       [`THREAD_NUM-1:0][`LSQ_IDX_WIDTH-1:0]           lsq_head_mon_o      ,   // LSQ pointer monitor
     output  logic       [`THREAD_NUM-1:0][`LSQ_IDX_WIDTH-1:0]           lsq_tail_mon_o      ,   // LSQ pointer monitor
     output  MSHR_ENTRY      [`MSHR_ENTRY_NUM-1:0]                       dmshr_array_mon_o   ,   
-    output  CACHE_MEM_ENTRY [`DCACHE_SET_NUM-1:0][`DCACHE_SASS-1:0]     dcache_array_mon_o
+`endif
+
+    input   logic                                                       clk_i               ,   // Clock
+    input   logic                                                       rst_i               ,   // Reset
+
+    // Memory Interface
+    output  MEM_IN                                                      proc2mem_o          ,   // From Processor to Memory
+    input   MEM_OUT                                                     mem2proc_i          ,   // From Memory to Processor
+
+    // Pipeline Control Signals
+    input   logic                                                       exception_i         ,   // External exception
+    input   logic           [`THREAD_NUM-1:0]                           pc_en_i             ,   // Used to control SMT (turn off a hart if necessary)
+    input   logic           [`THREAD_NUM-1:0][`XLEN-1:0]                rst_pc_i            ,
+
+    // Must-have Monitor Signals for testbench
+    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]       rt_pc_o             ,   // PC of retired instructions
+    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_valid_o          ,   // Retire valid
+    output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_wfi_o            ,   // WFI
+    output  AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]            amt_mon_o           ,   // Arch Map Table contents monitor
+    output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]                  prf_mon_o           ,   // Physical Register File monitor
+    output  CACHE_MEM_ENTRY [`DCACHE_SET_NUM-1:0][`DCACHE_SASS-1:0]     dcache_array_mon_o  
 );
 
 // ====================================================================
@@ -104,7 +104,7 @@ module pipeline_ss_smt (
     // From IF
     MEM_IN                                                  if_ic           ;	
     MEM_OUT                                                 ic_if           ;
-    // FIQ_DP                                               fiq_dp          ;
+    FIQ_DP                                                  fiq_dp          ;
 
     // From DP
     DP_ROB      [`THREAD_NUM-1:0]                           dp_rob          ;
@@ -112,7 +112,7 @@ module pipeline_ss_smt (
     DP_RS                                                   dp_rs           ;
     DP_FL                                                   dp_fl           ;
     DP_LSQ      [`THREAD_NUM-1:0]                           dp_lsq          ;
-    // DP_FIQ                                               dp_fiq          ;
+    DP_FIQ                                                  dp_fiq          ;
 
     // From ROB
     ROB_DP      [`THREAD_NUM-1:0]                           rob_dp          ;
@@ -184,8 +184,10 @@ module pipeline_ss_smt (
 // Description  :   Instruction Cache
 // --------------------------------------------------------------------
     icache IC (
+`ifdef DEBUG
         .mshr_array_mon_o   (imshr_array_mon_o  ),
         .cache_array_mon_o  (icache_array_mon_o ),
+`endif
         .clk_i              (clk_i              ),
         .rst_i              (rst_i              ),
         .proc2cache_i       (if_ic              ),
@@ -201,6 +203,15 @@ module pipeline_ss_smt (
 // Description  :   Instruction fetch
 // --------------------------------------------------------------------
     IF IF_inst (
+    `ifdef DEBUG
+    // Everything here isn't required for functionalities
+    // Next State wires
+        .n_thread_data_o_t    ( n_thread_data_o_t    ),           // Verify how the wire is like.
+        .thread_idx_disp_o_t  ( thread_idx_disp_o_t  ),
+    // State Register wires
+        .thread_data_o_t      ( thread_data_o_t      ),          // Expose print to testbench
+        .thread_to_ft_o_t     ( thread_to_ft_o_t     ),
+    `endif
         .clk_i      (clk_i      ),
         .rst_i      (rst_i      ),
         .pc_en_i    (pc_en_i    ),
@@ -211,17 +222,6 @@ module pipeline_ss_smt (
 
         .if_ic_o    (if_ic      ),
         .fiq_dp_o   (fiq_dp     )
-    `ifdef DEBUG
-                                ,
-    // Everything here isn't required for functionalities
-    // Next State wires
-        .n_thread_data_o_t    ( n_thread_data_o_t    ),           // Verify how the wire is like.
-        .thread_idx_disp_o_t  ( thread_idx_disp_o_t  ),
-
-    // State Register wires
-        .thread_data_o_t      ( thread_data_o_t      ),          // Expose print to testbench
-        .thread_to_ft_o_t     ( thread_to_ft_o_t     )
-    `endif
     );
 // --------------------------------------------------------------------
 // --------------------------------------------------------------------
@@ -248,14 +248,16 @@ module pipeline_ss_smt (
 // Description  :   Freelist
 // --------------------------------------------------------------------
     FL_smt FL_smt_inst (
+    `ifdef DEBUG
+        .fl_mon_o       (fl_mon_o       ),
+    `endif
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
         .br_mis_i       (br_mis         ),
         .dp_fl_i        (dp_fl          ),
         .rob_fl_i       (rob_fl         ),
         .fl_dp_o        (fl_dp          ),
-        .exception_i    (exception_i    ),
-        .fl_mon_o       (fl_mon_o       )
+        .exception_i    (exception_i    )
     );
 // --------------------------------------------------------------------
 
@@ -266,6 +268,12 @@ module pipeline_ss_smt (
     generate
         for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
             ROB ROB_inst (
+                //ROB testing
+            `ifdef DEBUG
+                .rob_mon_o          (rob_mon_o[thread_idx]              ),
+                .rob_head_mon_o     (rob_head_mon_o[thread_idx]         ),
+                .rob_tail_mon_o     (rob_tail_mon_o[thread_idx]         ),
+            `endif
                 .clk_i              (clk_i                              ),
                 .rst_i              (rst_i                              ),
                 .rob_dp_o           (rob_dp[thread_idx]                 ),
@@ -278,10 +286,6 @@ module pipeline_ss_smt (
                 .br_mis_valid_o     (br_mis.valid[thread_idx]           ),
                 .br_target_o        (br_mis.br_target[thread_idx]       ),
                 .rob_lsq_o          (rob_lsq[thread_idx]                ),
-                //ROB testing
-                .rob_mon_o          (rob_mon_o[thread_idx]              ),
-                .rob_head_mon_o     (rob_head_mon_o[thread_idx]         ),
-                .rob_tail_mon_o     (rob_tail_mon_o[thread_idx]         ),
                 .rt_pc_o            (rt_pc_o[thread_idx]                ),
                 .rt_valid_o         (rt_valid_o[thread_idx]             ),
                 .rt_wfi_o           (rt_wfi_o[thread_idx]               )
@@ -297,6 +301,10 @@ module pipeline_ss_smt (
     generate
         for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
             MT_SS MT_inst (
+                 // MT Testing
+            `ifdef DEBUG
+                .mt_mon_o       (mt_mon_o[thread_idx]                       ),
+            `endif
                 .clk_i          (clk_i                                      ),
                 .rst_i          (rst_i                                      ),
                 .rollback_i     (exception_i || br_mis.valid[thread_idx]    ),
@@ -304,9 +312,7 @@ module pipeline_ss_smt (
                 .dp_mt_i        (dp_mt[thread_idx]                          ),
                 .amt_i          (amt[thread_idx]                            ),
                 .thread_idx_i   (thread_idx[`THREAD_IDX_WIDTH-1:0]          ),
-                .mt_dp_o        (mt_dp[thread_idx]                          ),
-                 // MT Testing
-                .mt_mon_o       (mt_mon_o[thread_idx]                       )
+                .mt_dp_o        (mt_dp[thread_idx]                          )
             );
         end
     endgenerate
@@ -337,9 +343,11 @@ module pipeline_ss_smt (
     generate
         for(thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
             LSQ LSQ_inst (
+            `ifdef DEBUG
                 .lsq_array_mon_o    (lsq_array_mon_o[thread_idx]                ),
                 .lsq_head_mon_o     (lsq_head_mon_o[thread_idx]                 ),
                 .lsq_tail_mon_o     (lsq_tail_mon_o[thread_idx]                 ),
+            `endif
                 .clk_i              (clk_i                                      ),
                 .rst_i              (rst_i                                      ),
                 .thread_idx_i       (thread_idx[`THREAD_IDX_WIDTH-1:0]          ),
@@ -364,8 +372,10 @@ module pipeline_ss_smt (
 // --------------------------------------------------------------------
     RS RS_inst (
         //RS testing
+    `ifdef DEBUG
         .rs_mon_o       (rs_mon_o       ),
         .rs_cod_mon_o   (rs_cod_mon_o   ),
+    `endif
         // testing end
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
@@ -386,15 +396,8 @@ module pipeline_ss_smt (
 // Description  :   Issue Buffer
 // --------------------------------------------------------------------
     IB IB_inst (
-        .clk_i              (clk_i              ),
-        .rst_i              (rst_i              ),
-        .ib_rs_o            (ib_rs              ),
-        .rs_ib_i            (rs_ib              ),
-        .fu_ib_i            (fu_ib              ),
-        .ib_fu_o            (ib_fu              ),
-        .br_mis_i           (br_mis             ),
-        .exception_i        (exception_i        ),
         //IB testing    
+    `ifdef DEBUG
         .ALU_queue_mon_o    (ALU_queue_mon_o    ),
         .MULT_queue_mon_o   (MULT_queue_mon_o   ),
         .BR_queue_mon_o     (BR_queue_mon_o     ),
@@ -414,7 +417,16 @@ module pipeline_ss_smt (
         .LOAD_head_mon_o    (LOAD_head_mon_o    ),
         .LOAD_tail_mon_o    (LOAD_tail_mon_o    ),
         .STORE_head_mon_o   (STORE_head_mon_o   ),
-        .STORE_tail_mon_o   (STORE_tail_mon_o   )
+        .STORE_tail_mon_o   (STORE_tail_mon_o   ),
+    `endif
+        .clk_i              (clk_i              ),
+        .rst_i              (rst_i              ),
+        .ib_rs_o            (ib_rs              ),
+        .rs_ib_i            (rs_ib              ),
+        .fu_ib_i            (fu_ib              ),
+        .ib_fu_o            (ib_fu              ),
+        .br_mis_i           (br_mis             ),
+        .exception_i        (exception_i        )
     );
 // --------------------------------------------------------------------
 
@@ -428,7 +440,6 @@ module pipeline_ss_smt (
         .rs_prf_i       (rs_prf         ),
         .prf_rs_o       (prf_rs         ),
         .bc_prf_i       (bc_prf         ),
-        // PRF Testing
         .prf_mon_o      (prf_mon_o      )
     );
 // --------------------------------------------------------------------
@@ -484,8 +495,10 @@ module pipeline_ss_smt (
 // Description  :   D-Cache
 // --------------------------------------------------------------------
     dcache DC_inst (
+    `ifdef DEBUG
         .mshr_array_mon_o   (dmshr_array_mon_o  ),
         .cache_array_mon_o  (dcache_array_mon_o ),
+    `endif
         .clk_i              (clk_i              ),
         .rst_i              (rst_i              ),
         .proc2cache_i       (proc2dcache        ),
@@ -523,12 +536,19 @@ module pipeline_ss_smt (
     assign  req2mem[1]  =   icache2mem  ;
 
     // Testing
+`ifdef DEBUG
     //      Fetch
     assign  if_ic_o_t       =   if_ic       ;
     assign  ic_if_o_t       =   ic_if       ;
     //      Dispatch
     assign  dp_rs_mon_o     =   dp_rs       ;
-        
+    always_comb begin
+        for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
+            dp_mt_mon_o[thread_idx]     =   dp_mt[thread_idx]       ;
+            mt_dp_mon_o[thread_idx]     =   mt_dp[thread_idx]       ;
+            amt_mon_o[thread_idx]       =   amt[thread_idx]         ; 
+        end
+    end
     //      Issue
     assign  rs_ib_mon_o     =   rs_ib       ;
     //      Execute
@@ -537,6 +557,7 @@ module pipeline_ss_smt (
     assign  fu_bc_mon_o     =   fu_bc       ;
     assign  cdb_mon_o       =   cdb         ;
     //      Retire
+    assign  br_mis_mon_o    =   br_mis      ;
     always_comb begin
         for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
             rob_amt_mon_o[thread_idx]   =   rob_amt[thread_idx]     ;
@@ -544,16 +565,7 @@ module pipeline_ss_smt (
         end
     end
 
-    assign  br_mis_mon_o    =   br_mis      ;
-
-    //thread 
-    always_comb begin
-        for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++)begin
-            dp_mt_mon_o[thread_idx]     =   dp_mt[thread_idx]       ;
-            mt_dp_mon_o[thread_idx]     =   mt_dp[thread_idx]       ;
-            amt_mon_o[thread_idx]       =   amt[thread_idx]         ; 
-        end
-    end
+`endif
 
 // --------------------------------------------------------------------
 // Logic Divider

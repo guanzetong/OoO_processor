@@ -186,7 +186,6 @@ module mshr_entry_ctrl #(
                                 next_mshr_entry.req_data    =   mshr_entry.req_data ;
                             end
                         endcase
-                        $display("input data offset=%0d", input_data_offset);
                     end
                 end
             end
