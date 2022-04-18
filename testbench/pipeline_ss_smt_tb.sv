@@ -238,7 +238,8 @@ class monitor;
         logic   [`DCACHE_IDX_WIDTH-1:0]  dcache_idx;
         logic   [`DCACHE_TAG_WIDTH-1:0]  dcache_tag;
         logic                            dcache_hit;
-        logic [64-1:0]  dcache_data;
+        logic                            dcache_zero;
+        logic [64-1:0]                   dcache_data;
         begin
             $display("@@@");
             showing_data=0;
@@ -251,18 +252,17 @@ class monitor;
                     // $display("cache tag = %0h", vif.dcache_array_mon_o[dcache_idx][way_idx].tag);
                     if ((vif.dcache_array_mon_o[dcache_idx][way_idx].valid == 1'b1)
                     && (vif.dcache_array_mon_o[dcache_idx][way_idx].dirty == 1'b1)
-                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].tag == dcache_tag)
-                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].data != 0)) begin
+                    && (vif.dcache_array_mon_o[dcache_idx][way_idx].tag == dcache_tag)) begin
                         dcache_data =   vif.dcache_array_mon_o[dcache_idx][way_idx].data;
                         dcache_hit  =   1;
                         break;
                     end
                 end
-                if (dcache_hit) begin
+                if (dcache_hit && (dcache_data != 'b0)) begin
                     $display("@@@ mem[%5d] = %x : %0d", k*8, dcache_data, 
                                                             dcache_data);
                     showing_data=1;
-                end else if (vif.unified_memory[k] != 0) begin
+                end else if ((dcache_hit == 1'b0) && (vif.unified_memory[k] != 0)) begin
                     $display("@@@ mem[%5d] = %x : %0d", k*8, vif.unified_memory[k], 
                                                             vif.unified_memory[k]);
                     showing_data=1;

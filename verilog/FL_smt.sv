@@ -44,8 +44,10 @@ module FL_smt #(
 // ====================================================================
     // Freelist array
     FL_ENTRY        [C_FL_ENTRY_NUM-1:0]                fl_entry            ;   // Freelist entry
-    logic           [C_RT_NUM_WIDTH-1:0]                rt_num              ;
     logic           [C_FL_NUM_WIDTH-1:0]                avail_num           ;
+    logic           [C_FL_NUM_WIDTH-1:0]                next_avail_num      ;
+    logic           [C_THREAD_NUM-1:0][C_FL_NUM_WIDTH-1:0]  thread_tag_num  ;
+    logic           [C_THREAD_NUM-1:0][C_FL_NUM_WIDTH-1:0]  thread_rt_num   ;
 
     // Dispatch entry select
     logic           [C_FL_ENTRY_NUM-1:0]                entry_valid_concat  ;
@@ -129,14 +131,7 @@ module FL_smt #(
         end//for fl_idx
     end//ff
 
-    always_comb begin
-        rt_num = 'b0;
-        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
-            rt_num = rob_fl_i[thread_idx].rt_num + rt_num;
-        end
-    end
-
-    assign fl_mon_o = fl_entry;
+    assign  fl_mon_o    =   fl_entry;
 
 // --------------------------------------------------------------------
 // Dispatch Select
@@ -159,7 +154,7 @@ module FL_smt #(
         end
 
         // Assert Per-entry dp_sel
-        dp_sel      =   'b0;
+        dp_sel  =   'b0;
         for (int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++) begin
             for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
                 if ((fl_dp_idx[dp_idx] == fl_idx) && dp_valid[dp_idx]) begin
@@ -172,12 +167,50 @@ module FL_smt #(
 // --------------------------------------------------------------------
 // Calculation of avail_num 
 // --------------------------------------------------------------------
+    // Count the number of tags in-flight in each thread
+    always_comb begin
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            thread_tag_num[thread_idx]  =   'd0;
+            for (int unsigned fl_idx = 0; fl_idx < C_FL_ENTRY_NUM; fl_idx++) begin
+                if ((fl_entry[fl_idx].thread_idx == thread_idx)
+                && (fl_entry[fl_idx].valid == 1'b0)) begin
+                    thread_tag_num[thread_idx]++;
+                end
+            end
+        end
+    end
+
+    // Count the number of tags to be retired in each thread in the current cycle
+    always_comb begin
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            thread_rt_num[thread_idx]   =   'd0;
+            for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
+                if ((rt_idx < rob_fl_i[thread_idx].rt_num)
+                && (rob_fl_i[thread_idx].tag[rt_idx] != `ZERO_REG)) begin
+                    thread_rt_num[thread_idx]++;
+                end
+            end
+        end
+    end
+
+    // Number of available entries in the next cycle
+    always_comb begin
+        next_avail_num  =   avail_num;
+        for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
+            if (br_mis_i.valid[thread_idx] == 1'b1) begin
+                next_avail_num  =   next_avail_num + thread_tag_num[thread_idx];
+            end else begin
+                next_avail_num  =   next_avail_num + thread_rt_num[thread_idx];
+            end
+        end
+        next_avail_num  =   next_avail_num - dp_fl_i.dp_num;
+    end
+
     always_ff @(posedge clk_i) begin
         if (rst_i || exception_i) begin
             avail_num   <=   `SD C_FL_ENTRY_NUM ;
-        end//if
-        else begin
-            avail_num   <=   `SD avail_num + rt_num - dp_fl_i.dp_num;
+        end else begin
+            avail_num   <=   `SD next_avail_num;
         end  
     end//ff
     //available nums are the ones has vaild value to be dispatched
