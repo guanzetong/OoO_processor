@@ -49,6 +49,8 @@ typedef union packed {
 // Architecture Parameters
 // 
 //////////////////////////////////////////////
+`define DEBUG
+
 `define IF_NUM          2   // The number of (F)etch channels per cycle. ( Used for fetching from instruction cache )		
 `define FIQ_NUM         16  // The numb
 `define DP_NUM          2   // The number of Dispatch channels.

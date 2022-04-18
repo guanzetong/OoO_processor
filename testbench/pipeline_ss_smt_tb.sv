@@ -87,6 +87,9 @@ class monitor;
     logic   [32-1:0]                    clk_cnt                         ;
     logic   [32-1:0]                    inst_cnt                        ;
 
+    logic   [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]   wfi_rob_idx         ;
+    logic   [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]   wfi_tail            ;
+
     task run();
         // automatic string thrd_string;
         $display("T=%0t [Monitor] starting ...", $time);
@@ -96,7 +99,7 @@ class monitor;
     
         // Open writeback.out
         for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-`ifndef SMT_EN
+        `ifndef SMT_EN
             if (thread_idx == 0) begin
                 wb_filename             =   {"writeback.out"};
                 wb_fileno[thread_idx]   =   $fopen(wb_filename);
@@ -104,26 +107,26 @@ class monitor;
                 wb_filename             =   {"writeback_t", (thread_idx + 'd48), ".out"};
                 wb_fileno[thread_idx]   =   $fopen(wb_filename);
             end
-`else
+        `else
             wb_filename             =   {"writeback_t", (thread_idx + 'd48), ".out"};
             wb_fileno[thread_idx]   =   $fopen(wb_filename);
-`endif
+        `endif
         end
 
         // Initialize wfi_flag
         for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
             wfi_flag[thread_idx]    =   1'b0        ;
         end
-`ifndef SMT_EN
+        `ifndef SMT_EN
         wfi_flag[1] =   1'b1;
-`endif
+        `endif
 
 
         forever begin
             @(posedge vif.clk_i);
             clk_cnt++;
             // $display("%0d", vif.fiq_dp.avail_num);
-`ifdef DEBUG
+        `ifdef DEBUG
             // print_IF(vif.pc_en_i, vif.if_ic_o_t, vif.ic_if_o_t, vif.thread_idx_disp_o_t, vif.thread_to_ft_o_t, vif.thread_data_o_t );
             // print_icache_mem(vif.icache_array_mon_o);
             // print_imshr(vif.imshr_array_mon_o);
@@ -145,7 +148,7 @@ class monitor;
             // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
             // print_dmshr(vif.dmshr_array_mon_o);
             // print_dcache_mem(vif.dcache_array_mon_o);
-`endif
+        `endif
             // Monitor Retire
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
                 for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
@@ -165,7 +168,14 @@ class monitor;
                         inst_cnt++;
                         if (vif.rt_wfi_o[thread_idx][rt_idx] == 1'b1) begin
                             wfi_flag[thread_idx]    =   1'b1;
-                            $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, exit thread %0d", $time, vif.rt_pc_o[thread_idx][rt_idx], thread_idx);
+                            if (vif.rob_head_mon_o[thread_idx] + rt_idx >= `ROB_ENTRY_NUM) begin
+                                wfi_rob_idx[thread_idx] =   vif.rob_head_mon_o[thread_idx] + rt_idx - `ROB_ENTRY_NUM;
+                            end else begin
+                                wfi_rob_idx[thread_idx] =   vif.rob_head_mon_o[thread_idx] + rt_idx;
+                            end
+                            wfi_tail[thread_idx]    =   vif.rob_tail_mon_o[thread_idx];
+                            $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, rob_idx=%0d, rob_tail=%0d, exit thread %0d", 
+                            $time, wfi_rob_idx[thread_idx], wfi_tail[thread_idx], vif.rt_pc_o[thread_idx][rt_idx], thread_idx);
                         end
                     end
                 end // for
@@ -179,13 +189,24 @@ class monitor;
                 end
             end
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
-                for (int unsigned lsq_idx = 0; lsq_idx < `LSQ_ENTRY_NUM; lsq_idx++) begin
-                    if (vif.lsq_array_mon_o[thread_idx][lsq_idx].state != LSQ_ST_IDLE) begin
-                        store_complete_flag =   0;
+                if (wfi_flag[thread_idx]) begin
+                    for (int unsigned lsq_idx = 0; lsq_idx < `LSQ_ENTRY_NUM; lsq_idx++) begin
+                        if (vif.lsq_array_mon_o[thread_idx][lsq_idx].state != LSQ_ST_IDLE) begin
+                            if (wfi_rob_idx[thread_idx] < wfi_tail[thread_idx]) begin
+                                if ((vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx < wfi_rob_idx[thread_idx])
+                                || (vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx >= wfi_tail[thread_idx])) begin
+                                    store_complete_flag =   0;
+                                end
+                            end else begin
+                                if ((vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx < wfi_rob_idx[thread_idx])
+                                && (vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx >= wfi_tail[thread_idx])) begin
+                                    store_complete_flag =   0;
+                                end
+                            end
+                        end
                     end
                 end
             end
-            // $display("Store complete=%0b", store_complete_flag);
 
             if (&wfi_flag == 1) begin
                 print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);

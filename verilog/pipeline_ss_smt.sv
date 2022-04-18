@@ -37,8 +37,6 @@ module pipeline_ss_smt (
     output  BR_MIS                                                      br_mis_mon_o        ,   // Branch Misprediction
     //      Contents
     output  ROB_ENTRY   [`THREAD_NUM-1:0][`ROB_ENTRY_NUM-1:0]           rob_mon_o           ,   // ROB contents monitor
-    output  logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]           rob_head_mon_o      ,   // ROB head pointer
-    output  logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]           rob_tail_mon_o      ,   // ROB tail pointer
     output  RS_ENTRY    [`RS_ENTRY_NUM-1:0]                             rs_mon_o            ,   // RS contents monitor
     output  logic       [$clog2(`RS_ENTRY_NUM)-1:0]                     rs_cod_mon_o        ,
     output  MT_ENTRY    [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]            mt_mon_o            ,   // Map Table contents monitor
@@ -85,6 +83,8 @@ module pipeline_ss_smt (
     output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]       rt_pc_o             ,   // PC of retired instructions
     output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_valid_o          ,   // Retire valid
     output  logic       [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rt_wfi_o            ,   // WFI
+    output  logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]           rob_head_mon_o      ,   // ROB head pointer
+    output  logic       [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]           rob_tail_mon_o      ,   // ROB tail pointer
     output  AMT_ENTRY   [`THREAD_NUM-1:0][`ARCH_REG_NUM-1:0]            amt_mon_o           ,   // Arch Map Table contents monitor
     output  logic       [`PHY_REG_NUM-1:0] [`XLEN-1:0]                  prf_mon_o           ,   // Physical Register File monitor
     output  CACHE_MEM_ENTRY [`DCACHE_SET_NUM-1:0][`DCACHE_SASS-1:0]     dcache_array_mon_o  
@@ -169,6 +169,10 @@ module pipeline_ss_smt (
     MEM_IN      [2-1:0]                                     req2mem         ;
     logic       [2-1:0]                                     memory_grant    ;
 
+    logic       [`THREAD_NUM-1:0]                           wfi_flag        ;
+    logic       [`THREAD_NUM-1:0]                           wfi_retire      ;
+    logic       [`THREAD_NUM-1:0]                           dp_en           ;
+
     genvar thread_idx;
 
 // ====================================================================
@@ -229,6 +233,7 @@ module pipeline_ss_smt (
 // Description  :   Dispatcher that support LSQ and SMT
 // --------------------------------------------------------------------
     DP_lsq DP_lsq_inst (
+        .dp_en_i        (dp_en              ),
         .rob_dp_i       (rob_dp             ),
         .dp_rob_o       (dp_rob             ),
         .mt_dp_i        (mt_dp              ),
@@ -534,6 +539,32 @@ module pipeline_ss_smt (
 
     assign  req2mem[0]  =   dcache2mem  ;
     assign  req2mem[1]  =   icache2mem  ;
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i || exception_i) begin
+            wfi_flag    <=  `SD 2'b0;
+        end else begin
+            for (int unsigned th_idx = 0; th_idx < `THREAD_NUM; th_idx++) begin
+                if (wfi_retire[th_idx] == 1'b1) begin
+                    wfi_flag[th_idx]    <=  `SD 1'b1;
+                end
+            end
+        end        
+    end
+
+    always_comb begin
+        for (int unsigned th_idx = 0; th_idx < `THREAD_NUM; th_idx++) begin
+            wfi_retire[th_idx]  =   1'b0;
+            for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
+                if ((rt_valid_o[th_idx][rt_idx] == 1'b1) 
+                && (rt_wfi_o[th_idx][rt_idx] == 1'b1)) begin
+                    wfi_retire[th_idx]  =   1'b1;
+                end
+            end
+        end
+    end
+
+    assign  dp_en   =   ~(wfi_retire | wfi_flag);
 
     // Testing
 `ifdef DEBUG

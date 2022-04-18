@@ -1,4 +1,4 @@
-# *.out
+*.out
 extras
 csrc/
 simv.daidir/

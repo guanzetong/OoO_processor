@@ -15,20 +15,21 @@ module DP_lsq # (
     parameter       C_ARCH_REG_NUM          =   `ARCH_REG_NUM   ,
     parameter       C_PHY_REG_NUM           =   `PHY_REG_NUM    
 )(    
-    input           ROB_DP      [C_THREAD_NUM-1:0]                rob_dp_i  ,
-    output          DP_ROB      [C_THREAD_NUM-1:0]                dp_rob_o  ,
-    input           MT_DP       [C_THREAD_NUM-1:0][C_DP_NUM-1:0]  mt_dp_i   ,   
+    input           logic       [C_THREAD_NUM-1:0]                  dp_en_i     ,
+    input           ROB_DP      [C_THREAD_NUM-1:0]                  rob_dp_i    ,
+    output          DP_ROB      [C_THREAD_NUM-1:0]                  dp_rob_o    ,
+    input           MT_DP       [C_THREAD_NUM-1:0][C_DP_NUM-1:0]    mt_dp_i     ,   
     // output          DP_MT_READ  [C_DP_NUM-1:0]  dp_mt_o    ,
     // output          DP_MT_WRITE [C_DP_NUM-1:0]  dp_mt_o    ,
-    output          DP_MT       [C_THREAD_NUM-1:0][C_DP_NUM-1:0]  dp_mt_o   ,
-    input           FL_DP                                         fl_dp_i   ,   
-    output          DP_FL                                         dp_fl_o   ,
-    input           FIQ_DP                                        fiq_dp_i  ,   
-    output          DP_FIQ                                        dp_fiq_o  ,
-    input           RS_DP                                         rs_dp_i   ,   
-    output          DP_RS                                         dp_rs_o   ,
-    output          DP_LSQ      [C_THREAD_NUM-1:0]                dp_lsq_o  ,
-    input           LSQ_DP      [C_THREAD_NUM-1:0]                lsq_dp_i      
+    output          DP_MT       [C_THREAD_NUM-1:0][C_DP_NUM-1:0]    dp_mt_o     ,
+    input           FL_DP                                           fl_dp_i     ,   
+    output          DP_FL                                           dp_fl_o     ,
+    input           FIQ_DP                                          fiq_dp_i    ,   
+    output          DP_FIQ                                          dp_fiq_o    ,
+    input           RS_DP                                           rs_dp_i     ,   
+    output          DP_RS                                           dp_rs_o     ,
+    output          DP_LSQ      [C_THREAD_NUM-1:0]                  dp_lsq_o    ,
+    input           LSQ_DP      [C_THREAD_NUM-1:0]                  lsq_dp_i        
 );//declaration of the interactive structures
 
 // ====================================================================
@@ -283,7 +284,11 @@ module DP_lsq # (
         lsq_route   =   lsq_router(lsq_dp_num);
         for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
             if(thread_idx == thread_sel)begin
-                dp_lsq_o[thread_idx].dp_num =   lsq_dp_num;
+                if (dp_en_i[thread_idx] == 1'b1) begin
+                    dp_lsq_o[thread_idx].dp_num =   lsq_dp_num;
+                end else begin
+                    dp_lsq_o[thread_idx].dp_num =   'd0;
+                end
                 // Loop over Dispatch channel
                 for(int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
                     // IF   The channel is ready for dispatch
@@ -306,7 +311,11 @@ module DP_lsq # (
 // DP_FIQ
 // --------------------------------------------------------------------  
     always_comb begin
-        dp_fiq_o.dp_num =   legal_dp_num    ;
+        if (dp_en_i[thread_sel] == 1'b1) begin
+            dp_fiq_o.dp_num =   legal_dp_num    ;
+        end else begin
+            dp_fiq_o.dp_num =   'd0;
+        end
     end
 
 // --------------------------------------------------------------------
@@ -316,21 +325,23 @@ module DP_lsq # (
         dp_mt_o =   'b0;
         for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
             if (thread_idx == thread_sel) begin
-                for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
-                    if (dp_idx < legal_dp_num) begin
-                        dp_mt_o[thread_idx][dp_idx].wr_en   =   1'b1;
-                    end else begin
-                        dp_mt_o[thread_idx][dp_idx].wr_en   =   1'b0;
+                if (dp_en_i[thread_idx] == 1'b1) begin
+                    for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
+                        if (dp_idx < legal_dp_num) begin
+                            dp_mt_o[thread_idx][dp_idx].wr_en   =   1'b1;
+                        end else begin
+                            dp_mt_o[thread_idx][dp_idx].wr_en   =   1'b0;
+                        end
+                        dp_mt_o[thread_idx][dp_idx].thread_idx  =   fiq_dp_i.thread_idx[dp_idx]     ;
+                        dp_mt_o[thread_idx][dp_idx].rd          =   dec_rd [dp_idx]                 ;
+                        dp_mt_o[thread_idx][dp_idx].rs1         =   dec_rs1[dp_idx]                 ;
+                        dp_mt_o[thread_idx][dp_idx].rs2         =   dec_rs2[dp_idx]                 ;
+                        if(dp_mt_o[thread_idx][dp_idx].rd == `ZERO_REG)begin
+                            dp_mt_o[thread_idx][dp_idx].tag     =   `ZERO_REG                       ;
+                        end else begin
+                            dp_mt_o[thread_idx][dp_idx].tag     =   fl_dp_i.tag[fl_route[dp_idx]]   ;
+                        end//if-else
                     end
-                    dp_mt_o[thread_idx][dp_idx].thread_idx  =   fiq_dp_i.thread_idx[dp_idx]     ;
-                    dp_mt_o[thread_idx][dp_idx].rd          =   dec_rd [dp_idx]                 ;
-                    dp_mt_o[thread_idx][dp_idx].rs1         =   dec_rs1[dp_idx]                 ;
-                    dp_mt_o[thread_idx][dp_idx].rs2         =   dec_rs2[dp_idx]                 ;
-                    if(dp_mt_o[thread_idx][dp_idx].rd == `ZERO_REG)begin
-                        dp_mt_o[thread_idx][dp_idx].tag     =   `ZERO_REG                       ;
-                    end else begin
-                        dp_mt_o[thread_idx][dp_idx].tag     =   fl_dp_i.tag[fl_route[dp_idx]]   ;
-                    end//if-else
                 end
             end 
         end
@@ -340,7 +351,11 @@ module DP_lsq # (
 // DP_RS
 // --------------------------------------------------------------------  
     always_comb begin
-        dp_rs_o.dp_num  =   legal_dp_num    ;
+        if (dp_en_i[thread_sel] == 1'b1) begin
+            dp_rs_o.dp_num  =   legal_dp_num    ;
+        end else begin
+            dp_rs_o.dp_num  =   'd0 ;
+        end
         for(int dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
             // DP_RS
             //  The rest of the signals are directly assigned in Decoder
@@ -368,7 +383,11 @@ module DP_lsq # (
         dp_rob_o    =   'b0     ;
         for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
             if (thread_idx == thread_sel) begin
-                dp_rob_o[thread_idx].dp_num =   legal_dp_num    ;
+                if (dp_en_i[thread_idx] == 1'b1) begin
+                    dp_rob_o[thread_idx].dp_num =   legal_dp_num    ;
+                end else begin
+                    dp_rob_o[thread_idx].dp_num =   'd0 ;
+                end
                 for(int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++)begin
                     dp_rob_o[thread_idx].tag_old[dp_idx]    =   mt_dp_i[thread_idx][dp_idx].tag_old ;
                     dp_rob_o[thread_idx].br_predict[dp_idx] =   fiq_dp_i.br_predict[dp_idx]         ;
@@ -390,7 +409,11 @@ module DP_lsq # (
 // --------------------------------------------------------------------  
     always_comb begin
         dp_fl_o.thread_idx  =   fiq_dp_i.thread_idx[0]  ;
-        dp_fl_o.dp_num      =   fl_dp_num            ;
+        if (dp_en_i[thread_sel] == 1'b1) begin
+            dp_fl_o.dp_num      =   fl_dp_num   ;
+        end else begin
+            dp_fl_o.dp_num      =   'd0;
+        end
         // for (int unsigned dp_idx = 0; dp_idx < C_DP_NUM; dp_idx++) begin
         //     if((dp_idx < fl_dp_num) && (dp_mt_o[thread_sel][dp_idx].rd == `ZERO_REG))begin
         //         dp_fl_o.dp_num-- ;

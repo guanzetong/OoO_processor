@@ -21,6 +21,10 @@ module ROB # (
     parameter   C_THREAD_NUM        =   `THREAD_NUM             ,
     parameter   C_THREAD_IDX_WIDTH  =   $clog2(C_THREAD_NUM)
 ) (
+    // For testing
+`ifdef DEBUG
+    output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
+`endif
     input   logic                               clk_i           ,   // Clock
     input   logic                               rst_i           ,   // Reset
     output  ROB_DP                              rob_dp_o        ,   // To Dispatcher - ROB_DP, Entry readiness for structural hazard detection
@@ -35,8 +39,6 @@ module ROB # (
     output  logic   [C_XLEN-1:0]                br_target_o     ,   // Branch target address
     output  ROB_LSQ                             rob_lsq_o       ,   // To Load/Store Queue - ROB_LSQ
 
-    // For testing
-    output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
     output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_head_mon_o  ,
     output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_tail_mon_o  ,
     output  logic   [C_RT_NUM-1:0][C_XLEN-1:0]  rt_pc_o         ,
@@ -95,6 +97,7 @@ module ROB # (
     logic       [C_ROB_ENTRY_NUM-1:0]   rt_sel                              ;
     logic       [C_RT_NUM-1:0]          rt_valid                            ;
     logic       [C_RT_NUM_WIDTH-1:0]    rt_num                              ;
+    logic                               rt_wfi                              ;
 
     logic       [C_ROB_NUM_WIDTH:0]     avail_num                           ;
 // ====================================================================
@@ -239,21 +242,25 @@ module ROB # (
 
         // Select the entries that are ready to retire
         rt_sel  =   {C_ROB_ENTRY_NUM{1'b0}};
-        for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
-            // If the entry is in the retire window -> go on to check if it is ready to retire
-            if (rt_window[idx] && rob_array[idx].valid) begin
-                // idx == 0
-                if (idx == 0) begin
-                    rt_sel[0]   =   head_sel[0] ?
-                                    rob_array[0].complete : 
-                                    (rt_sel[C_ROB_ENTRY_NUM-1] & rob_array[0].complete
-                                    & (~br_mispredict[C_ROB_ENTRY_NUM-1]));
-                // idx == 1 ~ (C_ROB_ENTRY_NUM-1)
-                end else begin
-                    rt_sel[idx] =   head_sel[idx] ?
-                                    rob_array[idx].complete : 
-                                    (rt_sel[idx-1] & rob_array[idx].complete
-                                    & (~br_mispredict[idx-1]));
+        if (rt_wfi == 1'b0) begin
+            for (int unsigned idx = 0; idx < C_ROB_ENTRY_NUM; idx++) begin
+                // If the entry is in the retire window -> go on to check if it is ready to retire
+                if (rt_window[idx] && rob_array[idx].valid) begin
+                    // idx == 0
+                    if (idx == 0) begin
+                        rt_sel[0]   =   head_sel[0] ?
+                                        rob_array[0].complete : 
+                                        (rt_sel[C_ROB_ENTRY_NUM-1] & rob_array[0].complete
+                                        & (~br_mispredict[C_ROB_ENTRY_NUM-1])
+                                        & (~rob_array[C_ROB_ENTRY_NUM-1].wfi));
+                    // idx == 1 ~ (C_ROB_ENTRY_NUM-1)
+                    end else begin
+                        rt_sel[idx] =   head_sel[idx] ?
+                                        rob_array[idx].complete : 
+                                        (rt_sel[idx-1] & rob_array[idx].complete
+                                        & (~br_mispredict[idx-1])
+                                        & (~rob_array[idx-1].wfi));
+                    end
                 end
             end
         end
@@ -265,13 +272,9 @@ module ROB # (
                 rt_valid[idx]   =   rt_sel[head];
             end else begin
                 if ((head + idx - 1) >= C_ROB_ENTRY_NUM) begin
-                    rt_valid[idx]   =   rt_sel[head+idx-C_ROB_ENTRY_NUM]
-                                    && (!br_mispredict[head+idx-1-C_ROB_ENTRY_NUM])
-                                    && rt_valid[idx-1];
+                    rt_valid[idx]   =   rt_sel[head+idx-C_ROB_ENTRY_NUM];
                 end else begin
-                    rt_valid[idx]   =   rt_sel[head+idx]
-                                    && (!br_mispredict[head+idx-1])
-                                    && rt_valid[idx-1];
+                    rt_valid[idx]   =   rt_sel[head+idx];
                 end
             end
         end
@@ -423,6 +426,21 @@ module ROB # (
         end
     end
 
+
+    always_ff @(posedge clk_i) begin
+        if (rst_i) begin
+            rt_wfi  <=  `SD 1'b0;
+        end else if (exception_i) begin
+            rt_wfi  <=  `SD 1'b0;
+        end else begin
+            for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
+                if ((rt_valid_o[rt_idx] == 1'b1)
+                && (rt_wfi_o[rt_idx] == 1'b1)) begin
+                    rt_wfi  <=  1'b1;
+                end
+            end
+        end
+    end
 // ====================================================================
 // RTL Logic End
 // ====================================================================
