@@ -23,6 +23,7 @@ module LSQ_global_ctrl #(
     output  logic       [C_LSQ_IDX_WIDTH-1:0]       tail_o          ,
     output  logic       [C_LSQ_ENTRY_NUM-1:0]       dp_sel_o        ,
     output  logic       [C_LSQ_ENTRY_NUM-1:0]       rt_sel_o        ,
+    input   logic       [C_LSQ_ENTRY_NUM-1:0]       rob_retire_i    ,
     output  LSQ_DP                                  lsq_dp_o        ,
     input   BR_MIS                                  br_mis_i        ,
     output  logic                                   rollback_o      
@@ -228,12 +229,15 @@ module LSQ_global_ctrl #(
         for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
             if (lsq_array_i[entry_idx].state == LSQ_ST_WR_MEM) begin
                 store_retiring  =   1'b1;
+            end else if (rob_retire_i[entry_idx] == 1'b1
+            && lsq_array_i[entry_idx].cmd == BUS_STORE) begin
+                store_retiring  =   1'b1;
             end
         end
 
         // Indicate when to rollback LSQ
         rollback_o  =   1'b0;
-        if (br_mis_i.valid[thread_idx_i] == 1'b1 && store_retiring == 1'b0) begin
+        if ((br_mis_i.valid[thread_idx_i] == 1'b1) && (store_retiring == 1'b0)) begin
             rollback_o =   1'b1;
         end else if ((rollback_flag == 1'b1) && (store_retiring == 1'b0)) begin
             rollback_o =   1'b1;

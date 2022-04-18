@@ -271,7 +271,7 @@ module ROB # (
             if (idx == 0) begin
                 rt_valid[idx]   =   rt_sel[head];
             end else begin
-                if ((head + idx - 1) >= C_ROB_ENTRY_NUM) begin
+                if (head + idx >= C_ROB_ENTRY_NUM) begin
                     rt_valid[idx]   =   rt_sel[head+idx-C_ROB_ENTRY_NUM];
                 end else begin
                     rt_valid[idx]   =   rt_sel[head+idx];

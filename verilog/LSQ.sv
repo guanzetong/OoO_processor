@@ -56,6 +56,7 @@ module LSQ #(
     logic       [C_LSQ_IDX_WIDTH-1:0]       tail            ;
     logic       [C_LSQ_ENTRY_NUM-1:0]       dp_sel          ;
     logic       [C_LSQ_ENTRY_NUM-1:0]       rt_sel          ;
+    logic       [C_LSQ_ENTRY_NUM-1:0]       rob_retire      ;
     FU_BC       [C_LSQ_ENTRY_NUM-1:0]       lsq_entry_bc    ;
     BC_FU       [C_LSQ_ENTRY_NUM-1:0]       bc_lsq_entry    ;
     MEM_IN      [C_LSQ_ENTRY_NUM-1:0]       lsq_entry_mem   ;
@@ -94,6 +95,7 @@ module LSQ #(
                 .tail_i             (tail                           ),
                 .dp_sel_i           (dp_sel[entry_idx]              ),
                 .rt_sel_i           (rt_sel[entry_idx]              ),
+                .rob_retire_o       (rob_retire[entry_idx]          ),
                 .dp_lsq_i           (dp_lsq_i                       ),
                 .fu_lsq_i           (fu_lsq_i                       ),
                 .lsq_entry_mem_o    (lsq_entry_mem[entry_idx]       ),
@@ -126,6 +128,7 @@ module LSQ #(
         .tail_o         (tail           ),
         .dp_sel_o       (dp_sel         ),
         .rt_sel_o       (rt_sel         ),
+        .rob_retire_i   (rob_retire     ),
         .lsq_dp_o       (lsq_dp_o       ),
         .br_mis_i       (br_mis_i       ),
         .rollback_o     (rollback       )
