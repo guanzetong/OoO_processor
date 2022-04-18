@@ -14,13 +14,13 @@
 #
 
 # SOURCE = test_progs/alexnet.c
-# SOURCE = test_progs/rv32_mult_no_lsq.s
+SOURCE = test_progs/rv32_mult_no_lsq.s
 # SOURCE = test_progs/rv32_mult.s
 # SOURCE = test_progs/rv32_halt.s
 # SOURCE = test_progs/rv32_parallel.s
 # SOURCE = test_progs/sampler.s
 # SOURCE = test_progs/rv32_btest1.s
-SOURCE = test_progs/rv32_fib_rec.s
+#SOURCE = test_progs/rv32_fib_rec.s
 
 
 CRT = crt.s
@@ -64,8 +64,10 @@ HEADERS     = $(wildcard *.svh)
 # TESTBENCH	= testbench/adder_tb.sv
 # TESTBENCH	= testbench/pe_mult_tb.sv
 # TESTBENCH	= testbench/IB_tb.sv
-TESTBENCH	= testbench/pipeline_ss_smt_tb.sv
-PIPEFILES   = $(wildcard verilog/*.sv)
+# TESTBENCH	= testbench/pipeline_ss_smt_tb.sv
+TESTBENCH	= testbench/IF_IC_tb.sv
+# PIPEFILES   = $(wildcard verilog/*.sv)
+PIPEFILES	= verilog/IF.sv
 # TESTBENCH	= testbench/cache_test.sv
 # TESTBENCH	= testbench/cache_tb.sv
 TESTBENCH	+= testbench/mem.sv
@@ -97,7 +99,8 @@ export PIPEFILES
 # export PIPELINE_NAME = binary_encoder
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
-export PIPELINE_NAME = pipeline_ss_smt
+# export PIPELINE_NAME = pipeline_ss_smt
+export PIPELINE_NAME = IF
 # export PIPELINE_NAME = cache
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
