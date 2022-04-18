@@ -23,6 +23,7 @@ module LSQ_global_ctrl #(
     output  logic       [C_LSQ_IDX_WIDTH-1:0]       tail_o          ,
     output  logic       [C_LSQ_ENTRY_NUM-1:0]       dp_sel_o        ,
     output  logic       [C_LSQ_ENTRY_NUM-1:0]       rt_sel_o        ,
+    input   logic       [C_LSQ_ENTRY_NUM-1:0]       rob_retire_i    ,
     output  LSQ_DP                                  lsq_dp_o        ,
     input   BR_MIS                                  br_mis_i        ,
     output  logic                                   rollback_o      
@@ -74,10 +75,10 @@ module LSQ_global_ctrl #(
         end else begin
             head_o  <=  `SD next_head;
             tail_o  <=  `SD next_tail;
-            if (head_o + lsq_rt_num   >= C_LSQ_ENTRY_NUM) begin
+            if (head_o + lsq_rt_num >= C_LSQ_ENTRY_NUM) begin
                 head_rollover   <=  `SD ~head_rollover;
             end
-            if (tail_o + lsq_dp_num   >= C_LSQ_ENTRY_NUM) begin
+            if (tail_o + lsq_dp_num >= C_LSQ_ENTRY_NUM) begin
                 tail_rollover   <=  `SD ~tail_rollover;
             end
         end
@@ -85,15 +86,15 @@ module LSQ_global_ctrl #(
 
     // Next state
     always_comb begin
-        if (head_o + lsq_rt_num   >= C_LSQ_ENTRY_NUM) begin
-            next_head   =   head_o + lsq_rt_num   - C_LSQ_ENTRY_NUM;
+        if (head_o + lsq_rt_num >= C_LSQ_ENTRY_NUM) begin
+            next_head   =   head_o + lsq_rt_num - C_LSQ_ENTRY_NUM;
         end else begin
-            next_head   =   head_o + lsq_rt_num  ;
+            next_head   =   head_o + lsq_rt_num ;
         end
-        if (tail_o + lsq_dp_num   >= C_LSQ_ENTRY_NUM) begin
-            next_tail   =   tail_o + lsq_dp_num   - C_LSQ_ENTRY_NUM;
+        if (tail_o + lsq_dp_num >= C_LSQ_ENTRY_NUM) begin
+            next_tail   =   tail_o + lsq_dp_num - C_LSQ_ENTRY_NUM;
         end else begin
-            next_tail   =   tail_o + lsq_dp_num  ;
+            next_tail   =   tail_o + lsq_dp_num ;
         end
     end
 
@@ -194,7 +195,8 @@ module LSQ_global_ctrl #(
                 if (entry_idx == 0 && tail_o != 0) begin
                     // IF   It is retired from ROB
                     // ->   Select this entry to retire from LSQ
-                    if (lsq_array_i[C_LSQ_ENTRY_NUM-1].retire == 1'b1) begin
+                    if ((rt_sel_o[C_LSQ_ENTRY_NUM-1] == 1'b1)
+                    && (lsq_array_i[entry_idx].retire == 1'b1)) begin
                         rt_sel_o[entry_idx] =   1'b1;
                     end
                 // ELSE Other valid entries (between [head_o] and [C_LSQ_ENTRY_NUM-1])
@@ -227,12 +229,15 @@ module LSQ_global_ctrl #(
         for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
             if (lsq_array_i[entry_idx].state == LSQ_ST_WR_MEM) begin
                 store_retiring  =   1'b1;
+            end else if (rob_retire_i[entry_idx] == 1'b1
+            && lsq_array_i[entry_idx].cmd == BUS_STORE) begin
+                store_retiring  =   1'b1;
             end
         end
 
         // Indicate when to rollback LSQ
         rollback_o  =   1'b0;
-        if (br_mis_i.valid[thread_idx_i] == 1'b1 && store_retiring == 1'b0) begin
+        if ((br_mis_i.valid[thread_idx_i] == 1'b1) && (store_retiring == 1'b0)) begin
             rollback_o =   1'b1;
         end else if ((rollback_flag == 1'b1) && (store_retiring == 1'b0)) begin
             rollback_o =   1'b1;

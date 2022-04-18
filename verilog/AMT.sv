@@ -13,42 +13,35 @@ module AMT #(
     output  AMT_ENTRY  [C_ARCH_REG_NUM-1:0] 		amt_o
 );
 
+    localparam  C_ARCH_REG_IDX_WIDTH    =   $clog2(C_ARCH_REG_NUM);
+
     AMT_ENTRY  [C_ARCH_REG_NUM- 1:0] amt_entry;
 
     always_comb begin
-        if (rollback_i) begin
-            for (int unsigned i=0; i<C_ARCH_REG_NUM; i++) begin
-                if (rob_amt_i[0].wr_en && rob_amt_i[0].arch_reg == i) begin
-                    amt_o[i].amt_tag = rob_amt_i[0].phy_reg;
-                end else if (rob_amt_i[1].wr_en && rob_amt_i[1].arch_reg == i) begin
-                    amt_o[i].amt_tag = rob_amt_i[1].phy_reg;
-                end else begin
-                    amt_o[i].amt_tag = amt_entry[i].amt_tag;
+        for (int unsigned arch_idx = 0; arch_idx < C_ARCH_REG_NUM; arch_idx++) begin
+            amt_o[arch_idx].amt_tag =   amt_entry[arch_idx].amt_tag;
+            if (rollback_i) begin
+                for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
+                    if ((rob_amt_i[rt_idx].wr_en == 1'b1) && (rob_amt_i[rt_idx].arch_reg == arch_idx)) begin
+                        amt_o[arch_idx].amt_tag =   rob_amt_i[rt_idx].phy_reg;
+                    end
                 end
             end
-        end else begin
-            for (int unsigned i=0; i<C_ARCH_REG_NUM; i++) begin
-                amt_o[i].amt_tag = amt_entry[i].amt_tag;
-            end
-        end
-            
+        end            
     end
 
     always_ff @(posedge clk_i) begin
-        if (rst_i) begin
-            for(integer i = 0; i < C_ARCH_REG_NUM; i++) begin
-                if (i == 0) begin
-                    amt_entry[i].amt_tag    <=  `SD 'd0;
+        for (int unsigned arch_idx = 0; arch_idx < C_ARCH_REG_NUM; arch_idx++) begin
+            if (rst_i) begin
+                if (arch_idx == 0) begin
+                    amt_entry[arch_idx].amt_tag <=  `SD 'd0;
                 end else begin
-                    amt_entry[i].amt_tag    <=  `SD i + (thread_idx_i << 5) - thread_idx_i;
+                    amt_entry[arch_idx].amt_tag <=  `SD arch_idx + (thread_idx_i << C_ARCH_REG_IDX_WIDTH) - thread_idx_i;
                 end
-            end
-        end else begin
-            for (int unsigned i=0; i<C_ARCH_REG_NUM; i++) begin
-                for (int unsigned j=0; j<C_RT_NUM; j++) begin
-                    if (rob_amt_i[j].wr_en && rob_amt_i[j].arch_reg == i) begin
-                        amt_entry[rob_amt_i[j].arch_reg].amt_tag    <=  `SD rob_amt_i[j].phy_reg;
-                    end else begin
+            end else begin
+                for (int unsigned rt_idx = 0; rt_idx < C_RT_NUM; rt_idx++) begin
+                    if ((rob_amt_i[rt_idx].wr_en == 1'b1) && (rob_amt_i[rt_idx].arch_reg == arch_idx)) begin
+                        amt_entry[arch_idx].amt_tag <=  `SD rob_amt_i[rt_idx].phy_reg;
                     end
                 end
             end

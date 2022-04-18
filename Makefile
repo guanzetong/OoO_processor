@@ -14,13 +14,15 @@
 #
 
 # SOURCE = test_progs/alexnet.c
-SOURCE = test_progs/rv32_mult_no_lsq.s
+# SOURCE = test_progs/rv32_mult_no_lsq.s
 # SOURCE = test_progs/rv32_mult.s
 # SOURCE = test_progs/rv32_halt.s
 # SOURCE = test_progs/rv32_parallel.s
 # SOURCE = test_progs/sampler.s
 # SOURCE = test_progs/rv32_btest1.s
-#SOURCE = test_progs/rv32_fib_rec.s
+# SOURCE = test_progs/rv32_fib_rec.s
+# SOURCE = test_progs/backtrack.c
+SOURCE = test_progs/matrix_mult_rec.c
 
 
 CRT = crt.s
@@ -67,10 +69,12 @@ HEADERS     = $(wildcard *.svh)
 TESTBENCH	= testbench/pipeline_ss_smt_tb.sv
 # TESTBENCH	= testbench/IF_IC_tb.sv
 PIPEFILES   = $(wildcard verilog/*.sv)
+# PIPEFILES   = $(wildcard dcache/*.sv)
 # PIPEFILES	= verilog/IF.sv
 # TESTBENCH	= testbench/cache_test.sv
 # TESTBENCH	= testbench/cache_tb.sv
 TESTBENCH	+= testbench/mem.sv
+# TESTBENCH	+= $(wildcard verilog/*.sv)
 # PIPEFILES   = $(wildcard verilog/*.sv)
 # PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
 # PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
@@ -100,7 +104,9 @@ export PIPEFILES
 # export PIPELINE_NAME = adder
 # export PIPELINE_NAME = pe_mult
 export PIPELINE_NAME = pipeline_ss_smt
+# export PIPELINE_NAME = IF
 # export PIPELINE_NAME = cache
+# export PIPELINE_NAME = dcache
 
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv

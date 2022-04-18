@@ -27,6 +27,7 @@ module LSQ_entry_ctrl # (
     input   logic       [C_LSQ_IDX_WIDTH-1:0]       tail_i          ,
     input   logic                                   dp_sel_i        ,   //  Dispatch select
     input   logic                                   rt_sel_i        ,   //  Retire(from LSQ) select
+    output  logic                                   rob_retire_o    ,
     // Interface with other modules
     input   DP_LSQ                                  dp_lsq_i        ,   //  From Dipatcher
     input   FU_LSQ      [C_LSQ_IN_NUM-1:0]          fu_lsq_i        ,   //  From FU
@@ -91,6 +92,7 @@ module LSQ_entry_ctrl # (
 
     always_comb begin
         next_lsq_entry  =   lsq_entry_o;
+        rob_retire_o    =   1'b0;
         case (lsq_entry_o.state)
             // Idle state, this entry is available for new LOAD/STORE
             LSQ_ST_IDLE     :   begin
@@ -259,6 +261,7 @@ module LSQ_entry_ctrl # (
                     //      and wait to be selected to retire from LSQ
                     if ((rt_idx < rob_lsq_i.rt_num)
                     && (rob_lsq_i.rob_idx[rt_idx] == lsq_entry_o.rob_idx)) begin
+                        rob_retire_o    =   1'b1;
                         if (lsq_entry_o.cmd == BUS_LOAD) begin
                             next_lsq_entry.retire   =   1'b1            ;
                             next_lsq_entry.state    =   LSQ_ST_RETIRE   ;
@@ -319,6 +322,21 @@ module LSQ_entry_ctrl # (
                         next_lsq_entry.mem_tag      =   'd0         ;
                     end
                 end
+            end
+            default: begin
+                next_lsq_entry.state        =   LSQ_ST_IDLE ;
+                next_lsq_entry.cmd          =   BUS_NONE    ;
+                next_lsq_entry.pc           =   'd0         ;
+                next_lsq_entry.tag          =   'd0         ;
+                next_lsq_entry.rob_idx      =   'd0         ;
+                next_lsq_entry.mem_size     =   BYTE        ;
+                next_lsq_entry.sign         =   1'b0        ;
+                next_lsq_entry.addr         =   'd0         ;
+                next_lsq_entry.addr_valid   =   1'b0        ;
+                next_lsq_entry.data         =   'b0         ;
+                next_lsq_entry.data_valid   =   1'b0        ;
+                next_lsq_entry.retire       =   1'b0        ;
+                next_lsq_entry.mem_tag      =   'd0         ;
             end
         endcase    
     end

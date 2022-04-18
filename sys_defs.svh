@@ -57,10 +57,10 @@ typedef union packed {
 `define IS_NUM          2   // The number of Issue channels.
 `define CDB_NUM         2   // The number of CDB/Complete channels.
 `define RT_NUM          2   // The number of Retire channels.
-`define ROB_ENTRY_NUM   32  // The number of ROB entries.
+`define ROB_ENTRY_NUM   16  // The number of ROB entries.
 `define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
-`define PHY_REG_NUM     128 // The number of Physical registers.
+`define PHY_REG_NUM     96  // The number of Physical registers.
 `define THREAD_NUM      2
 `define FL_ENTRY_NUM    (`PHY_REG_NUM - (`ARCH_REG_NUM - 1) * `THREAD_NUM - 1)
 
@@ -520,19 +520,19 @@ typedef struct packed {
 } CACHE_MEM_ENTRY;  // for each block
 
 typedef struct packed {
+    LSQ_STATE                                       state       ;
     BUS_COMMAND                                     cmd         ;
     logic   [`XLEN-1:0]                             pc          ;   
     logic   [`TAG_IDX_WIDTH-1:0]                    tag         ;   
     logic   [`ROB_IDX_WIDTH-1:0]                    rob_idx     ;   
     MEM_SIZE                                        mem_size    ;
-    logic   [`XLEN-1:0]                             addr        ;   
+    logic                                           sign        ;
+    logic   [`XLEN-1:0]                             addr        ;
     logic                                           addr_valid  ;   
     logic   [`XLEN-1:0]                             data        ;   
     logic                                           data_valid  ;   
     logic                                           retire      ;  
     logic   [`MSHR_IDX_WIDTH-1:0]                   mem_tag     ;
-    LSQ_STATE                                       state       ;
-    logic                                           sign        ;
 } LSQ_ENTRY;
 // Array Entry Contents End
 

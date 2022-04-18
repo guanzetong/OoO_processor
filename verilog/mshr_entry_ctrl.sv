@@ -55,14 +55,15 @@ module mshr_entry_ctrl #(
 // ====================================================================
 // Signal Declarations Start
 // ====================================================================
-    MSHR_ENTRY                              mshr_entry          ;
-    MSHR_ENTRY                              next_mshr_entry     ;
+    MSHR_ENTRY                              mshr_entry              ;
+    MSHR_ENTRY                              next_mshr_entry         ;
 
-    logic                                   next_mshr_cp_flag   ;
-    logic   [C_CACHE_BLOCK_SIZE*8-1:0]      next_mshr_cp_data   ;
+    logic                                   next_mshr_cp_flag       ;
+    logic   [C_CACHE_BLOCK_SIZE*8-1:0]      next_mshr_cp_data       ;
 
-    logic   [C_CACHE_OFFSET_WIDTH+3-1:0]    input_data_offset   ;
-    logic   [C_CACHE_OFFSET_WIDTH+3-1:0]    output_data_offset  ;
+    logic   [C_CACHE_OFFSET_WIDTH+3-1:0]    mshr_data_offset        ;
+    logic   [C_CACHE_OFFSET_WIDTH+3-1:0]    proc_data_offset        ;
+    logic   [C_CACHE_OFFSET_WIDTH+3-1:0]    cache_mem_data_offset   ;
 // ====================================================================
 // Signal Declarations End
 // ====================================================================
@@ -110,7 +111,7 @@ module mshr_entry_ctrl #(
         next_mshr_entry.mem_tag     =   mshr_entry.mem_tag      ;
         next_mshr_cp_flag           =   mshr_cp_flag_o          ;
         next_mshr_cp_data           =   mshr_cp_data_o          ;
-        input_data_offset           =   'b0                     ;
+        mshr_data_offset            =   'b0                     ;
         case (mshr_entry.state)
             ST_IDLE     :   begin
                 // IF   there is a valid transaction on Processor Interface
@@ -168,16 +169,16 @@ module mshr_entry_ctrl #(
                     if (mshr_entry.cmd == BUS_STORE) begin
                         case (mshr_entry.req_size)
                             BYTE    :   begin
-                                input_data_offset   =   {mshr_entry.req_addr[2:0], 3'b0};
-                                next_mshr_entry.req_data[input_data_offset +:  8] =   mshr_entry.req_data[ 7:0]   ;
+                                mshr_data_offset    =   {mshr_entry.req_addr[2:0], 3'b0};
+                                next_mshr_entry.req_data[mshr_data_offset +:  8] =   mshr_entry.req_data[ 7:0]   ;
                             end
                             HALF    :   begin
-                                input_data_offset   =   {mshr_entry.req_addr[2:1], 4'b0};
-                                next_mshr_entry.req_data[input_data_offset +: 16] =   mshr_entry.req_data[15:0]   ;
+                                mshr_data_offset    =   {mshr_entry.req_addr[2:1], 4'b0};
+                                next_mshr_entry.req_data[mshr_data_offset +: 16] =   mshr_entry.req_data[15:0]   ;
                             end
                             WORD    :   begin
-                                input_data_offset   =   {mshr_entry.req_addr[2], 5'b0};
-                                next_mshr_entry.req_data[input_data_offset +: 32] =   mshr_entry.req_data[31:0]   ;
+                                mshr_data_offset    =   {mshr_entry.req_addr[2], 5'b0};
+                                next_mshr_entry.req_data[mshr_data_offset +: 32] =   mshr_entry.req_data[31:0]   ;
                             end
                             DOUBLE  :   begin
                                 next_mshr_entry.req_data    =   mshr_entry.req_data ;
@@ -214,16 +215,16 @@ module mshr_entry_ctrl #(
                     if (mshr_entry.cmd == BUS_STORE) begin
                         case (mshr_entry.req_size)
                             BYTE    :   begin
-                                input_data_offset   =   {mshr_entry.req_addr[2:0], 3'b0};
-                                next_mshr_entry.req_data[input_data_offset +:  8] =   mshr_entry.req_data[ 7:0]   ;
+                                mshr_data_offset    =   {mshr_entry.req_addr[2:0], 3'b0};
+                                next_mshr_entry.req_data[mshr_data_offset +:  8] =   mshr_entry.req_data[ 7:0]   ;
                             end
                             HALF    :   begin
-                                input_data_offset   =   {mshr_entry.req_addr[2:1], 4'b0};
-                                next_mshr_entry.req_data[input_data_offset +: 16] =   mshr_entry.req_data[15:0]   ;
+                                mshr_data_offset    =   {mshr_entry.req_addr[2:1], 4'b0};
+                                next_mshr_entry.req_data[mshr_data_offset +: 16] =   mshr_entry.req_data[15:0]   ;
                             end
                             WORD    :   begin
-                                input_data_offset   =   {mshr_entry.req_addr[2], 5'b0};
-                                next_mshr_entry.req_data[input_data_offset +: 32] =   mshr_entry.req_data[31:0]   ;
+                                mshr_data_offset    =   {mshr_entry.req_addr[2], 5'b0};
+                                next_mshr_entry.req_data[mshr_data_offset +: 32] =   mshr_entry.req_data[31:0]   ;
                             end
                             DOUBLE  :   begin
                                 next_mshr_entry.req_data    =   mshr_entry.req_data ;
@@ -367,11 +368,24 @@ module mshr_entry_ctrl #(
                         if (cache_mem_ctrl_i.req_hit == 1'b1 && proc2cache_i.command == BUS_LOAD) begin
                             mshr_proc_o.tag     =   mshr_entry_idx_i;
                             case (proc2cache_i.size)
-                                BYTE    :   mshr_proc_o.data    =   {56'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+: 8]};
-                                HALF    :   mshr_proc_o.data    =   {48'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+:16]};
-                                WORD    :   mshr_proc_o.data    =   {32'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+:32]};
-                                DOUBLE  :   mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
-                                default :   mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
+                                BYTE    :   begin
+                                    proc_data_offset    =   {proc2cache_i.addr[2:0], 3'b0};
+                                    mshr_proc_o.data    =   {56'b0,cache_mem_ctrl_i.req_data_out[proc_data_offset +: 8]};
+                                end
+                                HALF    :   begin
+                                    proc_data_offset    =   {proc2cache_i.addr[2:1], 4'b0};
+                                    mshr_proc_o.data    =   {48'b0,cache_mem_ctrl_i.req_data_out[proc_data_offset +:16]};
+                                end
+                                WORD    :   begin
+                                    proc_data_offset    =   {proc2cache_i.addr[2], 5'b0};
+                                    mshr_proc_o.data    =   {32'b0,cache_mem_ctrl_i.req_data_out[proc_data_offset +:32]};
+                                end
+                                DOUBLE  :   begin
+                                    mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
+                                end
+                                default :   begin
+                                    mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
+                                end
                             endcase
                         end
                     end
@@ -382,16 +396,16 @@ module mshr_entry_ctrl #(
                 mshr_proc_o.tag         =   mshr_entry_idx_i    ;
                 case (mshr_entry.req_size)
                     BYTE    :   begin
-                        output_data_offset  =   {mshr_entry.req_addr[2:0], 3'b0};
-                        mshr_proc_o.data    =   {56'b0,mshr_entry.req_data[output_data_offset +: 8]};
+                        proc_data_offset    =   {mshr_entry.req_addr[2:0], 3'b0};
+                        mshr_proc_o.data    =   {56'b0,mshr_entry.req_data[proc_data_offset +: 8]};
                     end
                     HALF    :   begin
-                        output_data_offset  =   {mshr_entry.req_addr[2:1], 4'b0};
-                        mshr_proc_o.data    =   {48'b0,mshr_entry.req_data[output_data_offset +:16]};
+                        proc_data_offset    =   {mshr_entry.req_addr[2:1], 4'b0};
+                        mshr_proc_o.data    =   {48'b0,mshr_entry.req_data[proc_data_offset +:16]};
                     end
                     WORD    :   begin
-                        output_data_offset  =   {mshr_entry.req_addr[2], 5'b0};
-                        mshr_proc_o.data    =   {32'b0,mshr_entry.req_data[output_data_offset +:32]};
+                        proc_data_offset    =   {mshr_entry.req_addr[2], 5'b0};
+                        mshr_proc_o.data    =   {32'b0,mshr_entry.req_data[proc_data_offset +:32]};
                     end
                     DOUBLE  :   begin
                         mshr_proc_o.data    =   mshr_entry.req_data;
@@ -426,10 +440,24 @@ module mshr_entry_ctrl #(
                             mshr_cache_mem_o.req_addr       =   proc2cache_i.addr               ;
                             mshr_cache_mem_o.req_data_in    =   cache_mem_ctrl_i.req_data_out   ;
                             case (proc2cache_i.size)
-                                BYTE    :   mshr_cache_mem_o.req_data_in[proc2cache_i.addr[2:0] +:  8]  =   proc2cache_i.data[ 7:0] ;
-                                HALF    :   mshr_cache_mem_o.req_data_in[proc2cache_i.addr[2:0] +: 16]  =   proc2cache_i.data[15:0] ;
-                                WORD    :   mshr_cache_mem_o.req_data_in[proc2cache_i.addr[2:0] +: 32]  =   proc2cache_i.data[31:0] ;
-                                DOUBLE  :   mshr_cache_mem_o.req_data_in                                =   proc2cache_i.data       ;
+                                BYTE    :   begin
+                                    cache_mem_data_offset   =   {proc2cache_i.addr[2:0], 3'b0};
+                                    mshr_cache_mem_o.req_data_in[cache_mem_data_offset +:  8]   =   proc2cache_i.data[ 7:0] ;
+                                end
+                                HALF    :   begin
+                                    cache_mem_data_offset   =   {proc2cache_i.addr[2:1], 4'b0};
+                                    mshr_cache_mem_o.req_data_in[cache_mem_data_offset +: 16]   =   proc2cache_i.data[15:0] ;
+                                end
+                                WORD    :   begin
+                                    cache_mem_data_offset   =   {proc2cache_i.addr[2], 5'b0};
+                                    mshr_cache_mem_o.req_data_in[cache_mem_data_offset +: 32]   =   proc2cache_i.data[31:0] ;
+                                end
+                                DOUBLE  :   begin
+                                    mshr_cache_mem_o.req_data_in    =   proc2cache_i.data ;
+                                end
+                                default :   begin
+                                    mshr_cache_mem_o.req_data_in    =   proc2cache_i.data ;
+                                end
                             endcase
                         end    
                     endcase
