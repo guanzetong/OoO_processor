@@ -21,7 +21,8 @@ lappend search_path ../
 set cache_module [getenv CACHE_NAME]
 
 read_file -f ddc [list ${cache_module}.ddc]
-set_dont_touch ${cache_module}
+# Take this layout of this synthesis and treat it as a black box.
+set_dont_touch ${cache_module} 
 
 set headers [getenv HEADERS]
 set sources [getenv PIPEFILES]

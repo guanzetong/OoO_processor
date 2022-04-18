@@ -33,7 +33,7 @@ module IF # (
     parameter   C_FIQ_NUM                = `FIQ_NUM                       // Number of instructions that can exist in the instruction buffer at once.
 ) (
     input   logic                               clk_i               ,           // system clock
-    input   logic                               rst_i               ,           // System reset
+    input   logic                               rst_i               ,           // System Reset
     input   logic  [C_THREAD_NUM-1:0]           pc_en_i             ,           // Used to control whether or not to use SMT or not.
     input   logic  [C_THREAD_NUM-1:0][`XLEN-1:0]rst_pc_i            ,
     input   BR_MIS                              br_mis_i            ,           // mis-predict  signal
@@ -102,7 +102,10 @@ module IF # (
     // Explict for inst_num_sel
     always_comb
     begin
-        inst_num_sel = 0;   // All zero for now (for both threads).
+        for ( int n = 0; n < C_THREAD_NUM; ++n )	
+        begin	
+            inst_num_sel[ n ] = 'd0;   // All zero for now (for both threads).	
+        end
         inst_num_sel[ thread_idx_disp ] = dp_fiq_i.dp_num;        // How many to take out (we only expect one thread to be dispatchable per cycle)
     end // always_comb
 
@@ -125,20 +128,19 @@ module IF # (
         begin
             if ( rst_i )
             begin
-                // $display( "Resetting FIQ_NUM == %0d", C_FIQ_NUM );
                 thread_data[ n ].PC_reg     <= `SD rst_pc_i[ n ];
-                thread_data[ n ].inst_buff  <= `SD 0;
+                thread_data[ n ].inst_buff  <= `SD 'd0;
                 thread_data[ n ].avail_size <= `SD C_FIQ_NUM;
-                thread_data[ n ].hd_ptr     <= `SD 0;
-                thread_data[ n ].tail_ptr   <= `SD 0;
+                thread_data[ n ].hd_ptr     <= `SD 'd0;
+                thread_data[ n ].tail_ptr   <= `SD 'd0;
             end
             else if ( br_mis_i.valid[n] ) // need to clear queue
             begin
                 thread_data[ n ].PC_reg         <= `SD br_mis_i.br_target[ n ];
-                thread_data[ n ].inst_buff  <= `SD 0;
+                thread_data[ n ].inst_buff  <= `SD 'd0;
                 thread_data[ n ].avail_size     <= `SD C_FIQ_NUM;
-                thread_data[ n ].hd_ptr         <= `SD 0;        
-                thread_data[ n ].tail_ptr       <= `SD 0;        
+                thread_data[ n ].hd_ptr         <= `SD 'd0;        
+                thread_data[ n ].tail_ptr       <= `SD 'd0;        
                 //! The setting of the pc is already handled in the next_pc logic
             end else if (  pc_en_i[ n ] )
             begin
@@ -156,7 +158,7 @@ module IF # (
     always_ff @ ( posedge clk_i )
     begin
         if ( rst_i ) begin
-            thread_to_ft <= 'SD 0;
+            thread_to_ft <= `SD 'd0;
         end else if ( br_mis_i.valid[ thread_to_ft ] == 1'b1 || !pc_en_i[ thread_to_ft + 1 ] ) begin // Maintain same index
             thread_to_ft <= `SD thread_to_ft; // Try again next cycle.
         end else begin // Otherwise go to next thread.
@@ -233,7 +235,7 @@ module next_state_thread_context # (
     // Limits the number of insertions to fit to the size of the fetch buffer.
     always_comb
     begin
-        inst_to_insert_i = 0;
+        inst_to_insert_i = 'd0;
         if ( pc_en_i == 1'b1 && ic_if_i.response != 0 ) begin
             inst_to_insert_i = ( inst_num_to_ft > curr_context_i.avail_size ) ?
                                 curr_context_i.avail_size : inst_num_to_ft;
@@ -400,9 +402,9 @@ module next_state_insert_queue (
                     if ( idx_array[ inst_i_idx ] == idx ) // Assumes that can wrap around 
                     begin
                         //assert( invarients[ idx ] != 1'b1 ) else $display( "Idx: %0d, maps to more than one entry(incorrect!)\n(insert_window[ idx ] == %b", idx, insert_window[ idx ] ); // Essentially ensure that only maps once.
-                        n_fetch_buff_o[ idx ].inst          = ( cache_hit ) ? data_as_inst[ inst_in_off_idx + inst_i_idx ] : 0; // Make sure we have an invalid instruction // Make sure we have an invalid instruction.
+                        n_fetch_buff_o[ idx ].inst          = ( cache_hit ) ? data_as_inst[ inst_in_off_idx + inst_i_idx ] : 'd0; // Make sure we have an invalid instruction // Make sure we have an invalid instruction.
                         n_fetch_buff_o[ idx ].pc            = curr_context_i.PC_reg + ( inst_i_idx << 2 );
-                        n_fetch_buff_o[ idx ].mem_tag       = ( cache_hit ) ? 0 : ic_if_i.response;   // Keep track for transaction since data isn't ready.
+                        n_fetch_buff_o[ idx ].mem_tag       = ( cache_hit ) ? 'd0 : ic_if_i.response;   // Keep track for transaction since data isn't ready.
                         n_fetch_buff_o[ idx ].br_predict    = 1'b0;
                         // $display( "(Entry: %0d)PC at inst_i_idx: %0d -> PC: %0d", idx, inst_i_idx, n_fetch_buff_o[idx].pc );
                         // invarients[ idx ] = 1'b1;
@@ -416,7 +418,7 @@ module next_state_insert_queue (
             end // else
 
             // Also consider for the responses coming from the cache.
-            if ( ic_if_i.tag != 0 && curr_context_i.inst_buff[ idx ].mem_tag == ic_if_i.tag ) // Then we need to check every entry to update it.
+            if ( ic_if_i.tag != 'd0 && curr_context_i.inst_buff[ idx ].mem_tag == ic_if_i.tag ) // Then we need to check every entry to update it.
             begin
                 // This memory is for us!
                 // Index into the right bits to receive.
@@ -427,7 +429,7 @@ module next_state_insert_queue (
                 n_fetch_buff_o[ idx ].inst = data_as_inst[ 
                                         curr_context_i.inst_buff[ idx ].pc[`CACHE_OFFSET_WIDTH-1:0] >> $clog2( `XLEN_BYTES ) 
                                         ];
-                n_fetch_buff_o[ idx ].mem_tag = 0;    // This instruction is no long er pending.   
+                n_fetch_buff_o[ idx ].mem_tag = 'd0;    // This instruction is no long er pending.   
             end
         end // for
 
@@ -525,7 +527,7 @@ module output_logic_IC #(
     assign if_ic_o.addr     = { context_i[ thread_to_ft_i ].PC_reg[`XLEN-1:3], 3'b0 }; 
     assign if_ic_o.size     = DOUBLE;   // Always a double (aka block size)
     assign if_ic_o.command  = context_i[ thread_to_ft_i ].avail_size > 0 ? BUS_LOAD : BUS_NONE; // Don't request anything if full.
-    assign if_ic_o.data     = 0;        // Make sure that there's no x's.
+    assign if_ic_o.data     = 'd0;        // Make sure that there's no x's.
 endmodule:output_logic_IC
 
 // Wires up based on the pointers provided
@@ -594,7 +596,7 @@ module output_FIQ # (
     always_comb
     begin
         if ( br_mis_i.valid[ thread_idx ] )
-            fiq_dp_o.avail_num = 0;
+            fiq_dp_o.avail_num = 'd0;
         else if (C_DP_NUM < ( C_FIQ_NUM - thread_of.avail_size ))
             fiq_dp_o.avail_num = C_DP_NUM;  // Put a ceiling on entries
         else
@@ -718,7 +720,6 @@ assign proc2Imem_addr = { PC_reg[`XLEN-1:3], 3'b0 }; // Grab the 64-bits of the 
 // assign if_packet_out.valid = PC_enable; // This instruction isn't valid otherwise (esp if instruction is still being written to IF/ID registers)
 
 // This register holds the PC value
-// synopsys sync_set_reset "reset"
 
 //! Miscellanous Modules
 
@@ -863,33 +864,9 @@ typedef struct packed {
         end //for 
     end // always_comb
 
-*/
 
 // Just some practice and reference to the syntax of function and tasks.
 function int prod( 
     input int a, b, c
 );
-    return a * b * c;
-endfunction : prod
-
-task generate_pulse;
-    // Task IO
-    input time pulse_high;
-    input time pulse_low;
-    input int   num_pulses;
-    output logic pulse; 
-
-    for ( int n = 0; n < num_pulses; ++n )
-    begin
-        /*
-        pulse = 1'b1;
-        #pulse_high;
-        */
-        #pulse_low pulse = 1'b1;
-        /*
-        pulse = 1'b0;
-        #pulse_low;
-        */
-        #pulse_high pulse = 1'b0;
-    end
-endtask
+*/
