@@ -185,7 +185,7 @@ class monitor;
                     end
                 end
             end
-            $display("Store complete=%0b", store_complete_flag);
+            // $display("Store complete=%0b", store_complete_flag);
 
             if (&wfi_flag == 1) begin
                 print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
