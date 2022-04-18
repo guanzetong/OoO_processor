@@ -20,7 +20,8 @@
 # SOURCE = test_progs/rv32_parallel.s
 # SOURCE = test_progs/sampler.s
 # SOURCE = test_progs/rv32_btest1.s
-SOURCE = test_progs/rv32_fib_rec.s
+# SOURCE = test_progs/rv32_fib_rec.s
+SOURCE = test_progs/backtrack.c
 
 
 CRT = crt.s

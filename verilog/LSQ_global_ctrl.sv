@@ -194,7 +194,8 @@ module LSQ_global_ctrl #(
                 if (entry_idx == 0 && tail_o != 0) begin
                     // IF   It is retired from ROB
                     // ->   Select this entry to retire from LSQ
-                    if (lsq_array_i[C_LSQ_ENTRY_NUM-1].retire == 1'b1) begin
+                    if ((rt_sel_o[C_LSQ_ENTRY_NUM-1] == 1'b1)
+                    && (lsq_array_i[entry_idx].retire == 1'b1)) begin
                         rt_sel_o[entry_idx] =   1'b1;
                     end
                 // ELSE Other valid entries (between [head_o] and [C_LSQ_ENTRY_NUM-1])

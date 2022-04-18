@@ -838,7 +838,7 @@ endclass:monitor
 class generator;
     mailbox drv_mbx;
     event   drv_done;
-    int     num     =   600;
+    int     num     =   1000;
 
     task run();
         for (int i = 0; i < num; i++) begin

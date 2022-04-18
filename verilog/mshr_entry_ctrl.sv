@@ -367,11 +367,24 @@ module mshr_entry_ctrl #(
                         if (cache_mem_ctrl_i.req_hit == 1'b1 && proc2cache_i.command == BUS_LOAD) begin
                             mshr_proc_o.tag     =   mshr_entry_idx_i;
                             case (proc2cache_i.size)
-                                BYTE    :   mshr_proc_o.data    =   {56'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+: 8]};
-                                HALF    :   mshr_proc_o.data    =   {48'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+:16]};
-                                WORD    :   mshr_proc_o.data    =   {32'b0,cache_mem_ctrl_i.req_data_out[proc2cache_i.addr[2:0]+:32]};
-                                DOUBLE  :   mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
-                                default :   mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
+                                BYTE    :   begin
+                                    output_data_offset  =   {mshr_entry.req_addr[2:0], 3'b0};
+                                    mshr_proc_o.data    =   {56'b0,cache_mem_ctrl_i.req_data_out[output_data_offset +: 8]};
+                                end
+                                HALF    :   begin
+                                    output_data_offset  =   {mshr_entry.req_addr[2:1], 4'b0};
+                                    mshr_proc_o.data    =   {48'b0,cache_mem_ctrl_i.req_data_out[output_data_offset +:16]};
+                                end
+                                WORD    :   begin
+                                    output_data_offset  =   {mshr_entry.req_addr[2], 5'b0};
+                                    mshr_proc_o.data    =   {32'b0,cache_mem_ctrl_i.req_data_out[output_data_offset +:32]};
+                                end
+                                DOUBLE  :   begin
+                                    mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
+                                end
+                                default :   begin
+                                    mshr_proc_o.data    =   cache_mem_ctrl_i.req_data_out;
+                                end
                             endcase
                         end
                     end
