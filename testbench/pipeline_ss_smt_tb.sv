@@ -101,7 +101,7 @@ class monitor;
                 wb_filename             =   {"writeback.out"};
                 wb_fileno[thread_idx]   =   $fopen(wb_filename);
             end else begin
-                wb_filename             =   {"writeback_t", (thread_idx + 'd48), ".out"};
+                wb_filename             =   {"writeback_t", (thread_idx[8-1:0] + 8'd48), ".out"};
                 wb_fileno[thread_idx]   =   $fopen(wb_filename);
             end
         `else

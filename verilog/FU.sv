@@ -144,13 +144,13 @@ module alu #(
             valid_sh    <=  `SD valid_sh;
         // Shift
         end else begin
-            if (C_CYCLE == 1) begin
+            // if (C_CYCLE == 1) begin
                 valid_sh    <=  `SD ex_start;
-            end else if (squash) begin
-                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
-            end else begin
-                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
-            end
+            // end else if (squash) begin
+            //     valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
+            // end else begin
+            //     valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            // end
         end
     end
 
@@ -319,13 +319,13 @@ module mult #(
             valid_sh    <=  `SD valid_sh;
         // Shift
         end else begin
-            if (C_CYCLE == 1) begin
+            // if (C_CYCLE == 1) begin
                 valid_sh    <=  `SD ex_start;
-            end else if (squash) begin
-                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
-            end else begin
-                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
-            end
+            // end else if (squash) begin
+            //     valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
+            // end else begin
+            //     valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            // end
         end
     end
 
@@ -513,13 +513,13 @@ module branch #(
             valid_sh    <=  `SD valid_sh;
         // Shift
         end else begin
-            if (C_CYCLE == 1) begin
+            // if (C_CYCLE == 1) begin
                 valid_sh    <=  `SD ex_start;
-            end else if (squash) begin
-                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
-            end else begin
-                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
-            end
+            // end else if (squash) begin
+            //     valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
+            // end else begin
+            //     valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            // end
         end
     end
 
@@ -648,13 +648,13 @@ module load #(
             valid_sh    <=  `SD 'b0;
         // Shift
         end else begin
-            if (C_CYCLE == 1) begin
+            // if (C_CYCLE == 1) begin
                 valid_sh    <=  `SD ex_start;
-            end else if (squash) begin
-                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
-            end else begin
-                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
-            end
+            // end else if (squash) begin
+            //     valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
+            // end else begin
+            //     valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            // end
         end
     end
 
@@ -783,13 +783,13 @@ module store #(
             valid_sh    <=  `SD valid_sh;
         // Shift
         end else begin
-            if (C_CYCLE == 1) begin
+            // if (C_CYCLE == 1) begin
                 valid_sh    <=  `SD ex_start;
-            end else if (squash) begin
-                valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
-            end else begin
-                valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
-            end
+            // end else if (squash) begin
+            //     valid_sh    <=  `SD {{(C_CYCLE-1){1'b0}}, ex_start};
+            // end else begin
+            //     valid_sh    <=  `SD {valid_sh[C_CYCLE-2:0], ex_start};
+            // end
         end
     end
 
