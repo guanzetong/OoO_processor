@@ -13,16 +13,7 @@
 #
 #
 
-# SOURCE = test_progs/alexnet.c
-# SOURCE = test_progs/rv32_mult_no_lsq.s
 SOURCE = test_progs/rv32_mult.s
-# SOURCE = test_progs/rv32_halt.s
-# SOURCE = test_progs/rv32_parallel.s
-# SOURCE = test_progs/sampler.s
-# SOURCE = test_progs/rv32_btest1.s
-# SOURCE = test_progs/rv32_fib_rec.s
-# SOURCE = test_progs/backtrack.c
-# SOURCE = test_progs/matrix_mult_rec.c
 # SOURCE = test_progs/alexnet.c
 
 
@@ -60,73 +51,153 @@ LIB = /afs/umich.edu/class/eecs470/lib/verilog/lec25dscc25.v
 # SIMULATION CONFIG
 
 HEADERS     = $(wildcard *.svh)
-# TESTBENCH   = $(wildcard testbench/*.sv)
-# TESTBENCH  += $(wildcard testbench/*.c)
-# TESTBENCH	= testbench/RS_tb.sv
-# TESTBENCH	= testbench/test_tb.sv
-# TESTBENCH	= testbench/adder_tb.sv
-# TESTBENCH	= testbench/pe_mult_tb.sv
-# TESTBENCH	= testbench/IB_tb.sv
-TESTBENCH	= testbench/pipeline_ss_smt_tb.sv
-# TESTBENCH	= testbench/IF_IC_tb.sv
-PIPEFILES   = $(wildcard verilog/*.sv)
-# PIPEFILES   = $(wildcard dcache/*.sv)
-# PIPEFILES	= verilog/IF.sv
-# TESTBENCH	= testbench/cache_test.sv
-# TESTBENCH	= testbench/cache_tb.sv
-TESTBENCH	+= testbench/mem.sv
-# TESTBENCH	+= $(wildcard verilog/*.sv)
-# PIPEFILES   = $(wildcard verilog/*.sv)
-# PIPEFILES	= verilog/binary_encoder.sv verilog/pe.sv verilog/pe_mult.sv verilog/COD.sv verilog/RS.sv
-# PIPEFILES	= verilog/IB.sv verilog/IB_channel.sv verilog/IB_push_in_router.sv verilog/IB_queue.sv verilog/IB_pop_out_router.sv
-# PIPEFILES	= verilog/IB.sv 
-# PIPEFILES	+= verilog/IB_ALU_push_in_router.sv verilog/IB_ALU_queue.sv verilog/IB_ALU_pop_out_router.sv verilog/IB_ALU.sv
-# PIPEFILES	+= verilog/IB_MULT_push_in_router.sv verilog/IB_MULT_queue.sv verilog/IB_MULT_pop_out_router.sv verilog/IB_MULT.sv
-# PIPEFILES	+= verilog/IB_BR_push_in_router.sv verilog/IB_BR_queue.sv verilog/IB_BR_pop_out_router.sv verilog/IB_BR.sv
-# PIPEFILES	+= verilog/IB_LOAD_push_in_router.sv verilog/IB_LOAD_queue.sv verilog/IB_LOAD_pop_out_router.sv verilog/IB_LOAD.sv
-# PIPEFILES	+= verilog/IB_STORE_push_in_router.sv verilog/IB_STORE_queue.sv verilog/IB_STORE_pop_out_router.sv verilog/IB_STORE.sv 
 
-# PIPEFILES	= verilog/cache_mem.sv verilog/cache_ctrl.sv verilog/cache.sv
-# PIPEFILES   += verilog/LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
-# PIPEFILES	+= verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
-# PIPEFILES	+= verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
-# PIPEFILES	= verilog/freelist.sv
-SIMFILES    = $(PIPEFILES)
+TESTBENCH	= testbench/pipeline_ss_smt_tb.sv
+TESTBENCH	+= testbench/mem.sv
+
+SIMFILES    = $(wildcard verilog/*.sv)
 
 # SYNTHESIS CONFIG
 SYNTH_DIR = ./synth
 
 export HEADERS
+
+# Pipeline
+PIPEFILES   = verilog/pipeline_ss_smt.sv
 export PIPEFILES
-
-# export PIPELINE_NAME = pipeline
-# export PIPELINE_NAME = RS
-# export PIPELINE_NAME = binary_encoder
-# export PIPELINE_NAME = adder
-# export PIPELINE_NAME = pe_mult
-export PIPELINE_NAME = pipeline_ss_smt
-# export PIPELINE_NAME = IF
-# export PIPELINE_NAME = cache
-# export PIPELINE_NAME = dcache
-
+PIPELINE_NAME = pipeline_ss_smt
+export PIPELINE_NAME
 PIPELINE  = $(SYNTH_DIR)/$(PIPELINE_NAME).vg 
 SYNFILES  = $(PIPELINE) $(SYNTH_DIR)/$(PIPELINE_NAME)_svsim.sv
 
-# CACHEFILES	= verilog/cache_mem.sv verilog/cache_ctrl.sv verilog/cache.sv
-# CACHEFILES	+= verilog/LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
-# CACHEFILES	+= verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
-# CACHEFILES	+= verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
-# CACHE_NAME	=	cache
-# export CACHEFILES
-# export CACHE_NAME
-# CACHE     = $(SYNTH_DIR)/$(CACHE_NAME).vg 
-# SYNFILES  = $(CACHE) $(SYNTH_DIR)/$(CACHE_NAME)_svsim.sv
-
+# Data Cache
 DCACHE_NAME	= dcache
+export DCACHE_NAME
+DCACHE_FILES = verilog/dcache_mem.sv verilog/cache_ctrl.sv verilog/dcache.sv
+DCACHE_FILES += verilog/dcache_LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
+DCACHE_FILES += verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
+DCACHE_FILES += verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
+export DCACHE_FILES
+DCACHE = $(SYNTH_DIR)/$(DCACHE_NAME).ddc
+
+# Instruction Cache
 ICACHE_NAME = icache
 export ICACHE_NAME
-export DCACHE_NAME
+ICACHE_FILES = verilog/icache_mem.sv verilog/cache_ctrl.sv verilog/icache.sv
+ICACHE_FILES += verilog/icache_LRU_update.sv verilog/mshr_entry_ctrl.sv verilog/mshr_cache_mem_switch.sv
+ICACHE_FILES += verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv verilog/evict_hit_detector.sv
+ICACHE_FILES += verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
+export ICACHE_FILES
+ICACHE = $(SYNTH_DIR)/$(ICACHE_NAME).ddc
 
+# Instruction Fetch
+IF_NAME = IF
+export IF_NAME
+IF_FILES = verilog/IF.sv
+export IF_FILES
+IF = $(SYNTH_DIR)/$(IF_NAME).ddc
+
+# Dispatcher
+DP_NAME = DP_lsq
+export DP_NAME
+DP_FILES = verilog/$(DP_NAME).sv
+export DP_FILES
+DP = $(SYNTH_DIR)/$(DP_NAME).ddc
+
+# Reorder Buffer
+ROB_NAME = ROB
+export ROB_NAME
+ROB_FILES = verilog/$(ROB_NAME).sv
+export ROB_FILES
+ROB = $(SYNTH_DIR)/$(ROB_NAME).ddc
+
+# Freelist
+FL_NAME = FL_smt
+export FL_NAME
+FL_FILES = verilog/$(FL_NAME).sv
+export FL_FILES
+FL = $(SYNTH_DIR)/$(FL_NAME).ddc
+
+# Architectural Map Table
+AMT_NAME = AMT
+export AMT_NAME
+AMT_FILES = verilog/$(AMT_NAME).sv
+export AMT_FILES
+AMT = $(SYNTH_DIR)/$(AMT_NAME).ddc
+
+# Map Table (Superscalar)
+MT_NAME = MT_SS
+export MT_NAME
+MT_FILES = verilog/$(MT_NAME).sv
+export MT_FILES
+MT = $(SYNTH_DIR)/$(MT_NAME).ddc
+
+# Reservation Station
+RS_NAME = RS
+export RS_NAME
+RS_FILES = verilog/$(RS_NAME).sv
+export RS_FILES
+RS = $(SYNTH_DIR)/$(RS_NAME).ddc
+
+# Issue Buffer
+IB_NAME = IB
+export IB_NAME
+IB_FILES = verilog/IB.sv
+IB_FILES += verilog/IB_ALU_pop_out_router.sv verilog/IB_ALU_push_in_router.sv verilog/IB_ALU_queue.sv verilog/IB_ALU.sv
+IB_FILES += verilog/IB_MULT_pop_out_router.sv verilog/IB_MULT_push_in_router.sv verilog/IB_MULT_queue.sv verilog/IB_MULT.sv
+IB_FILES += verilog/IB_BR_pop_out_router.sv verilog/IB_BR_push_in_router.sv verilog/IB_BR_queue.sv verilog/IB_BR.sv
+IB_FILES += verilog/IB_LOAD_pop_out_router.sv verilog/IB_LOAD_push_in_router.sv verilog/IB_LOAD_queue.sv verilog/IB_LOAD.sv
+IB_FILES += verilog/IB_STORE_pop_out_router.sv verilog/IB_STORE_push_in_router.sv verilog/IB_STORE_queue.sv verilog/IB_STORE.sv
+export IB_FILES
+IB = $(SYNTH_DIR)/$(IB_NAME).ddc
+
+# Functional Unit
+FU_NAME = FU
+export FU_NAME
+FU_FILES = verilog/FU.sv
+export FU_FILES
+FU = $(SYNTH_DIR)/$(FU_NAME).ddc
+
+# Physical Register File
+PRF_NAME = PRF
+export PRF_NAME
+PRF_FILES = verilog/PRF.sv
+export PRF_FILES
+PRF = $(SYNTH_DIR)/$(PRF_NAME).ddc
+
+# Load/Store Queue
+LSQ_NAME = LSQ
+export LSQ_NAME
+LSQ_FILES = verilog/LSQ.sv
+LSQ_FILES += verilog/LSQ_bc_switch.sv verilog/LSQ_entry_ctrl.sv verilog/LSQ_global_ctrl.sv verilog/LSQ_memory_switch.sv
+LSQ_FILES += verilog/LSQ_rr_arbiter.sv 
+export LSQ_FILES
+LSQ = $(SYNTH_DIR)/$(LSQ_NAME).ddc
+
+# Broadcaster
+BC_NAME = BC
+export BC_NAME
+BC_FILES = verilog/BC.sv
+export BC_FILES
+BC = $(SYNTH_DIR)/$(BC_NAME).ddc
+
+# Memory Interface Switch
+MEMSW_NAME = mem_switch
+export MEMSW_NAME
+MEMSW_FILES = verilog/mem_switch.sv verilog/mem_fixed_priority_arbiter.sv
+export MEMSW_FILES
+MEMSW = $(SYNTH_DIR)/$(MEMSW_NAME).ddc
+
+# Data Cache Interface Switch
+DCSW_NAME = dcache_switch
+export DCSW_NAME
+DCSW_FILES = verilog/dcache_switch.sv verilog/dcache_rr_arbiter.sv
+export DCSW_FILES
+DCSW = $(SYNTH_DIR)/$(DCSW_NAME).ddc
+
+# Pipeline DDC
+PIPE_DDC = $(DCACHE) $(ICACHE) $(IF) $(DP) $(ROB) $(FL) $(AMT) $(MT)
+PIPE_DDC += $(RS) $(IB) $(FU) $(PRF) $(LSQ) $(BC) $(MEMSW) $(DCSW)
 
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
@@ -183,14 +254,57 @@ assembly: assemble disassemble hex
 
 # Synthesis
 
-$(PIPELINE): $(SIMFILES) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
+$(PIPELINE): $(PIPE_DDC) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
 	cd $(SYNTH_DIR) && dc_shell-t -f ./$(PIPELINE_NAME).tcl | tee $(PIPELINE_NAME)_synth.out
 	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(PIPELINE)
 
-$(CACHE): $(SIMFILES) $(SYNTH_DIR)/$(CACHE_NAME).tcl
-	cd $(SYNTH_DIR) && dc_shell-t -f ./$(CACHE_NAME).tcl | tee $(CACHE_NAME)_synth.out
-	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(CACHE)
+$(DCACHE): $(HEADERS) $(DCACHE_FILES) $(SYNTH_DIR)/$(DCACHE_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(DCACHE_NAME).tcl | tee $(DCACHE_NAME)_synth.out
 
+$(ICACHE): $(HEADERS) $(ICACHE_FILES) $(SYNTH_DIR)/$(ICACHE_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(ICACHE_NAME).tcl | tee $(ICACHE_NAME)_synth.out
+
+$(IF): $(HEADERS) $(IF_FILES) $(SYNTH_DIR)/$(IF_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(IF_NAME).tcl | tee $(IF_NAME)_synth.out
+
+$(DP): $(HEADERS) $(DP_FILES) $(SYNTH_DIR)/$(DP_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(DP_NAME).tcl | tee $(DP_NAME)_synth.out
+
+$(ROB): $(HEADERS) $(ROB_FILES) $(SYNTH_DIR)/$(ROB_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(ROB_NAME).tcl | tee $(ROB_NAME)_synth.out
+
+$(FL): $(HEADERS) $(FL_FILES) $(SYNTH_DIR)/$(FL_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(FL_NAME).tcl | tee $(FL_NAME)_synth.out
+
+$(AMT): $(HEADERS) $(AMT_FILES) $(SYNTH_DIR)/$(AMT_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(AMT_NAME).tcl | tee $(AMT_NAME)_synth.out
+
+$(MT): $(HEADERS) $(MT_FILES) $(SYNTH_DIR)/$(MT_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(MT_NAME).tcl | tee $(MT_NAME)_synth.out
+
+$(RS): $(HEADERS) $(RS_FILES) $(SYNTH_DIR)/$(RS_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(RS_NAME).tcl | tee $(RS_NAME)_synth.out
+
+$(IB): $(HEADERS) $(IB_FILES) $(SYNTH_DIR)/$(IB_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(IB_NAME).tcl | tee $(IB_NAME)_synth.out
+
+$(FU): $(HEADERS) $(FU_FILES) $(SYNTH_DIR)/$(FU_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(FU_NAME).tcl | tee $(FU_NAME)_synth.out
+
+$(PRF): $(HEADERS) $(PRF_FILES) $(SYNTH_DIR)/$(PRF_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(PRF_NAME).tcl | tee $(PRF_NAME)_synth.out
+
+$(LSQ): $(HEADERS) $(LSQ_FILES) $(SYNTH_DIR)/$(LSQ_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(LSQ_NAME).tcl | tee $(LSQ_NAME)_synth.out
+
+$(BC): $(HEADERS) $(BC_FILES) $(SYNTH_DIR)/$(BC_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(BC_NAME).tcl | tee $(BC_NAME)_synth.out
+
+$(MEMSW): $(HEADERS) $(MEMSW_FILES) $(SYNTH_DIR)/$(MEMSW_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(MEMSW_NAME).tcl | tee $(MEMSW_NAME)_synth.out
+
+$(DCSW): $(HEADERS) $(DCSW_FILES) $(SYNTH_DIR)/$(DCSW_NAME).tcl
+	cd $(SYNTH_DIR) && dc_shell-t -f ./$(DCSW_NAME).tcl | tee $(DCSW_NAME)_synth.out
 
 syn:	syn_simv 
 	./syn_simv | tee syn_program.out
@@ -199,6 +313,7 @@ syn_simv:	$(HEADERS) $(SYNFILES) $(TESTBENCH)
 	$(VCS) $^ $(LIB) +define+SYNTH_TEST -o syn_simv 
 
 .PHONY: syn
+
 
 # Debugging
 
