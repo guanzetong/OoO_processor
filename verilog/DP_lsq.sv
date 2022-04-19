@@ -132,6 +132,7 @@ module DP_lsq # (
 
     function automatic logic [C_DP_NUM-1:0][C_DP_NUM_WIDTH-1:0] lsq_router;
         input   logic   [C_DP_NUM_WIDTH-1:0]    dp_num;
+        input   DP_RS                           dp_rs_o;
         int     lsq_idx   ;
         begin
             lsq_idx     =   0;
@@ -281,7 +282,7 @@ module DP_lsq # (
 // --------------------------------------------------------------------  
 	always_comb begin
         dp_lsq_o    =   'b0;
-        lsq_route   =   lsq_router(lsq_dp_num);
+        lsq_route   =   lsq_router(legal_dp_num, dp_rs_o);
         for (int unsigned thread_idx = 0; thread_idx < C_THREAD_NUM; thread_idx++) begin
             if(thread_idx == thread_sel)begin
                 if (dp_en_i[thread_idx] == 1'b1) begin

@@ -53,10 +53,10 @@ typedef union packed {
 
 `define IF_NUM          2   // The number of (F)etch channels per cycle. ( Used for fetching from instruction cache )		
 `define FIQ_NUM         16  // The numb
-`define DP_NUM          2   // The number of Dispatch channels.
-`define IS_NUM          2   // The number of Issue channels.
-`define CDB_NUM         2   // The number of CDB/Complete channels.
-`define RT_NUM          2   // The number of Retire channels.
+`define DP_NUM          3   // The number of Dispatch channels.
+`define IS_NUM          3   // The number of Issue channels.
+`define CDB_NUM         3   // The number of CDB/Complete channels.
+`define RT_NUM          3   // The number of Retire channels.
 `define ROB_ENTRY_NUM   16  // The number of ROB entries.
 `define RS_ENTRY_NUM    16	// The number of RS entries.
 `define ARCH_REG_NUM    32  // The number of Architectural registers.
