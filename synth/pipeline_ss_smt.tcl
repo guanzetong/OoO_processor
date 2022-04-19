@@ -18,12 +18,75 @@ suppress_message {"VER-130"}
 #/***********************************************************/
 lappend search_path ../
 
+set DCACHE [getenv DCACHE_NAME]
+read_file -f ddc [list ${DCACHE}.ddc]
+set_dont_touch ${DCACHE} 
+
+set icache [getenv ICACHE_NAME]
+read_file -f ddc [list ${ICACHE}.ddc]
+set_dont_touch ${ICACHE} 
+
+set IF [getenv IF_NAME]
+read_file -f ddc [list ${IF}.ddc]
+set_dont_touch ${IF} 
+
+set DP [getenv DP_NAME]
+read_file -f ddc [list ${DP}.ddc]
+set_dont_touch ${DP} 
+
+set ROB [getenv ROB_NAME]
+read_file -f ddc [list ${ROB}.ddc]
+set_dont_touch ${ROB} 
+
+set FL [getenv FL_NAME]
+read_file -f ddc [list ${FL}.ddc]
+set_dont_touch ${FL} 
+
+set AMT [getenv AMT_NAME]
+read_file -f ddc [list ${AMT}.ddc]
+set_dont_touch ${AMT} 
+
+set MT [getenv MT_NAME]
+read_file -f ddc [list ${MT}.ddc]
+set_dont_touch ${MT} 
+
+set RS [getenv RS_NAME]
+read_file -f ddc [list ${RS}.ddc]
+set_dont_touch ${RS} 
+
+set IB [getenv IB_NAME]
+read_file -f ddc [list ${IB}.ddc]
+set_dont_touch ${IB} 
+
+set FU [getenv FU_NAME]
+read_file -f ddc [list ${FU}.ddc]
+set_dont_touch ${FU} 
+
+set PRF [getenv PRF_NAME]
+read_file -f ddc [list ${PRF}.ddc]
+set_dont_touch ${PRF} 
+
+set LSQ [getenv LSQ_NAME]
+read_file -f ddc [list ${LSQ}.ddc]
+set_dont_touch ${LSQ} 
+
+set BC [getenv BC_NAME]
+read_file -f ddc [list ${BC}.ddc]
+set_dont_touch ${BC} 
+
+set MEMSW [getenv MEMSW_NAME]
+read_file -f ddc [list ${MEMSW}.ddc]
+set_dont_touch ${MEMSW} 
+
+set DCSW [getenv DCSW_NAME]
+read_file -f ddc [list ${DCSW}.ddc]
+set_dont_touch ${DCSW} 
 
 set headers [getenv HEADERS]
-set sources [getenv IB_FILES]
+set sources [getenv PIPEFILES]
 
 read_file -f sverilog [list ${headers} ${sources}]
-set design_name [getenv IB_NAME]
+set design_name [getenv PIPELINE_NAME]
 set clock_name [getenv CLOCK_NET_NAME]
 set reset_name [getenv RESET_NET_NAME]
 set CLK_PERIOD [getenv CLOCK_PERIOD]

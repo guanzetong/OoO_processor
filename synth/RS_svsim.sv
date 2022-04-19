@@ -9,9 +9,9 @@
 
 module RS_svsim #(
     parameter   C_RS_ENTRY_NUM  =   16   ,
-    parameter   C_DP_NUM        =   4         ,
-    parameter   C_IS_NUM        =   4         ,
-    parameter   C_CDB_NUM       =   4        ,
+    parameter   C_DP_NUM        =   3         ,
+    parameter   C_IS_NUM        =   3         ,
+    parameter   C_CDB_NUM       =   3        ,
     parameter   C_THREAD_NUM    =   2     ,
     localparam  C_RS_IDX_WIDTH  =   $clog2(C_RS_ENTRY_NUM)
 ) (

@@ -14,7 +14,14 @@ simv
 .DS_Store
 syn_simv
 syn_simv.daidir/
-synth/
+synth/*.res
+synth/*.sv
+synth/*.rep
+synth/*.chk
+synth/*.svf
+synth/*.log
+synth/*.ddc
+synth/*.vg
 DVEfiles/
 inter.vpd
 cm.log

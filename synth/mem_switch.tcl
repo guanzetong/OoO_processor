@@ -18,12 +18,11 @@ suppress_message {"VER-130"}
 #/***********************************************************/
 lappend search_path ../
 
-
 set headers [getenv HEADERS]
-set sources [getenv IB_FILES]
+set sources [getenv MEMSW_FILES]
 
 read_file -f sverilog [list ${headers} ${sources}]
-set design_name [getenv IB_NAME]
+set design_name [getenv MEMSW_NAME]
 set clock_name [getenv CLOCK_NET_NAME]
 set reset_name [getenv RESET_NET_NAME]
 set CLK_PERIOD [getenv CLOCK_PERIOD]
