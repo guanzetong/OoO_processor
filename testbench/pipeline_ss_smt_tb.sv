@@ -87,9 +87,6 @@ class monitor;
     logic   [32-1:0]                    clk_cnt                         ;
     logic   [32-1:0]                    inst_cnt                        ;
 
-    logic   [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]   wfi_rob_idx         ;
-    logic   [`THREAD_NUM-1:0][`ROB_IDX_WIDTH-1:0]   wfi_tail            ;
-
     task run();
         // automatic string thrd_string;
         $display("T=%0t [Monitor] starting ...", $time);
@@ -168,14 +165,8 @@ class monitor;
                         inst_cnt++;
                         if (vif.rt_wfi_o[thread_idx][rt_idx] == 1'b1) begin
                             wfi_flag[thread_idx]    =   1'b1;
-                            if (vif.rob_head_mon_o[thread_idx] + rt_idx >= `ROB_ENTRY_NUM) begin
-                                wfi_rob_idx[thread_idx] =   vif.rob_head_mon_o[thread_idx] + rt_idx - `ROB_ENTRY_NUM;
-                            end else begin
-                                wfi_rob_idx[thread_idx] =   vif.rob_head_mon_o[thread_idx] + rt_idx;
-                            end
-                            wfi_tail[thread_idx]    =   vif.rob_tail_mon_o[thread_idx];
-                            $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, rob_idx=%0d, rob_tail=%0d, exit thread %0d", 
-                            $time, wfi_rob_idx[thread_idx], wfi_tail[thread_idx], vif.rt_pc_o[thread_idx][rt_idx], thread_idx);
+                            $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, exit thread %0d", 
+                            $time, vif.rt_pc_o[thread_idx][rt_idx], thread_idx);
                         end
                     end
                 end // for
@@ -191,19 +182,26 @@ class monitor;
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
                 if (wfi_flag[thread_idx]) begin
                     for (int unsigned lsq_idx = 0; lsq_idx < `LSQ_ENTRY_NUM; lsq_idx++) begin
-                        if (vif.lsq_array_mon_o[thread_idx][lsq_idx].state != LSQ_ST_IDLE) begin
-                            if (wfi_rob_idx[thread_idx] < wfi_tail[thread_idx]) begin
-                                if ((vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx < wfi_rob_idx[thread_idx])
-                                || (vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx >= wfi_tail[thread_idx])) begin
-                                    store_complete_flag =   0;
-                                end
-                            end else begin
-                                if ((vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx < wfi_rob_idx[thread_idx])
-                                && (vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx >= wfi_tail[thread_idx])) begin
-                                    store_complete_flag =   0;
+                        case (vif.lsq_array_mon_o[thread_idx][lsq_idx].state)
+                            LSQ_ST_WR_MEM, LSQ_ST_RETIRE: store_complete_flag =   0;
+                            LSQ_ST_ROB_RETIRE: begin
+                                for (int unsigned rt_idx = 0; rt_idx < `RT_NUM; rt_idx++) begin
+                                    if (vif.rt_valid_o[thread_idx][rt_idx] == 1'b1) begin
+                                        if (vif.rob_head_mon_o[thread_idx] + rt_idx >= `ROB_ENTRY_NUM) begin
+                                            if (vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx 
+                                            == (vif.rob_head_mon_o[thread_idx] + rt_idx - `ROB_ENTRY_NUM)) begin
+                                                store_complete_flag =   0;
+                                            end
+                                        end else begin
+                                            if (vif.lsq_array_mon_o[thread_idx][lsq_idx].rob_idx 
+                                            == (vif.rob_head_mon_o[thread_idx] + rt_idx)) begin
+                                                store_complete_flag =   0;
+                                            end
+                                        end
+                                    end
                                 end
                             end
-                        end
+                        endcase
                     end
                 end
             end

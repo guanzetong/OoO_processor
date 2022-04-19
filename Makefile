@@ -22,7 +22,8 @@
 # SOURCE = test_progs/rv32_btest1.s
 # SOURCE = test_progs/rv32_fib_rec.s
 # SOURCE = test_progs/backtrack.c
-SOURCE = test_progs/matrix_mult_rec.c
+# SOURCE = test_progs/matrix_mult_rec.c
+SOURCE = test_progs/alexnet.c
 
 
 CRT = crt.s
