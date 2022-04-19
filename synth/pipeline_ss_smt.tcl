@@ -22,7 +22,7 @@ set DCACHE [getenv DCACHE_NAME]
 read_file -f ddc [list ${DCACHE}.ddc]
 set_dont_touch ${DCACHE} 
 
-set icache [getenv ICACHE_NAME]
+set ICACHE [getenv ICACHE_NAME]
 read_file -f ddc [list ${ICACHE}.ddc]
 set_dont_touch ${ICACHE} 
 
