@@ -41,7 +41,7 @@ loop:	addi	x5,	x5,	1 #
 	sw	x13, 32(x1)
 	srli	x14,	x2,	0 #
 	sw	x14, 48(x1)
-	addi	x1,	x1,	32 #
+	addi	x1,	x1,	64 #
 	bne	x6,	x0,	loop #
 	wfi
     nop
@@ -107,4 +107,3 @@ loop1:	addi	x5,	x5,	1 #
 	addi	x1,	x1,	32 #
 	bne	x6,	x0,	loop # while ( x5 < 16 ) 
 	wfi
-	
