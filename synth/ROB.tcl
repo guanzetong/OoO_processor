@@ -18,16 +18,11 @@ suppress_message {"VER-130"}
 #/***********************************************************/
 lappend search_path ../
 
-set cache_module [getenv CACHE_NAME]
-
-read_file -f ddc [list ${cache_module}.ddc]
-set_dont_touch ${cache_module}
-
 set headers [getenv HEADERS]
-set sources [getenv PIPEFILES]
+set sources [getenv ROB_FILES]
 
 read_file -f sverilog [list ${headers} ${sources}]
-set design_name [getenv PIPELINE_NAME]
+set design_name [getenv ROB_NAME]
 set clock_name [getenv CLOCK_NET_NAME]
 set reset_name [getenv RESET_NET_NAME]
 set CLK_PERIOD [getenv CLOCK_PERIOD]

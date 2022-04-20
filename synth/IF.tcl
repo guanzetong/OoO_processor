@@ -19,21 +19,20 @@ suppress_message {"VER-130"}
 lappend search_path ../
 
 set headers [getenv HEADERS]
-set sources [getenv CACHEFILES]
+set sources [getenv IF_FILES]
 
 read_file -f sverilog [list ${headers} ${sources}]
-set design_name [getenv CACHE_NAME]
+set design_name [getenv IF_NAME]
 set clock_name [getenv CLOCK_NET_NAME]
 set reset_name [getenv RESET_NET_NAME]
 set CLK_PERIOD [getenv CLOCK_PERIOD]
 
+set SYN_DIR ./
+
 
 #/***********************************************************/
-#/* The rest of this file may be left alone for most small  */
-#/* to moderate sized designs.  You may need to alter it    */
-#/* when synthesizing your final project.                   */
+#/* You should NOT edit anything below this line for 470    */
 #/***********************************************************/
-set SYN_DIR ./
 
 #/***********************************************************/
 #/* Set some flags for optimisation */
@@ -99,7 +98,7 @@ set dc_shell_status [ set chk_file [format "%s%s"  [format "%s%s"  $SYN_DIR $des
 
 #/* if we didnt find errors at this point, run */
 if {  $dc_shell_status != [list] } {
-   current_design $design_name
+  current_design $design_name
   link
   set_wire_load_model -name $WIRE_LOAD -lib $LOGICLIB $design_name
   set_wire_load_mode top
@@ -141,7 +140,7 @@ if {  $dc_shell_status != [list] } {
   redirect -append $rep_file { report_reference -nosplit }
   quit
 } else {
-   quit
+  quit
 }
 
 

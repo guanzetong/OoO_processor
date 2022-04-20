@@ -8,7 +8,7 @@
 // For simulation only. Do not modify.
 
 module IB_svsim #(
-    parameter   C_IS_NUM            =   4                 ,
+    parameter   C_IS_NUM            =   3                 ,
     parameter   C_ALU_NUM           =   3                , 
     parameter   C_MULT_NUM          =   2               , 
     parameter   C_BR_NUM            =   1                 , 

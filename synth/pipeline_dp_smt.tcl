@@ -1,4 +1,5 @@
 ################################################################################
+################################################################################
 ## DO NOT EDIT THESE FILES BY HAND
 ##
 ## CONFIGURATION HAS BEEN MOVED TO THE MAKEFILE
@@ -18,12 +19,16 @@ suppress_message {"VER-130"}
 #/***********************************************************/
 lappend search_path ../
 
+set cache_module [getenv CACHE_NAME]
+
+read_file -f ddc [list ${cache_module}.ddc]
+set_dont_touch ${cache_module}
 
 set headers [getenv HEADERS]
-set sources [getenv IB_FILES]
+set sources [getenv PIPEFILES]
 
 read_file -f sverilog [list ${headers} ${sources}]
-set design_name [getenv IB_NAME]
+set design_name [getenv PIPELINE_NAME]
 set clock_name [getenv CLOCK_NET_NAME]
 set reset_name [getenv RESET_NET_NAME]
 set CLK_PERIOD [getenv CLOCK_PERIOD]
