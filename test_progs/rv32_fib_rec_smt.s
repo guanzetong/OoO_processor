@@ -98,8 +98,8 @@ fib_ret_1:
 	nop
 	nop
 	nop
-	data1 = 0x400
-	stack1 = 0xf000   # Allocate stack elsewhere
+	data1 = 0x408     # Location of value after finishes
+	stack1 = 0x2000   # Allocate stack elsewhere
     li  x8, 1
 	li	x31, stack1
 	

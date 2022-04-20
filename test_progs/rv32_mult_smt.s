@@ -78,7 +78,7 @@ loop:	addi	x5,	x5,	1 #
 	nop
     nop
         data1 = 0x1000
-	li	x1, data1			# Starts at 0x100
+	li	x1, data1			# Starts at 0x1000
 	jal	x2,	start1 #
 	.dword 2862933555777941757
 	.dword 	3037000493
