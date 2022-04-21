@@ -30,9 +30,9 @@ set IF [getenv IF_NAME]
 read_file -f ddc [list ${IF}.ddc]
 set_dont_touch ${IF} 
 
-set DP [getenv DP_NAME]
-read_file -f ddc [list ${DP}.ddc]
-set_dont_touch ${DP} 
+# set DP [getenv DP_NAME]
+# read_file -f ddc [list ${DP}.ddc]
+# set_dont_touch ${DP} 
 
 set ROB [getenv ROB_NAME]
 read_file -f ddc [list ${ROB}.ddc]

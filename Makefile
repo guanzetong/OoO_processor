@@ -13,7 +13,7 @@
 #
 #
 
-SOURCE = test_progs/rv32_fib_rec_smt.s
+SOURCE = test_progs/rv32_mult.s
 # SOURCE = test_progs/alexnet.c
 
 
@@ -63,7 +63,7 @@ SYNTH_DIR = ./synth
 export HEADERS
 
 # Pipeline
-PIPEFILES   = verilog/pipeline_ss_smt.sv
+PIPEFILES   = verilog/pipeline_ss_smt.sv verilog/DP_lsq.sv
 export PIPEFILES
 PIPELINE_NAME = pipeline_ss_smt
 export PIPELINE_NAME
@@ -196,13 +196,13 @@ export DCSW_FILES
 DCSW = $(SYNTH_DIR)/$(DCSW_NAME).ddc
 
 # Pipeline DDC
-PIPE_DDC = $(DCACHE) $(ICACHE) $(IF) $(DP) $(ROB) $(FL) $(AMT) $(MT)
+PIPE_DDC = $(DCACHE) $(ICACHE) $(IF) $(ROB) $(FL) $(AMT) $(MT) #$(DP)
 PIPE_DDC += $(RS) $(IB) $(FU) $(PRF) $(LSQ) $(BC) $(MEMSW) $(DCSW)
 
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_PERIOD   = 10.4	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################
