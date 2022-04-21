@@ -13,7 +13,7 @@
 #
 #
 
-SOURCE = test_progs/rv32_mult_fib_rec_smt.s
+SOURCE = test_progs/rv32_fib_rec_smt.s
 # SOURCE = test_progs/alexnet.c
 
 
@@ -202,7 +202,7 @@ PIPE_DDC += $(RS) $(IB) $(FU) $(PRF) $(LSQ) $(BC) $(MEMSW) $(DCSW)
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 15	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_PERIOD   = 20	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################

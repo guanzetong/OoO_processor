@@ -8,42 +8,42 @@
 
 
 module BC #( 
-    parameter   C_FU_NUM             =   `FU_NUM                 ,
-    parameter   C_CDB_NUM            =   `CDB_NUM                ,
-    parameter   C_PE_OUT_WIDTH       =   $clog2(C_FU_NUM)        
+    parameter   C_BC_IN_NUM         =   `BC_IN_NUM              ,
+    parameter   C_CDB_NUM           =   `CDB_NUM                ,
+    parameter   C_PE_OUT_WIDTH      =   $clog2(C_BC_IN_NUM)        
 )(
 // debug start
     // output   logic [C_CDB_NUM-1:0]          mux_valid_o         ,
-    // output   logic [C_FU_NUM-1:0]           mask_o              ,
+    // output   logic [C_BC_IN_NUM-1:0]           mask_o              ,
     // output   logic                          queued_o            ,
 // debug end
 
-    input   logic                            clk_i               ,   // Clock
-    input   logic                            rst_i               ,   // Reset
-    input   FU_BC  [C_FU_NUM-1:0]            fu_bc_i             ,
-    output  BC_FU  [C_FU_NUM-1:0]            bc_fu_o             ,
-    output  CDB    [C_CDB_NUM-1:0]           cdb_o            ,
-    output  BC_PRF [C_CDB_NUM-1:0]           bc_prf_o            
+    input   logic                           clk_i               ,   // Clock
+    input   logic                           rst_i               ,   // Reset
+    input   FU_BC  [C_BC_IN_NUM-1:0]        fu_bc_i             ,
+    output  BC_FU  [C_BC_IN_NUM-1:0]        bc_fu_o             ,
+    output  CDB    [C_CDB_NUM-1:0]          cdb_o            ,
+    output  BC_PRF [C_CDB_NUM-1:0]          bc_prf_o            
 
 
 );
 
-    logic [C_FU_NUM-1:0] valid;
-    logic [C_FU_NUM-1:0] mask;
-    logic [C_FU_NUM-1:0] broadcasted;
+    logic [C_BC_IN_NUM-1:0] valid;
+    logic [C_BC_IN_NUM-1:0] mask;
+    logic [C_BC_IN_NUM-1:0] broadcasted;
     logic queued;
 
     
 
     logic [C_CDB_NUM-1:0][C_PE_OUT_WIDTH-1:0] mux_select_enc;
-    logic [C_CDB_NUM-1:0][C_FU_NUM-1:0] mux_select_dec;
+    logic [C_CDB_NUM-1:0][C_BC_IN_NUM-1:0] mux_select_dec;
     logic [C_CDB_NUM-1:0] mux_valid;
 
 
     
     genvar i;
     generate
-        for(i = 0; i < C_FU_NUM; i++) begin                                    : gen_FU_IO
+        for(i = 0; i < C_BC_IN_NUM; i++) begin                                    : gen_FU_IO
             assign valid[i] = fu_bc_i[i].valid;
             assign bc_fu_o[i].broadcasted = broadcasted[i];
         end
@@ -79,7 +79,7 @@ module BC #(
             mask <= mask & (~broadcasted);
         end
         else begin
-            mask <=  {C_FU_NUM{1'b1}};
+            mask <=  {C_BC_IN_NUM{1'b1}};
         end
     end
 
@@ -116,7 +116,7 @@ endmodule // BC
 
 
 module select_decoder #(
-    parameter   C_OUT_WIDTH =   `FU_NUM                  ,
+    parameter   C_OUT_WIDTH =   `BC_IN_NUM                  ,
     parameter   C_IN_WIDTH  =   $clog2(C_OUT_WIDTH)
 )(
     input   logic   [C_IN_WIDTH-1:0]    enc_i   ,
@@ -140,7 +140,7 @@ endmodule
 
 
 module multi_bit_or #(
-    parameter   C_IN_NUM_1  =   `FU_NUM
+    parameter   C_IN_NUM_1  =   `BC_IN_NUM
 )(
     input   logic   [C_IN_NUM_1-1:0]    or_i   ,
     output  logic                       result_o   
@@ -173,7 +173,7 @@ endmodule
 
 module multi_bit_and_or #(
     parameter   C_IN_NUM_1  =   `CDB_NUM,
-    parameter   C_IN_NUM_2  =   `FU_NUM
+    parameter   C_IN_NUM_2  =   `BC_IN_NUM
 )(
     input   logic   [C_IN_NUM_1-1:0]                    and_i   ,
     input   logic   [C_IN_NUM_1-1:0][C_IN_NUM_2-1:0]    or_i   ,
@@ -209,7 +209,7 @@ endmodule
 
 
 module bc_pe_mult #(
-    parameter   C_IN_WIDTH  =   `FU_NUM                  ,
+    parameter   C_IN_WIDTH  =   `BC_IN_NUM                  ,
     parameter   C_OUT_WIDTH =   $clog2(C_IN_WIDTH)      ,
     parameter   C_OUT_NUM   =   `CDB_NUM
 ) (
@@ -272,7 +272,7 @@ endmodule
 /////////////////////////////////////////////////////////////////////////
 
 module pe #(
-    parameter   C_IN_WIDTH  =   `FU_NUM             ,
+    parameter   C_IN_WIDTH  =   `BC_IN_NUM             ,
     parameter   C_OUT_WIDTH =   $clog2(C_IN_WIDTH)
 )(
     input   logic   [C_IN_WIDTH-1:0]    bit_i   ,
@@ -318,7 +318,7 @@ endmodule
 /////////////////////////////////////////////////////////////////////////
 
 module binary_decoder #(
-    parameter   C_OUT_WIDTH =   `FU_NUM             ,
+    parameter   C_OUT_WIDTH =   `BC_IN_NUM             ,
     parameter   C_IN_WIDTH  =   $clog2(C_OUT_WIDTH)
 )(
     input   logic   [C_IN_WIDTH-1:0]    enc_i   ,

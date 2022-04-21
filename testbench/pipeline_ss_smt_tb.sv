@@ -1,7 +1,7 @@
 // ====================================================================
 // Transaction Object Start
 // ====================================================================
-// `define SMT_EN
+`define SMT_EN
 class gen_item; // GEN -> DRV
     rand int    dp_num  ;   // # Dispatch
     rand int    cp_num  ;   // # Complete
@@ -155,12 +155,14 @@ class monitor;
                         if ((vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg != `ZERO_REG)
                         && (vif.rob_amt_mon_o[thread_idx][rt_idx].wr_en == 1'b1)) begin
                             $fdisplay(wb_fileno[thread_idx], "PC=%x, REG[%d]=%x",
-                                (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100),
+                                // (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100),
+                                vif.rt_pc_o[thread_idx][rt_idx],
                                 vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg,
                                 vif.prf_mon_o[vif.rob_amt_mon_o[thread_idx][rt_idx].phy_reg]);
                         end else begin
                             $fdisplay(wb_fileno[thread_idx], "PC=%x, ---", 
-                            (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100));
+                            // (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100));
+                            vif.rt_pc_o[thread_idx][rt_idx]);
                         end
                         inst_cnt++;
                         if (vif.rt_wfi_o[thread_idx][rt_idx] == 1'b1) begin
@@ -952,7 +954,7 @@ interface pipeline_ss_smt_if         (input bit clk_i);
     //      Execute
     IB_FU       [`FU_NUM-1:0]                           ib_fu_mon_o         ;   // From IB to FU
     //      Complete
-    FU_BC                                               fu_bc_mon_o         ;   // From FU to BC
+    FU_BC       [`BC_IN_NUM-1:0]                        fu_bc_mon_o         ;   // From FU to BC
     CDB         [`CDB_NUM-1:0]                          cdb_mon_o           ;   // CDB
     //      Retire
     logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]   rt_pc_o         ;   // PC of retired instructions

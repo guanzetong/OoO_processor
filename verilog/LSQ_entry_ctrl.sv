@@ -124,7 +124,8 @@ module LSQ_entry_ctrl # (
                     // Loop over all the LOAD/STORE FU output
                     for (int in_idx = 0; in_idx < C_LSQ_IN_NUM; in_idx++) begin
                         // IF   the rob_idx of FU output matches the rob_idx of the entry
-                        if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid) begin
+                        if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid
+                        && (fu_lsq_i[in_idx].thread_idx == thread_idx_i)) begin
                             // IF   All the older STORE addresses are known and there is no dependency
                             // ->   Go to LSQ_ST_RD_MEM to read from memory
                             if ((older_store_known == 1'b1) && (depend_flag == 1'b0)) begin
@@ -144,7 +145,8 @@ module LSQ_entry_ctrl # (
                     for (int in_idx = 0; in_idx < C_LSQ_IN_NUM; in_idx++) begin
                         // IF   the rob_idx of FU output matches the rob_idx of the entry
                         // ->   Go to LSQ_ST_ROB_RETIRE to wait for retire
-                        if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid) begin
+                        if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid
+                        && (fu_lsq_i[in_idx].thread_idx == thread_idx_i)) begin
                             next_lsq_entry.state        =   LSQ_ST_ROB_RETIRE       ;
                             next_lsq_entry.data_valid   =   1'b1                    ;
                             next_lsq_entry.data         =   fu_lsq_i[in_idx].data   ;

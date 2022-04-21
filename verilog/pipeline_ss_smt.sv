@@ -29,7 +29,7 @@ module pipeline_ss_smt (
     //      Execute
     output  IB_FU       [`FU_NUM-1:0]                                   ib_fu_mon_o         ,   // From IB to FU
     //      Complete
-    output  FU_BC                                                       fu_bc_mon_o         ,   // From FU to BC
+    output  FU_BC       [`BC_IN_NUM-1:0]                                fu_bc_mon_o         ,   // From FU to BC
     output  CDB         [`CDB_NUM-1:0]                                  cdb_mon_o           ,   // CDB
     //      Retire
     output  ROB_AMT     [`THREAD_NUM-1:0][`RT_NUM-1:0]                  rob_amt_mon_o       ,   // From ROB to AMT
@@ -134,13 +134,13 @@ module pipeline_ss_smt (
     IB_FU       [`FU_NUM-1:0]                               ib_fu           ;
 
     // From BC
-    BC_FU       [`FU_NUM-1:0]                               bc_fu           ;
+    BC_FU       [`BC_IN_NUM-1:0]                            bc_fu           ;
     BC_PRF      [`CDB_NUM-1:0]                              bc_prf          ;
     CDB         [`CDB_NUM-1:0]                              cdb             ;
 
     // From FU
     FU_IB       [`FU_NUM-1:0]                               fu_ib           ;
-    FU_BC       [`FU_NUM-1:0]                               fu_bc           ;
+    FU_BC       [`BC_IN_NUM-1:0]                            fu_bc           ;
     FU_LSQ      [`LSQ_IN_NUM-1:0]                           fu_lsq          ;
     BC_FU       [`LSQ_OUT_NUM-1:0]                          bc_lsq          ;
 
