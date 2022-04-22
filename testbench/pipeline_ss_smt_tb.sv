@@ -1,7 +1,7 @@
 // ====================================================================
 // Transaction Object Start
 // ====================================================================
-`define SMT_EN
+// `define SMT_EN
 class gen_item; // GEN -> DRV
     rand int    dp_num  ;   // # Dispatch
     rand int    cp_num  ;   // # Complete
