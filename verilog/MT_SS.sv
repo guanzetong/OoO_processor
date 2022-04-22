@@ -12,6 +12,10 @@ module MT_SS #(
     parameter   C_THREAD_NUM        =   `THREAD_NUM         ,
     parameter   C_THREAD_IDX_WIDTH  =   $clog2(C_THREAD_NUM)
 ) (
+`ifdef DEBUG
+    // For Testing  
+    output  MT_ENTRY    [C_ARCH_REG_NUM-1:0]        mt_mon_o        ,
+`endif
     input   logic                                   clk_i           ,
     input   logic                                   rst_i           ,
     input   logic                                   rollback_i      ,
@@ -19,9 +23,7 @@ module MT_SS #(
     input   DP_MT       [C_DP_NUM-1:0]              dp_mt_i         ,
     input   CDB         [C_CDB_NUM-1:0]             cdb_i           ,
     input   AMT_ENTRY   [C_ARCH_REG_NUM-1:0]        amt_i           ,
-    output  MT_DP       [C_DP_NUM-1:0]              mt_dp_o         ,
-    // For Testing  
-    output  MT_ENTRY    [C_ARCH_REG_NUM-1:0]        mt_mon_o    
+    output  MT_DP       [C_DP_NUM-1:0]              mt_dp_o         
 );
 
 // ====================================================================
@@ -148,7 +150,9 @@ module MT_SS #(
 // --------------------------------------------------------------------
 // For Testing
 // --------------------------------------------------------------------
+`ifdef DEBUG
     assign  mt_mon_o    =   mt_entry    ;
+`endif
 
 // ====================================================================
 // RTL Logic End

@@ -19,8 +19,10 @@ module RS #(
     localparam  C_RS_IDX_WIDTH  =   $clog2(C_RS_ENTRY_NUM)
 ) (
     // For Testing
+`ifdef DEBUG
     output  RS_ENTRY    [C_RS_ENTRY_NUM-1:0]    rs_mon_o        ,
     output  logic       [C_RS_IDX_WIDTH-1:0]    rs_cod_mon_o    ,
+`endif
     // Testing end
     input   logic                               clk_i           ,   //  Clock
     input   logic                               rst_i           ,   //  Reset
@@ -33,8 +35,6 @@ module RS #(
     input   PRF_RS      [C_IS_NUM-1:0]          prf_rs_i        ,
     input   BR_MIS                              br_mis_i        ,
     input   logic                               exception_i     
-
-
 );
 
 // ====================================================================
@@ -487,8 +487,10 @@ module RS #(
 // --------------------------------------------------------------------
 // For Pipeline Testing
 // --------------------------------------------------------------------
+`ifdef DEBUG
     assign  rs_mon_o    =   rs_array    ;
     assign  rs_cod_mon_o=   cod         ;
+`endif
 
 // ====================================================================
 // RTL Logic End

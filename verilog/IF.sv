@@ -19,7 +19,7 @@
 
 //! Note to self: logic is only used for bits (not struct data types) -> Those internally may have logic types (logic is basically its own type).
 `include "sys_defs.svh"
-`define DEBUG
+// `define DEBUG
 
 
 `define INST_PER_BLOCK ( `CACHE_BLOCK_SIZE / `XLEN_BYTES ) // gives number of instructions / block

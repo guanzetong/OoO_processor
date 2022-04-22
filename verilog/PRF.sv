@@ -19,13 +19,14 @@ module PRF # (
     parameter   C_ARCH_REG_NUM      =   `ARCH_REG_NUM   ,
     parameter   C_PHY_REG_NUM       =   `PHY_REG_NUM    
 ) (
+    // For Testing
+    output  logic   [C_PHY_REG_NUM-1:0] [C_XLEN-1:0]    prf_mon_o,
+    
     input   logic                       clk_i                ,   // Clock
     input   logic                       rst_i                ,   // Reset
     input   RS_PRF  [C_IS_NUM-1:0]      rs_prf_i             ,  
     output  PRF_RS  [C_IS_NUM-1:0]      prf_rs_o             ,
-    input   BC_PRF  [C_CDB_NUM-1:0]     bc_prf_i             ,
-    // For Testing
-    output  logic   [C_PHY_REG_NUM-1:0] [C_XLEN-1:0]    prf_mon_o
+    input   BC_PRF  [C_CDB_NUM-1:0]     bc_prf_i             
 );
 
 // ====================================================================

@@ -79,6 +79,7 @@ DCACHE_FILES += verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv v
 DCACHE_FILES += verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
 export DCACHE_FILES
 DCACHE = $(SYNTH_DIR)/$(DCACHE_NAME).ddc
+export DCACHE_CLOCK_PERIOD = 10.4
 
 # Instruction Cache
 ICACHE_NAME = icache
@@ -89,6 +90,7 @@ ICACHE_FILES += verilog/mshr_dispatch_selector.sv verilog/mshr_hit_detector.sv v
 ICACHE_FILES += verilog/mshr_memory_switch.sv verilog/mshr_proc_switch.sv verilog/mshr_rr_arbiter.sv
 export ICACHE_FILES
 ICACHE = $(SYNTH_DIR)/$(ICACHE_NAME).ddc
+export ICACHE_CLOCK_PERIOD = 10.4
 
 # Instruction Fetch
 IF_NAME = IF
@@ -96,6 +98,8 @@ export IF_NAME
 IF_FILES = verilog/IF.sv
 export IF_FILES
 IF = $(SYNTH_DIR)/$(IF_NAME).ddc
+export IF_CLOCK_PERIOD = 3.3
+# export IF_CLOCK_PERIOD = 3.5
 
 # Dispatcher
 DP_NAME = DP_lsq
@@ -110,6 +114,7 @@ export ROB_NAME
 ROB_FILES = verilog/$(ROB_NAME).sv
 export ROB_FILES
 ROB = $(SYNTH_DIR)/$(ROB_NAME).ddc
+export ROB_CLOCK_PERIOD = 2.5
 
 # Freelist
 FL_NAME = FL_smt
@@ -117,6 +122,7 @@ export FL_NAME
 FL_FILES = verilog/$(FL_NAME).sv
 export FL_FILES
 FL = $(SYNTH_DIR)/$(FL_NAME).ddc
+export FL_CLOCK_PERIOD = 4.5
 
 # Architectural Map Table
 AMT_NAME = AMT
@@ -124,6 +130,7 @@ export AMT_NAME
 AMT_FILES = verilog/$(AMT_NAME).sv
 export AMT_FILES
 AMT = $(SYNTH_DIR)/$(AMT_NAME).ddc
+export AMT_CLOCK_PERIOD = 1.7
 
 # Map Table (Superscalar)
 MT_NAME = MT_SS
@@ -131,6 +138,7 @@ export MT_NAME
 MT_FILES = verilog/$(MT_NAME).sv
 export MT_FILES
 MT = $(SYNTH_DIR)/$(MT_NAME).ddc
+export MT_CLOCK_PERIOD = 2.3
 
 # Reservation Station
 RS_NAME = RS
@@ -138,6 +146,7 @@ export RS_NAME
 RS_FILES = verilog/$(RS_NAME).sv
 export RS_FILES
 RS = $(SYNTH_DIR)/$(RS_NAME).ddc
+export RS_CLOCK_PERIOD = 5.8
 
 # Issue Buffer
 IB_NAME = IB
@@ -150,6 +159,7 @@ IB_FILES += verilog/IB_LOAD_pop_out_router.sv verilog/IB_LOAD_push_in_router.sv 
 IB_FILES += verilog/IB_STORE_pop_out_router.sv verilog/IB_STORE_push_in_router.sv verilog/IB_STORE_queue.sv verilog/IB_STORE.sv
 export IB_FILES
 IB = $(SYNTH_DIR)/$(IB_NAME).ddc
+export IB_CLOCK_PERIOD = 5
 
 # Functional Unit
 FU_NAME = FU
@@ -157,6 +167,7 @@ export FU_NAME
 FU_FILES = verilog/FU.sv
 export FU_FILES
 FU = $(SYNTH_DIR)/$(FU_NAME).ddc
+export FU_CLOCK_PERIOD = 12.5
 
 # Physical Register File
 PRF_NAME = PRF
@@ -164,6 +175,7 @@ export PRF_NAME
 PRF_FILES = verilog/PRF.sv
 export PRF_FILES
 PRF = $(SYNTH_DIR)/$(PRF_NAME).ddc
+export PRF_CLOCK_PERIOD = 2.4
 
 # Load/Store Queue
 LSQ_NAME = LSQ
@@ -173,6 +185,7 @@ LSQ_FILES += verilog/LSQ_bc_switch.sv verilog/LSQ_entry_ctrl.sv verilog/LSQ_glob
 LSQ_FILES += verilog/LSQ_rr_arbiter.sv 
 export LSQ_FILES
 LSQ = $(SYNTH_DIR)/$(LSQ_NAME).ddc
+export LSQ_CLOCK_PERIOD = 5
 
 # Broadcaster
 BC_NAME = BC
@@ -180,6 +193,7 @@ export BC_NAME
 BC_FILES = verilog/BC.sv
 export BC_FILES
 BC = $(SYNTH_DIR)/$(BC_NAME).ddc
+export BC_CLOCK_PERIOD = 3
 
 # Memory Interface Switch
 MEMSW_NAME = mem_switch
@@ -187,6 +201,7 @@ export MEMSW_NAME
 MEMSW_FILES = verilog/mem_switch.sv verilog/mem_fixed_priority_arbiter.sv
 export MEMSW_FILES
 MEMSW = $(SYNTH_DIR)/$(MEMSW_NAME).ddc
+export MEMSW_CLOCK_PERIOD = 1.1
 
 # Data Cache Interface Switch
 DCSW_NAME = dcache_switch
@@ -194,6 +209,7 @@ export DCSW_NAME
 DCSW_FILES = verilog/dcache_switch.sv verilog/dcache_rr_arbiter.sv
 export DCSW_FILES
 DCSW = $(SYNTH_DIR)/$(DCSW_NAME).ddc
+export DCSW_CLOCK_PERIOD = 2
 
 # Pipeline DDC
 PIPE_DDC = $(DCACHE) $(ICACHE) $(IF) $(ROB) $(FL) $(AMT) $(MT) #$(DP)
@@ -202,7 +218,7 @@ PIPE_DDC += $(RS) $(IB) $(FU) $(PRF) $(LSQ) $(BC) $(MEMSW) $(DCSW)
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 10.4	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_PERIOD   = 15   	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################
@@ -254,7 +270,8 @@ assembly: assemble disassemble hex
 
 # Synthesis
 
-$(PIPELINE): $(PIPE_DDC) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
+$(PIPELINE): $(HEADERS) $(PIPE_DDC) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
+# $(PIPELINE): $(HEADERS) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
 	cd $(SYNTH_DIR) && dc_shell-t -f ./$(PIPELINE_NAME).tcl | tee $(PIPELINE_NAME)_synth.out
 	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(PIPELINE)
 

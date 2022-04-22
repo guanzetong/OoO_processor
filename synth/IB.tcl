@@ -26,7 +26,7 @@ read_file -f sverilog [list ${headers} ${sources}]
 set design_name [getenv IB_NAME]
 set clock_name [getenv CLOCK_NET_NAME]
 set reset_name [getenv RESET_NET_NAME]
-set CLK_PERIOD [getenv CLOCK_PERIOD]
+set CLK_PERIOD [getenv IB_CLOCK_PERIOD]
 
 set SYN_DIR ./
 

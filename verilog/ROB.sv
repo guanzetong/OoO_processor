@@ -24,7 +24,9 @@ module ROB # (
     // For testing
 `ifdef DEBUG
     output  ROB_ENTRY   [C_ROB_ENTRY_NUM-1:0]   rob_mon_o       ,
+    output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_tail_mon_o  ,
 `endif
+
     input   logic                               clk_i           ,   // Clock
     input   logic                               rst_i           ,   // Reset
     output  ROB_DP                              rob_dp_o        ,   // To Dispatcher - ROB_DP, Entry readiness for structural hazard detection
@@ -38,12 +40,10 @@ module ROB # (
     output  logic                               br_mis_valid_o  ,   // Branch misprediction valid
     output  logic   [C_XLEN-1:0]                br_target_o     ,   // Branch target address
     output  ROB_LSQ                             rob_lsq_o       ,   // To Load/Store Queue - ROB_LSQ
-
-    output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_head_mon_o  ,
-    output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_tail_mon_o  ,
     output  logic   [C_RT_NUM-1:0][C_XLEN-1:0]  rt_pc_o         ,
     output  logic   [C_RT_NUM-1:0]              rt_valid_o      ,
-    output  logic   [C_RT_NUM-1:0]              rt_wfi_o        
+    output  logic   [C_RT_NUM-1:0]              rt_wfi_o        ,
+    output  logic   [C_ROB_IDX_WIDTH-1:0]       rob_head_mon_o  
 );
 
 //synopsys sync_set_reset ‘‘rst_i’’
@@ -404,9 +404,11 @@ module ROB # (
 // --------------------------------------------------------------------
 // For Pipeline Testing
 // --------------------------------------------------------------------
+`ifdef DEBUG
     assign  rob_mon_o       =   rob_array   ;
-    assign  rob_head_mon_o  =   head        ;
     assign  rob_tail_mon_o  =   tail        ;
+`endif
+    assign  rob_head_mon_o  =   head        ;
 
     always_comb begin
         for (int unsigned idx = 0; idx < C_RT_NUM; idx++) begin

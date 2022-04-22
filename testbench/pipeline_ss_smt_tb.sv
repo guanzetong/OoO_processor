@@ -124,11 +124,11 @@ class monitor;
             clk_cnt++;
             // $display("%0d", vif.fiq_dp.avail_num);
         `ifdef DEBUG
-            // print_IF(vif.pc_en_i, vif.if_ic_o_t, vif.ic_if_o_t, vif.thread_idx_disp_o_t, vif.thread_to_ft_o_t, vif.thread_data_o_t );
+            print_IF(vif.pc_en_i, vif.if_ic_o_t, vif.ic_if_o_t, vif.thread_idx_disp_o_t, vif.thread_to_ft_o_t, vif.thread_data_o_t );
             // print_icache_mem(vif.icache_array_mon_o);
             // print_imshr(vif.imshr_array_mon_o);
-            // print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
-            // print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
+            print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
+            print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
             // print_mt(vif.mt_mon_o);
             // print_amt(vif.amt_mon_o);
             // print_prf(vif.prf_mon_o);
@@ -1068,12 +1068,10 @@ module pipeline_ss_smt_tb;
         .fu_bc_mon_o        (_if.fu_bc_mon_o        ),
         .cdb_mon_o          (_if.cdb_mon_o          ),
         // Retire
-        .rob_amt_mon_o      (_if.rob_amt_mon_o      ),
         .rob_fl_mon_o       (_if.rob_fl_mon_o       ),
         .br_mis_mon_o       (_if.br_mis_mon_o       ),
         // Contents
         .rob_mon_o          (_if.rob_mon_o          ),
-        .rob_head_mon_o     (_if.rob_head_mon_o     ),
         .rob_tail_mon_o     (_if.rob_tail_mon_o     ),
         .rs_mon_o           (_if.rs_mon_o           ),
         .rs_cod_mon_o       (_if.rs_cod_mon_o       ),
@@ -1100,11 +1098,6 @@ module pipeline_ss_smt_tb;
         .LOAD_tail_mon_o    (_if.LOAD_tail_mon_o    ),   // IB queue pointer monitor
         .STORE_head_mon_o   (_if.STORE_head_mon_o   ),   // IB queue pointer monitor
         .STORE_tail_mon_o   (_if.STORE_tail_mon_o   ),   // IB queue pointer monitor
-        .prf_mon_o          (_if.prf_mon_o          ),
-        .lsq_array_mon_o    (_if.lsq_array_mon_o    ),
-        .lsq_head_mon_o     (_if.lsq_head_mon_o     ),
-        .lsq_tail_mon_o     (_if.lsq_tail_mon_o     ),
-        .dmshr_array_mon_o  (_if.dmshr_array_mon_o  ),
 `endif
 
         // Must-Haves
@@ -1121,6 +1114,13 @@ module pipeline_ss_smt_tb;
         .rt_pc_o            (_if.rt_pc_o            ),
         .rt_valid_o         (_if.rt_valid_o         ),
         .rt_wfi_o           (_if.rt_wfi_o           ),
+        .prf_mon_o          (_if.prf_mon_o          ),
+        .rob_head_mon_o     (_if.rob_head_mon_o     ),
+        .rob_amt_mon_o      (_if.rob_amt_mon_o      ),
+        .lsq_array_mon_o    (_if.lsq_array_mon_o    ),
+        .lsq_head_mon_o     (_if.lsq_head_mon_o     ),
+        .lsq_tail_mon_o     (_if.lsq_tail_mon_o     ),
+        .dmshr_array_mon_o  (_if.dmshr_array_mon_o  ),
         .dcache_array_mon_o (_if.dcache_array_mon_o )
     );
 // --------------------------------------------------------------------

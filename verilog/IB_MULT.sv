@@ -12,6 +12,13 @@ module IB_MULT #(
     parameter   C_OUT_NUM       =   `MULT_NUM       ,
     parameter   C_IDX_WIDTH     =   $clog2(C_SIZE)
 ) (
+    // For Testing
+`ifdef DEBUG
+    output  IS_INST [C_SIZE-1:0]        queue_mon_o     ,
+    output  logic   [C_SIZE-1:0]        valid_mon_o     ,
+    output  logic   [C_IDX_WIDTH-1:0]   head_mon_o      ,
+    output  logic   [C_IDX_WIDTH-1:0]   tail_mon_o      ,
+`endif
     input   logic                       clk_i           ,   // Clock
     input   logic                       rst_i           ,   // Reset
     // RS Interface
@@ -22,12 +29,7 @@ module IB_MULT #(
     output  IB_FU   [C_OUT_NUM-1:0]     ib_fu_o         ,   // Issue channel to FU
     // Flush
     input   BR_MIS                      br_mis_i        ,   // Branch Misprediction
-    input   logic                       exception_i     ,   // External Exception
-    // For Testing
-    output  IS_INST [C_SIZE-1:0]        queue_mon_o     ,
-    output  logic   [C_SIZE-1:0]        valid_mon_o     ,
-    output  logic   [C_IDX_WIDTH-1:0]   head_mon_o      ,
-    output  logic   [C_IDX_WIDTH-1:0]   tail_mon_o      
+    input   logic                       exception_i         // External Exception
 );
 
 // ====================================================================
@@ -65,6 +67,12 @@ module IB_MULT #(
 // Description  :   Instruction queue to a type of FU. 
 // --------------------------------------------------------------------
     IB_MULT_queue IB_MULT_queue_inst (
+    `ifdef DEBUG
+        .queue_mon_o    (queue_mon_o    ),
+        .valid_mon_o    (valid_mon_o    ),
+        .head_mon_o     (head_mon_o     ),
+        .tail_mon_o     (tail_mon_o     ),
+    `endif
         .clk_i          (clk_i          ),
         .rst_i          (rst_i          ),
         .s_valid_i      (push_in_valid  ),
@@ -74,11 +82,7 @@ module IB_MULT #(
         .m_ready_i      (pop_out_ready  ),
         .m_data_o       (pop_out_data   ),
         .br_mis_i       (br_mis_i       ),
-        .exception_i    (exception_i    ),
-        .queue_mon_o    (queue_mon_o    ),
-        .valid_mon_o    (valid_mon_o    ),
-        .head_mon_o     (head_mon_o     ),
-        .tail_mon_o     (tail_mon_o     )
+        .exception_i    (exception_i    )
     );
 // --------------------------------------------------------------------
 
