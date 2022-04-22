@@ -146,7 +146,7 @@ export RS_NAME
 RS_FILES = verilog/$(RS_NAME).sv
 export RS_FILES
 RS = $(SYNTH_DIR)/$(RS_NAME).ddc
-export RS_CLOCK_PERIOD = 5.8
+export RS_CLOCK_PERIOD = 6
 
 # Issue Buffer
 IB_NAME = IB
@@ -270,8 +270,8 @@ assembly: assemble disassemble hex
 
 # Synthesis
 
-$(PIPELINE): $(HEADERS) $(PIPE_DDC) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
-# $(PIPELINE): $(HEADERS) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
+# $(PIPELINE): $(HEADERS) $(PIPE_DDC) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
+$(PIPELINE): $(HEADERS) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
 	cd $(SYNTH_DIR) && dc_shell-t -f ./$(PIPELINE_NAME).tcl | tee $(PIPELINE_NAME)_synth.out
 	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(PIPELINE)
 
