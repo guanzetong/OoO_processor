@@ -98,8 +98,7 @@ export IF_NAME
 IF_FILES = verilog/IF.sv
 export IF_FILES
 IF = $(SYNTH_DIR)/$(IF_NAME).ddc
-export IF_CLOCK_PERIOD = 3.3
-# export IF_CLOCK_PERIOD = 3.5
+export IF_CLOCK_PERIOD = 2.6
 
 # Dispatcher
 DP_NAME = DP_lsq
