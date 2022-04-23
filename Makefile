@@ -184,7 +184,7 @@ LSQ_FILES += verilog/LSQ_bc_switch.sv verilog/LSQ_entry_ctrl.sv verilog/LSQ_glob
 LSQ_FILES += verilog/LSQ_rr_arbiter.sv 
 export LSQ_FILES
 LSQ = $(SYNTH_DIR)/$(LSQ_NAME).ddc
-export LSQ_CLOCK_PERIOD = 5
+export LSQ_CLOCK_PERIOD = 4.1
 
 # Broadcaster
 BC_NAME = BC
@@ -192,7 +192,7 @@ export BC_NAME
 BC_FILES = verilog/BC.sv
 export BC_FILES
 BC = $(SYNTH_DIR)/$(BC_NAME).ddc
-export BC_CLOCK_PERIOD = 3
+export BC_CLOCK_PERIOD = 2.7
 
 # Memory Interface Switch
 MEMSW_NAME = mem_switch
