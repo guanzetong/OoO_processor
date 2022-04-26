@@ -20,7 +20,7 @@ synth/*.rep
 synth/*.chk
 synth/*.svf
 synth/*.log
-# synth/*.ddc
+synth/*.ddc
 synth/*.vg
 DVEfiles/
 inter.vpd
