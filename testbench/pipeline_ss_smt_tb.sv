@@ -2,7 +2,7 @@
 // Transaction Object Start
 // ====================================================================
 // `define SMT_EN
-// `define THREAD_ONE_START_PC 256 // 0x100 (Default)
+`define THREAD_ONE_START_PC 256 // 0x100 (Default)
 class gen_item; // GEN -> DRV
     rand int    dp_num  ;   // # Dispatch
     rand int    cp_num  ;   // # Complete
