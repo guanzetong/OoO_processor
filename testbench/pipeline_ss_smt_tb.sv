@@ -142,9 +142,9 @@ class monitor;
             // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
             // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o, vif.rt_wfi_o);
             // print_cdb(vif.cdb_mon_o);
-            // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
-            // print_dmshr(vif.dmshr_array_mon_o);
-            // print_dcache_mem(vif.dcache_array_mon_o);
+            print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
+            print_dmshr(vif.dmshr_array_mon_o);
+            print_dcache_mem(vif.dcache_array_mon_o);
         `endif
             // Monitor Retire
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin

@@ -13,8 +13,9 @@
 #
 #
 
-SOURCE = test_progs/rv32_mult.s
+# SOURCE = test_progs/rv32_mult.s
 # SOURCE = test_progs/alexnet.c
+SOURCE = test_progs/sampler.s
 
 
 CRT = crt.s
@@ -217,7 +218,7 @@ PIPE_DDC += $(RS) $(IB) $(FU) $(PRF) $(LSQ) $(BC) $(MEMSW) $(DCSW)
 # Passed through to .tcl scripts:
 export CLOCK_NET_NAME = clk_i
 export RESET_NET_NAME = rst_i
-export CLOCK_PERIOD   = 15   	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
+export CLOCK_PERIOD   = 19.4   	# TODO: You will need to make match SYNTH_CLOCK_PERIOD in sys_defs
                                 #       and make this more aggressive
 
 ################################################################################
@@ -269,8 +270,8 @@ assembly: assemble disassemble hex
 
 # Synthesis
 
-# $(PIPELINE): $(HEADERS) $(PIPE_DDC) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
-$(PIPELINE): $(HEADERS) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
+$(PIPELINE): $(HEADERS) $(PIPE_DDC) $(PIPEFILES) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
+# $(PIPELINE): $(HEADERS) $(SYNTH_DIR)/$(PIPELINE_NAME).tcl
 	cd $(SYNTH_DIR) && dc_shell-t -f ./$(PIPELINE_NAME).tcl | tee $(PIPELINE_NAME)_synth.out
 	echo -e -n 'H\n1\ni\n`timescale 1ns/100ps\n.\nw\nq\n' | ed $(PIPELINE)
 
