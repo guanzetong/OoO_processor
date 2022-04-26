@@ -8,7 +8,7 @@
 // For simulation only. Do not modify.
 
 module AMT_svsim #(
-    parameter   C_RT_NUM            =   3         ,
+    parameter   C_RT_NUM            =   2         ,
     parameter   C_ARCH_REG_NUM      =   32   ,
     parameter   C_TAG_IDX_WIDTH     =   $clog2(96)  ,
     parameter   C_THREAD_NUM        =   2     ,

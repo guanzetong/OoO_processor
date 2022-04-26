@@ -2,6 +2,7 @@
 // Transaction Object Start
 // ====================================================================
 // `define SMT_EN
+`define THREAD_ONE_START_PC 256 // 0x100 (Default)
 class gen_item; // GEN -> DRV
     rand int    dp_num  ;   // # Dispatch
     rand int    cp_num  ;   // # Complete
@@ -124,11 +125,11 @@ class monitor;
             clk_cnt++;
             // $display("%0d", vif.fiq_dp.avail_num);
         `ifdef DEBUG
-            // print_IF(vif.pc_en_i, vif.if_ic_o_t, vif.ic_if_o_t, vif.thread_idx_disp_o_t, vif.thread_to_ft_o_t, vif.thread_data_o_t );
+            print_IF(vif.pc_en_i, vif.if_ic_o_t, vif.ic_if_o_t, vif.thread_idx_disp_o_t, vif.thread_to_ft_o_t, vif.thread_data_o_t );
             // print_icache_mem(vif.icache_array_mon_o);
             // print_imshr(vif.imshr_array_mon_o);
-            // print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
-            // print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
+            print_rob(vif.rob_mon_o, vif.rob_head_mon_o, vif.rob_tail_mon_o);
+            print_rs(vif.rs_mon_o, vif.rs_cod_mon_o);
             // print_mt(vif.mt_mon_o);
             // print_amt(vif.amt_mon_o);
             // print_prf(vif.prf_mon_o);
@@ -142,9 +143,9 @@ class monitor;
             // print_mt_dp(vif.dp_mt_mon_o, vif.mt_dp_mon_o);
             // print_rt(vif.rt_pc_o, vif.rt_valid_o, vif.rob_amt_mon_o, vif.rob_fl_mon_o, vif.prf_mon_o, vif.rt_wfi_o);
             // print_cdb(vif.cdb_mon_o);
-            // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
-            // print_dmshr(vif.dmshr_array_mon_o);
-            // print_dcache_mem(vif.dcache_array_mon_o);
+            print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
+            print_dmshr(vif.dmshr_array_mon_o);
+            print_dcache_mem(vif.dcache_array_mon_o);
         `endif
             // Monitor Retire
             for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
@@ -155,19 +156,22 @@ class monitor;
                         if ((vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg != `ZERO_REG)
                         && (vif.rob_amt_mon_o[thread_idx][rt_idx].wr_en == 1'b1)) begin
                             $fdisplay(wb_fileno[thread_idx], "PC=%x, REG[%d]=%x",
-                                (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100),
+                                // (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100),
+                                vif.rt_pc_o[thread_idx][rt_idx],
                                 vif.rob_amt_mon_o[thread_idx][rt_idx].arch_reg,
                                 vif.prf_mon_o[vif.rob_amt_mon_o[thread_idx][rt_idx].phy_reg]);
                         end else begin
                             $fdisplay(wb_fileno[thread_idx], "PC=%x, ---", 
-                            (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100));
+                            // (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100));
+                            vif.rt_pc_o[thread_idx][rt_idx]);
                         end
-                        inst_cnt++;
                         if (vif.rt_wfi_o[thread_idx][rt_idx] == 1'b1) begin
                             wfi_flag[thread_idx]    =   1'b1;
                             $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, exit thread %0d", 
                             $time, vif.rt_pc_o[thread_idx][rt_idx], thread_idx);
-                        end
+                        end else begin// Not halt instruction so increment.
+                            inst_cnt++;
+                        end // end else
                     end
                 end // for
             end // for
@@ -206,11 +210,13 @@ class monitor;
                 end
             end
 
+	    /*
             if (&wfi_flag == 1) begin
                 print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
                 print_dmshr(vif.dmshr_array_mon_o);
                 print_dcache_mem(vif.dcache_array_mon_o);
             end
+	    */
             
             if ((&wfi_flag == 1) && (store_complete_flag == 1)) begin
                 // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
@@ -952,7 +958,7 @@ interface pipeline_ss_smt_if         (input bit clk_i);
     //      Execute
     IB_FU       [`FU_NUM-1:0]                           ib_fu_mon_o         ;   // From IB to FU
     //      Complete
-    FU_BC                                               fu_bc_mon_o         ;   // From FU to BC
+    FU_BC       [`BC_IN_NUM-1:0]                        fu_bc_mon_o         ;   // From FU to BC
     CDB         [`CDB_NUM-1:0]                          cdb_mon_o           ;   // CDB
     //      Retire
     logic       [`THREAD_NUM-1:0][`RT_NUM-1:0][`XLEN-1:0]   rt_pc_o         ;   // PC of retired instructions
@@ -1066,12 +1072,10 @@ module pipeline_ss_smt_tb;
         .fu_bc_mon_o        (_if.fu_bc_mon_o        ),
         .cdb_mon_o          (_if.cdb_mon_o          ),
         // Retire
-        .rob_amt_mon_o      (_if.rob_amt_mon_o      ),
         .rob_fl_mon_o       (_if.rob_fl_mon_o       ),
         .br_mis_mon_o       (_if.br_mis_mon_o       ),
         // Contents
         .rob_mon_o          (_if.rob_mon_o          ),
-        .rob_head_mon_o     (_if.rob_head_mon_o     ),
         .rob_tail_mon_o     (_if.rob_tail_mon_o     ),
         .rs_mon_o           (_if.rs_mon_o           ),
         .rs_cod_mon_o       (_if.rs_cod_mon_o       ),
@@ -1098,11 +1102,6 @@ module pipeline_ss_smt_tb;
         .LOAD_tail_mon_o    (_if.LOAD_tail_mon_o    ),   // IB queue pointer monitor
         .STORE_head_mon_o   (_if.STORE_head_mon_o   ),   // IB queue pointer monitor
         .STORE_tail_mon_o   (_if.STORE_tail_mon_o   ),   // IB queue pointer monitor
-        .prf_mon_o          (_if.prf_mon_o          ),
-        .lsq_array_mon_o    (_if.lsq_array_mon_o    ),
-        .lsq_head_mon_o     (_if.lsq_head_mon_o     ),
-        .lsq_tail_mon_o     (_if.lsq_tail_mon_o     ),
-        .dmshr_array_mon_o  (_if.dmshr_array_mon_o  ),
 `endif
 
         // Must-Haves
@@ -1119,6 +1118,13 @@ module pipeline_ss_smt_tb;
         .rt_pc_o            (_if.rt_pc_o            ),
         .rt_valid_o         (_if.rt_valid_o         ),
         .rt_wfi_o           (_if.rt_wfi_o           ),
+        .prf_mon_o          (_if.prf_mon_o          ),
+        .rob_head_mon_o     (_if.rob_head_mon_o     ),
+        .rob_amt_mon_o      (_if.rob_amt_mon_o      ),
+        .lsq_array_mon_o    (_if.lsq_array_mon_o    ),
+        .lsq_head_mon_o     (_if.lsq_head_mon_o     ),
+        .lsq_tail_mon_o     (_if.lsq_tail_mon_o     ),
+        .dmshr_array_mon_o  (_if.dmshr_array_mon_o  ),
         .dcache_array_mon_o (_if.dcache_array_mon_o )
     );
 // --------------------------------------------------------------------
@@ -1163,8 +1169,11 @@ module pipeline_ss_smt_tb;
         _if.exception_i =   0;
 
         for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+            _if.rst_pc_i[thread_idx]  =   thread_idx * `THREAD_ONE_START_PC;	
             // _if.rst_pc_i[thread_idx]  =   thread_idx * 'h1900;
-            _if.rst_pc_i[thread_idx]  =   thread_idx * 'h100;
+            // _if.rst_pc_i[thread_idx]  =   thread_idx * 'h100;
+            // This second line is for setting the thread 0 to start at PC of thread 0 (when testing only 1).	
+            //_if.rst_pc_i[thread_idx]  =   ( thread_idx + 1 ) * `THREAD_ONE_START_PC;
         end
 
         @(posedge clk_i);

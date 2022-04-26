@@ -16,15 +16,18 @@ module FL_smt #(
     parameter   C_TAG_IDX_WIDTH =   `TAG_IDX_WIDTH      ,
     parameter   C_FL_IDX_WIDTH  =   $clog2(C_FL_ENTRY_NUM)
 ) (
+    //test
+`ifdef DEBUG
+    output  FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    fl_mon_o    ,
+`endif
     input   logic                               clk_i       ,   //  Clock
     input   logic                               rst_i       ,   //  Reset
     input   BR_MIS                              br_mis_i    ,  
     input   DP_FL                               dp_fl_i     ,
     input   ROB_FL      [C_THREAD_NUM-1:0]      rob_fl_i    ,
     output  FL_DP                               fl_dp_o     ,
-    input   logic                               exception_i ,
-    //test
-    output  FL_ENTRY    [C_FL_ENTRY_NUM-1:0]    fl_mon_o
+    input   logic                               exception_i 
+
 );
 
 // ====================================================================
@@ -130,8 +133,9 @@ module FL_smt #(
             end//else for Dispatch
         end//for fl_idx
     end//ff
-
+`ifdef DEBUG
     assign  fl_mon_o    =   fl_entry;
+`endif
 
 // --------------------------------------------------------------------
 // Dispatch Select

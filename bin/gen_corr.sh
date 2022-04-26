@@ -21,6 +21,21 @@ function assemble( ) {
 	echo ""
 }
 
+function compile( ) {
+	# Arguments (filename w/o extension, Source-file name)
+	file="$1" 
+	SOURCE="$2" # Name of source file
+	echo "Compiling $file"
+	cp "$SOURCE" project-v-open-beta/test_progs/sampler.c
+	#cp "$SOURCE" project-v-open-beta/test_progs/sampler.s
+	#cat project-v-open-beta/test_progs/sampler.s
+
+	# Run makefile against compile
+	(cd project-v-open-beta && make program)
+	# The actual memory portion is finally outputed to program.mem
+	echo ""
+}
+
 # Executes testbench (now converted to a memory_file (program.mem)
 function run( ) {
 	file="$1" 
@@ -49,6 +64,9 @@ function save_writeback_out( ) {
 	cp project-v-open-beta/writeback.out corrOutput/"${test_output}-writeback.out"
 	cp project-v-open-beta/program.out corrOutput/"${test_output}-program.out"
 	echo ""
+	# Ensure errors occur when possible (for compilation)
+	rm project-v-open-beta/program.out
+	rm project-v-open-beta/writeback.out
 } # end save_writeback_out( )
 
 
@@ -61,7 +79,7 @@ fi
 # Beginning of Meaningful Execution
 # Iterate through entire directory and execute any assembly (.s) file,
 # writing program.out and writeback.out to some known file
-for file in test_progs/*.s; do
+for file in test_progs/*.{c,s}; do
 	SOURCE=$file
 	file=$(basename "$file")
 	
@@ -101,8 +119,11 @@ for file in test_progs/*.s; do
 
 	# If didn't find
 	if [ $exec_test -eq 1 ]; then
-	    assemble "$file" "$SOURCE"
-
+		if [[ file == *.s ]]; then
+	    	assemble "$file" "$SOURCE"
+		else # Else compile
+			compile "$file" "$SOURCE"
+		fi
 	    #Run testcase
 	    run "$file"
 

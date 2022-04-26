@@ -13,6 +13,13 @@ module IB_MULT_queue #(
     parameter   C_OUT_NUM   =   `MULT_NUM       ,
     parameter   C_IDX_WIDTH =   $clog2(C_SIZE)
 ) (
+    // For Testing
+`ifdef DEBUG
+    output  IS_INST [C_SIZE-1:0]        queue_mon_o     ,
+    output  logic   [C_SIZE-1:0]        valid_mon_o     ,
+    output  logic   [C_IDX_WIDTH-1:0]   head_mon_o      ,
+    output  logic   [C_IDX_WIDTH-1:0]   tail_mon_o      ,
+`endif
     input   logic                       clk_i           ,   // Clock
     input   logic                       rst_i           ,   // Reset
     // Push-In
@@ -25,12 +32,7 @@ module IB_MULT_queue #(
     output  IS_INST [C_OUT_NUM-1:0]     m_data_o        ,   // Pop-out Data
     // Flush
     input   BR_MIS                      br_mis_i        ,   // Branch Misprediction
-    input   logic                       exception_i     ,   // External Exception
-    // For Testing
-    output  IS_INST [C_SIZE-1:0]        queue_mon_o     ,
-    output  logic   [C_SIZE-1:0]        valid_mon_o     ,
-    output  logic   [C_IDX_WIDTH-1:0]   head_mon_o      ,
-    output  logic   [C_IDX_WIDTH-1:0]   tail_mon_o      
+    input   logic                       exception_i         // External Exception
 );
 
 // ====================================================================
@@ -280,10 +282,12 @@ module IB_MULT_queue #(
 // --------------------------------------------------------------------
 // Queue Entry
 // --------------------------------------------------------------------
+`ifdef DEBUG
     assign  queue_mon_o =   queue   ;
     assign  valid_mon_o =   valid   ;
     assign  head_mon_o  =   head    ;
     assign  tail_mon_o  =   tail    ;
+`endif
 
 // ====================================================================
 // RTL Logic End

@@ -1,0 +1,26 @@
+<session version="1.1" release="R-2020.12-SP2-1" timestp="2022-04-21 20:18:55 GMT">
+  <info>
+    <attr name="datetime" value="Thu Apr 21 16:18:56 2022
+"/>
+    <attr name="command" value="urg -dir simv.vdb -format text"/>
+    <attr name="top_instance" value="cache_tb"/>
+  </info>
+  <hvp>
+    <datadef>
+      <metdef name="Line" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Toggle" type="ratio" aggregator="average" builtin="1" />
+    </datadef>
+  </hvp>
+  <old_coverage>
+  <scope type="top" name="top">
+    <metric name="Line" value="2985/3580" />
+    <metric name="Toggle" value="66005/82062" />
+  </scope>
+  <scope type="instance" name="top">
+  </scope>
+  <scope type="group" name="top">
+  </scope>
+  <scope type="assert" name="Statistics">
+  </scope>
+  </old_coverage>
+</session>

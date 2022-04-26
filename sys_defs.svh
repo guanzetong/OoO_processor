@@ -32,7 +32,7 @@
 
 //you can change the clock period to whatever, 10 is just fine
 `define VERILOG_CLOCK_PERIOD   10.0
-`define SYNTH_CLOCK_PERIOD     15.0 // Clock period for synth and memory latency
+`define SYNTH_CLOCK_PERIOD     19.4 // Clock period for synth and memory latency
 
 `define MEM_LATENCY_IN_CYCLES (100.0/`SYNTH_CLOCK_PERIOD+0.49999)
 // the 0.49999 is to force ceiling(100/period).  The default behavior for
@@ -49,7 +49,7 @@ typedef union packed {
 // Architecture Parameters
 // 
 //////////////////////////////////////////////
-`define DEBUG
+// `define DEBUG
 
 `define IF_NUM          2   // The number of (F)etch channels per cycle. ( Used for fetching from instruction cache )		
 `define FIQ_NUM         16  // The numb
@@ -70,8 +70,9 @@ typedef union packed {
 `define LOAD_NUM        1
 `define STORE_NUM       1
 `define FU_NUM          (`ALU_NUM + `MULT_NUM + `BR_NUM + `LOAD_NUM + `STORE_NUM)
-`define LSQ_IN_NUM      `LOAD_NUM + `STORE_NUM
+`define LSQ_IN_NUM      (`LOAD_NUM + `STORE_NUM)
 `define LSQ_OUT_NUM     (`THREAD_NUM) * (`LOAD_NUM)
+`define BC_IN_NUM       (`ALU_NUM + `MULT_NUM + `BR_NUM + `LSQ_OUT_NUM + `STORE_NUM)
 
 `define ALU_CYCLE       1
 `define MULT_CYCLE      1

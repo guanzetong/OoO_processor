@@ -20,10 +20,11 @@ synth/*.rep
 synth/*.chk
 synth/*.svf
 synth/*.log
-synth/*.ddc
+# synth/*.ddc
 synth/*.vg
 DVEfiles/
 inter.vpd
 cm.log
 attempt/
 verilog.dump
+test_progs/testSrc.*
