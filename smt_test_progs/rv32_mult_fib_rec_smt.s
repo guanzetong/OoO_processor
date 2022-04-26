@@ -85,9 +85,9 @@ fib_ret_1:
 	jal	x2,	start #
 	.dword 2862933555777941757
 	.dword 	3037000493
-start:	lw	x3, 0(x2)
-	lw	x4, 8(x2)
-	li	x5, 0
+start:	lw	x3, 0(x2) # Points to .dword 2862933555777941757 here
+	lw	x4, 8(x2) 	  # Points to .dword 3037000493
+	li	x5, 0			
 loop:	addi	x5,	x5,	1 #
 	slti	x6,	x5,	16 #
 	mul	x11,	x2,	x3 #

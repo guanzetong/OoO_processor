@@ -27,3 +27,4 @@ inter.vpd
 cm.log
 attempt/
 verilog.dump
+test_progs/testSrc.*

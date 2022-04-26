@@ -2,6 +2,7 @@
 // Transaction Object Start
 // ====================================================================
 // `define SMT_EN
+// `define THREAD_ONE_START_PC 256 // 0x100 (Default)
 class gen_item; // GEN -> DRV
     rand int    dp_num  ;   // # Dispatch
     rand int    cp_num  ;   // # Complete
@@ -1166,8 +1167,11 @@ module pipeline_ss_smt_tb;
         _if.exception_i =   0;
 
         for (int unsigned thread_idx = 0; thread_idx < `THREAD_NUM; thread_idx++) begin
+            _if.rst_pc_i[thread_idx]  =   thread_idx * `THREAD_ONE_START_PC;	
             // _if.rst_pc_i[thread_idx]  =   thread_idx * 'h1900;
-            _if.rst_pc_i[thread_idx]  =   thread_idx * 'h100;
+            // _if.rst_pc_i[thread_idx]  =   thread_idx * 'h100;
+            // This second line is for setting the thread 0 to start at PC of thread 0 (when testing only 1).	
+            //_if.rst_pc_i[thread_idx]  =   ( thread_idx + 1 ) * `THREAD_ONE_START_PC;
         end
 
         @(posedge clk_i);

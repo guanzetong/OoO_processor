@@ -1,0 +1,6 @@
+## Overview
+This is a N-way Supersclar Pipeline with SMT support (currently 2 hardware threads). Much of the modules are specifically designed to support SMT and thus we encourage testing multithreaded on this pipeline. As of now, it does not have fences to ensure threads interleavings donot generate incorrect executions and thus, when designing testcases, it is imperative to ensure that either shared addresses are read only or that writes are to seperate addresses.
+
+## SMT Setup 
+The following will go over a brief overview of how to set up SMT in our pipeline. Because there is no OS support, our pipeline has additional ports which enables setting the PC directly to the beginning of a thread routine. You can configure it by uncommenting the macro "SMT_EN." This will
+enable the PC for the second thread and allow instructions starting at this PC to enter the pipeline. You can adjust the starting address for the second PC via the macro "THREAD_ONE_START_PC." We have provided some example testcases in the directory SMT_test_projs which are iterations of rv32_mult.s and rv32_fib_fib_rec.s. All of the addresses for the second hardware thread begins at the default THREAD_ONE_START_PC (0x100).

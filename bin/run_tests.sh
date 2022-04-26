@@ -6,20 +6,43 @@ red="\e[31m"
 DONE="\e[0m"
 
 # Must declare function first before you can call it.
-# Assembles given file. Uses indirection to change test_progs/sampler.s to 
+# Assembles given file. Uses indirection to change test_progs/testSrc.s to 
 # $file and runs make compile through it.
 function assemble( ) {
 	# Arguments (filename w/o extension, Source-file name)
 	file="$1" 
 	SOURCE="$2" # Name of source file
 	echo "Assembling $file"
-	cp "$SOURCE" test_progs/sampler.s
-	#cp "$SOURCE" project-v-open-beta/test_progs/sampler.s
-	#cat project-v-open-beta/test_progs/sampler.s
+	cp "$SOURCE" test_progs/testSrc.s
+	#cp "$SOURCE" project-v-open-beta/test_progs/testSrc.s
+	#cat project-v-open-beta/test_progs/testSrc.s
 
 	# Run makefile against compile
 	#(cd project-v-open-beta && make assembly)
-	make assembly
+	if ! (make assembly); then
+		echo "Command make assembly returned some error"
+		exit
+	fi
+	# The actual memory portion is finally outputed to program.mem
+	echo ""
+}
+
+function compile( ) {
+	# Arguments (filename w/o extension, Source-file name)
+	file="$1" 
+	SOURCE="$2" # Name of source file
+	echo "Compiling $file"
+	echo "Source name is: $SOURCE"
+	cp "$SOURCE" test_progs/testSrc.c
+	#cp "$SOURCE" project-v-open-beta/test_progs/testSrc.s
+	#cat project-v-open-beta/test_progs/testSrc.s
+
+	# Run makefile against compile
+	#(cd project-v-open-beta && make assembly)
+	if ! (make program); then
+		echo "Command make program returned some error"
+		exit
+	fi
 	# The actual memory portion is finally outputed to program.mem
 	echo ""
 }
@@ -32,7 +55,7 @@ function run( ) {
 	# Use makefile to run testcase (make simv)
 	#(cd project-v-open-beta && make > /dev/null 2>&1)
 	#make > /dev/null 2>&1
-	make syn 
+	make
 	echo ""
 }
 
@@ -49,14 +72,25 @@ function create_dir( ) {
 # and copies to some known loccation if it isn't for further inspection.
 function compare_to_corr( ) {
 	file="$1" # The file used
-	echo "Comparing output $file."
-	test_name="$2"
-	corr_output="corrOutput/corr-$test_name"
+
+	# echo "Comparing output $file."
+	# test_name="$2"
+	# corr_output="corrOutput/corr-$test_name"
 
 	# The reasoning of passing in writeback.out and program.out means that
 	# this routine is no longer coupled with some filesystem structure (we can run and output anywhere and just compare it to the original (ground truth).
 	WRITEBACK="$3"
 	PROGRAMOUT="$4"
+	cp program.mem ../eecs470_w22_project3_xiongrob/program.mem
+	echo "Running groundtruth."
+	(cd ../eecs470_w22_project3_xiongrob && make)
+
+	mv ../eecs470_w22_project3_xiongrob/writeback.out corr-$WRITEBACK
+	echo "Writing to corr-$WRITEBACK"
+	mv ../eecs470_w22_project3_xiongrob/program.out corr-$PROGRAMOUT
+	echo "Writing to corr-$PROGRAMOUT"
+
+	
 
 	# Use a flag to determine whether either writeback.out or program.out differs (should remain 0 if there are no differences).
 	failed=0
@@ -64,7 +98,7 @@ function compare_to_corr( ) {
 	# Now look at program.out and writeback.out
 
 	echo "Comparing writeback.out"
-	if diff -q "$WRITEBACK" "$corr_output-writeback.out"; then
+	if diff -q "$WRITEBACK" "corr-$WRITEBACK"; then
 		echo "writeback.out same"
 	else
 		failed=1
@@ -73,11 +107,11 @@ function compare_to_corr( ) {
 		cp "$WRITEBACK" "wrongOutput/wrong-$test_name-writeback.out"
 	fi # end if
 
-	echo "Comparing program.out"
+	echo "Comparing program.out with corr-$PROGRAMOUT"
 
 	# Remove any lines not beginning with @@@
 	# This is because all other lines are optimization dependent (e.g. CPI).
-	cat "$corr_output-program.out" | grep @@@ > temp.txt
+	cat "corr-$PROGRAMOUT" | grep @@@ > temp.txt
         if cat "$PROGRAMOUT" | grep @@@ | diff -q - temp.txt; then
 		echo "program.out is the same"
 	else
@@ -85,6 +119,7 @@ function compare_to_corr( ) {
         	echo "${red}Test $file failed...( program.out differs )${DONE}"
 		create_dir "wrongOutput"
 		cp "$PROGRAMOUT" "wrongOutput/wrong-$test_name-program.out"
+		#exit
 	fi # end if
 
 	rm temp.txt
@@ -92,7 +127,13 @@ function compare_to_corr( ) {
 	# If passed...
 	if [ $failed -eq 0 ]; then
         	echo -e "${green}Test $file passed!${DONE}"
+	else
+		echo -e "${red}Test $file failed...${DONE}"
+		exit
 	fi
+	# Delete writeback to save space
+	rm corr-$WRITEBACK
+	rm corr-$PROGRAMOUT
 } # end compare_to_corr( )
 
 # Remove all wrongOutput
@@ -101,18 +142,26 @@ if [ "(ls -A wrongOutput)" ]; then
 fi
 
 
-for file in test_progs/*.s; do
+# Look for all .c and .s files
+for file in test_progs/*.{s,c}; do
 	SOURCE=$file
 	#file=$(echo $file | cut -d '.' -f1)
 	file=${file%.*} # Remove file extension
 
 	# Always ignore the file used as source
-	if [ "$SOURCE" == "test_progs/sampler.s" ]; then
+	if [ "$SOURCE" == "test_progs/testSrc.s" ] || [ "$SOURCE" == "test_progs/testSrc.c" ]; then
 		continue
 	fi
-
-	# Assemable testcase
-	assemble "$file" "$SOURCE"
+	if [[ $SOURCE == *.s ]]; then
+		# Assemble testcase
+		assemble  "$file" "$SOURCE"
+	elif [[ $SOURCE == *.c ]]; then
+		# Compile testcase
+		compile "$file" "$SOURCE"
+	else
+		echo "$SOURCE is not an executable"
+		continue
+	fi
 
 	# Exec function
 	run "$file"
@@ -126,7 +175,9 @@ for file in test_progs/*.s; do
 	#echo "@@@ Diff" >> project-v-open-beta/writeback.out
 	#echo "@@@ Diff" >> project-v-open-beta/program.out
 	#compare_to_corr "$file" "$test_name" "project-v-open-beta/writeback.out" "project-v-open-beta/program.out"
-	compare_to_corr "$file" "$test_name" "writeback.out" "syn_program.out"
+	compare_to_corr "$file" "$test_name" "writeback.out" "program.out"
 done
 
-cp bin/sampler_orig.s test_progs/sampler.s
+echo -e "${green}All tests passed!${DONE}"
+
+cp bin/testSrc_orig.s test_progs/testSrc.s

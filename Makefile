@@ -15,7 +15,9 @@
 
 # SOURCE = test_progs/rv32_mult.s
 # SOURCE = test_progs/alexnet.c
-SOURCE = test_progs/sampler.s
+#A_SOURCE = test_progs/sampler_orig.s
+A_SOURCE = test_progs/testSrc.s
+SOURCE = test_progs/testSrc.c
 
 
 CRT = crt.s
@@ -250,7 +252,7 @@ compile: $(CRT) $(LINKERS)
 	$(GCC) $(CFLAGS) $(OFLAGS) $(CRT) $(SOURCE) -T $(LINKERS) -o program.elf
 	$(GCC) $(CFLAGS) $(DEBUG_FLAG) $(CRT) $(SOURCE) -T $(LINKERS) -o program.debug.elf
 assemble: $(ASLINKERS)
-	$(GCC) $(ASFLAGS) $(SOURCE) -T $(ASLINKERS) -o program.elf 
+	$(GCC) $(ASFLAGS) $(A_SOURCE) -T $(ASLINKERS) -o program.elf 
 	cp program.elf program.debug.elf
 disassemble: program.debug.elf
 	$(OBJDUMP) $(OBJFLAGS) program.debug.elf > program.dump

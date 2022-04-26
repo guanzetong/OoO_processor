@@ -22,6 +22,7 @@
 start:	lw	x3, 0(x2)
 	lw	x4, 8(x2)
 	li	x5, 0
+	addi x2, x0, 100
 loop:	addi	x5,	x5,	1 #
 	slti	x6,	x5,	16 #
 	mul	x11,	x2,	x3 #
@@ -40,7 +41,7 @@ loop:	addi	x5,	x5,	1 #
 	sw	x13, 32(x1)
 	srli	x14,	x2,	0 #
 	sw	x14, 48(x1)
-	addi	x1,	x1,	32 #
+	addi	x1,	x1,	64 #
 	bne	x6,	x0,	loop #
 	wfi
     nop
@@ -76,7 +77,6 @@ loop:	addi	x5,	x5,	1 #
 	nop
     nop
 	nop
-    nop
         data1 = 0x1000
 	li	x1, data1			# Starts at 0x1000
 	jal	x2,	start1 #
@@ -85,6 +85,7 @@ loop:	addi	x5,	x5,	1 #
 start1:	lw	x3, 0(x2)       # loads  2862933555777941757
 	lw	x4, 8(x2)           # loads  3037000493
 	li	x5, 0
+	addi x2, x0, 100
 loop1:	addi	x5,	x5,	1 #
 	slti	x6,	x5,	16 # (set 1 (if) less than immediate)
 	mul	x11,	x2,	x3 #
@@ -103,6 +104,6 @@ loop1:	addi	x5,	x5,	1 #
 	sw	x13, 40(x1)
 	srli	x14,	x2,	0 #
 	sw	x14, 56(x1)
-	addi	x1,	x1,	72 #
-	bne	x6,	x0,	loop # while ( x5 < 16 ) 
+	addi	x1,	x1,	64 #
+	bne	x6,	x0,	loop1 # while ( x5 < 16 ) 
 	wfi
