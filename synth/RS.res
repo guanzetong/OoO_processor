@@ -3,11 +3,11 @@
 Report : resources
 Design : RS
 Version: S-2021.06-SP1
-Date   : Fri Apr 22 12:05:22 2022
+Date   : Tue Apr 26 12:09:45 2022
 ****************************************
 
 Resource Sharing Report for design RS in file
-        /afs/umich.edu/user/z/t/ztguan/group6w22/verilog/RS.sv
+        /afs/umich.edu/user/x/i/xiongrob/Private/470/projs/group6w22/verilog/RS.sv
 
 ===============================================================================
 |          |              |            | Contained     |                      |

@@ -210,11 +210,13 @@ class monitor;
                 end
             end
 
+	    /*
             if (&wfi_flag == 1) begin
                 print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);
                 print_dmshr(vif.dmshr_array_mon_o);
                 print_dcache_mem(vif.dcache_array_mon_o);
             end
+	    */
             
             if ((&wfi_flag == 1) && (store_complete_flag == 1)) begin
                 // print_lsq(vif.lsq_array_mon_o, vif.lsq_head_mon_o, vif.lsq_tail_mon_o);

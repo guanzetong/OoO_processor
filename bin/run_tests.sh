@@ -55,7 +55,7 @@ function run( ) {
 	# Use makefile to run testcase (make simv)
 	#(cd project-v-open-beta && make > /dev/null 2>&1)
 	#make > /dev/null 2>&1
-	make
+	make -j 8 syn
 	echo ""
 }
 
@@ -107,16 +107,16 @@ function compare_to_corr( ) {
 		cp "$WRITEBACK" "wrongOutput/wrong-$test_name-writeback.out"
 	fi # end if
 
-	echo "Comparing program.out with corr-$PROGRAMOUT"
+	echo "Comparing $PROGRAMOUT with corr-$PROGRAMOUT"
 
 	# Remove any lines not beginning with @@@
 	# This is because all other lines are optimization dependent (e.g. CPI).
 	cat "corr-$PROGRAMOUT" | grep @@@ > temp.txt
         if cat "$PROGRAMOUT" | grep @@@ | diff -q - temp.txt; then
-		echo "program.out is the same"
+		echo "$PROGRAMOUT is the same"
 	else
 		failed=1
-        	echo "${red}Test $file failed...( program.out differs )${DONE}"
+        	echo "${red}Test $file failed...( $PROGRAMOUT differs )${DONE}"
 		create_dir "wrongOutput"
 		cp "$PROGRAMOUT" "wrongOutput/wrong-$test_name-program.out"
 		#exit
@@ -175,7 +175,7 @@ for file in test_progs/*.{s,c}; do
 	#echo "@@@ Diff" >> project-v-open-beta/writeback.out
 	#echo "@@@ Diff" >> project-v-open-beta/program.out
 	#compare_to_corr "$file" "$test_name" "project-v-open-beta/writeback.out" "project-v-open-beta/program.out"
-	compare_to_corr "$file" "$test_name" "writeback.out" "program.out"
+	compare_to_corr "$file" "$test_name" "writeback.out" "syn_program.out"
 done
 
 echo -e "${green}All tests passed!${DONE}"

@@ -3,11 +3,11 @@
 Report : resources
 Design : IB
 Version: S-2021.06-SP1
-Date   : Fri Apr 22 11:27:59 2022
+Date   : Tue Apr 26 12:14:00 2022
 ****************************************
 
 Resource Sharing Report for design IB in file
-        /afs/umich.edu/user/z/t/ztguan/group6w22/verilog/IB_ALU_push_in_router.sv
+        /afs/umich.edu/user/x/i/xiongrob/Private/470/projs/group6w22/verilog/IB_ALU_push_in_router.sv
 
 ===============================================================================
 |          |              |            | Contained     |                      |
