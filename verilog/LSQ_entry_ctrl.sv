@@ -45,7 +45,7 @@ module LSQ_entry_ctrl # (
 // ====================================================================
 // Local Parameters Declarations Start
 // ====================================================================
-
+    localparam  C_CHECK_OFFSET  =   $clog2(C_XLEN/8);
 // ====================================================================
 // Local Parameters Declarations End
 // ====================================================================
@@ -54,6 +54,7 @@ module LSQ_entry_ctrl # (
 // Signal Declarations Start
 // ====================================================================
     LSQ_ENTRY                           next_lsq_entry      ;
+    logic                               forward_flag        ;
     logic                               depend_flag         ;
     logic       [C_LSQ_IDX_WIDTH-1:0]   depend_idx          ;
     logic       [C_LSQ_ENTRY_NUM-1:0]   store_check         ;
@@ -126,17 +127,20 @@ module LSQ_entry_ctrl # (
                         // IF   the rob_idx of FU output matches the rob_idx of the entry
                         if ((lsq_entry_o.rob_idx == fu_lsq_i[in_idx].rob_idx) && fu_lsq_i[in_idx].valid
                         && (fu_lsq_i[in_idx].thread_idx == thread_idx_i)) begin
-                            // IF   All the older STORE addresses are known and there is no dependency
-                            // ->   Go to LSQ_ST_RD_MEM to read from memory
-                            if ((older_store_known == 1'b1) && (depend_flag == 1'b0)) begin
-                                next_lsq_entry.state    =   LSQ_ST_RD_MEM   ;
-                            // ELSE Any older STORE addresses unknown or there is a dependency
-                            // ->   Go to LSQ_ST_DEPEND to wait for dependency resolution
-                            end else begin
-                                next_lsq_entry.state    =   LSQ_ST_DEPEND   ;
-                            end
                             next_lsq_entry.addr_valid   =   1'b1                    ;
                             next_lsq_entry.addr         =   fu_lsq_i[in_idx].addr   ;
+                        end
+                    end
+                    
+                    if (lsq_entry_o.addr_valid == 1'b1) begin
+                        // IF   All the older STORE addresses are known and there is no dependency
+                        // ->   Go to LSQ_ST_RD_MEM to read from memory
+                        if ((older_store_known == 1'b1) && (depend_flag == 1'b0)) begin
+                            next_lsq_entry.state    =   LSQ_ST_RD_MEM   ;
+                        // ELSE Any older STORE addresses unknown or there is a dependency
+                        // ->   Go to LSQ_ST_DEPEND to wait for dependency resolution
+                        end else begin
+                            next_lsq_entry.state    =   LSQ_ST_DEPEND   ; 
                         end
                     end
                 // STORE
@@ -167,9 +171,10 @@ module LSQ_entry_ctrl # (
                     if (depend_flag == 1'b0) begin
                         next_lsq_entry.state    =   LSQ_ST_RD_MEM   ;
                     // ELSE there is a dependency on older STORE
+                    // AND  Store to load forwarding is legitimate
                     // ->   Go to LSQ_ST_LOAD_CP to complete LOAD instruction
                     // ->   Forward the nearest older STORE data
-                    end else begin
+                    end else if (forward_flag == 1'b1) begin
                         next_lsq_entry.state        =   LSQ_ST_LOAD_CP;
                         next_lsq_entry.data_valid   =   1'b1;
                         // IF   it is a signed LOAD
@@ -188,6 +193,8 @@ module LSQ_entry_ctrl # (
                             endcase
                         end
                     end
+                    // ELSE There is a dependency and no forwarding 
+                    // ->   Wait for the dependency to be resolved
                 end
             end
             // Send read request to memory/cache and wait for response
@@ -369,6 +376,7 @@ module LSQ_entry_ctrl # (
     // and dependency
     always_comb begin
         older_store_known   =   1'b1    ;
+        forward_flag        =   1'b0    ;
         depend_flag         =   1'b0    ;
         depend_idx          =   'd0     ;
         // IF   there is no rollover in the queue
@@ -382,16 +390,23 @@ module LSQ_entry_ctrl # (
                         older_store_known   =   1'b0;
                     end
 
-                    // IF   the address and mem_size of a older store matches
-                    //      this entry
+                    // IF   the address (aligned to 4 bytes) of a older store matches this entry
+                    // AND  the address (aligned to 4 bytes) of a older store is valid
                     // ->   There is a dependency.
                     //      Because the loop sequence is from the head to this entry,
                     //      if there are multiple matches, only the nearest one is picked.
                     if ((lsq_array_i[entry_idx].cmd == BUS_STORE)
-                    && (lsq_entry_o.addr == lsq_array_i[entry_idx].addr)
-                    && (lsq_entry_o.mem_size == lsq_array_i[entry_idx].mem_size)) begin
+                    && (lsq_entry_o.addr[C_XLEN-1:C_CHECK_OFFSET] == lsq_array_i[entry_idx].addr[C_XLEN-1:C_CHECK_OFFSET])
+                    && (lsq_array_i[entry_idx].addr_valid == 1'b1)) begin
                         depend_flag =   1'b1;
                         depend_idx  =   entry_idx;
+                        // IF   the address (within 4 bytes offset) of a older store matches this entry
+                        // AND  the mem size matches as well
+                        // ->   Upon dependency, a store to load forwarding is legitimate
+                        if ((lsq_entry_o.addr[C_CHECK_OFFSET-1:0] == lsq_array_i[entry_idx].addr[C_CHECK_OFFSET-1:0])
+                        && (lsq_entry_o.mem_size == lsq_array_i[entry_idx].mem_size)) begin
+                            forward_flag    =   1'b1;
+                        end
                     end
                 end
             end
@@ -417,16 +432,23 @@ module LSQ_entry_ctrl # (
             // 1. Check entry from [head_i] to [C_LSQ_ENTRY_NUM-1]
             for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
                 if (entry_idx >= head_i) begin
-                    // IF   the address and mem_size of a older store matches
-                    //      this entry
+                    // IF   the address (aligned to 4 bytes) of a older store matches this entry
+                    // AND  the address (aligned to 4 bytes) of a older store is valid
                     // ->   There is a dependency.
                     //      Because the loop sequence is from the head to this entry,
                     //      if there are multiple matches, only the nearest one is picked.
                     if ((lsq_array_i[entry_idx].cmd == BUS_STORE)
-                    && (lsq_entry_o.addr == lsq_array_i[entry_idx].addr)
-                    && (lsq_entry_o.mem_size == lsq_array_i[entry_idx].mem_size)) begin
+                    && (lsq_entry_o.addr[C_XLEN-1:C_CHECK_OFFSET] == lsq_array_i[entry_idx].addr[C_XLEN-1:C_CHECK_OFFSET])
+                    && (lsq_array_i[entry_idx].addr_valid == 1'b1)) begin
                         depend_flag =   1'b1;
                         depend_idx  =   entry_idx;
+                        // IF   the address (within 4 bytes offset) of a older store matches this entry
+                        // AND  the mem size matches as well
+                        // ->   Upon dependency, a store to load forwarding is legitimate
+                        if ((lsq_entry_o.addr[C_CHECK_OFFSET-1:0] == lsq_array_i[entry_idx].addr[C_CHECK_OFFSET-1:0])
+                        && (lsq_entry_o.mem_size == lsq_array_i[entry_idx].mem_size)) begin
+                            forward_flag    =   1'b1;
+                        end
                     end
                 end
             end
@@ -434,16 +456,23 @@ module LSQ_entry_ctrl # (
             // 2. Check entry from [0] to [lsq_idx_i-1]
             for (int unsigned entry_idx = 0; entry_idx < C_LSQ_ENTRY_NUM; entry_idx++) begin
                 if (entry_idx < lsq_idx_i) begin
-                    // IF   the address and mem_size of a older store matches
-                    //      this entry
+                    // IF   the address (aligned to 4 bytes) of a older store matches this entry
+                    // AND  the address (aligned to 4 bytes) of a older store is valid
                     // ->   There is a dependency.
                     //      Because the loop sequence is from the head to this entry,
                     //      if there are multiple matches, only the nearest one is picked.
                     if ((lsq_array_i[entry_idx].cmd == BUS_STORE)
-                    && (lsq_entry_o.addr == lsq_array_i[entry_idx].addr)
-                    && (lsq_entry_o.mem_size == lsq_array_i[entry_idx].mem_size)) begin
+                    && (lsq_entry_o.addr[C_XLEN-1:C_CHECK_OFFSET] == lsq_array_i[entry_idx].addr[C_XLEN-1:C_CHECK_OFFSET])
+                    && (lsq_array_i[entry_idx].addr_valid == 1'b1)) begin
                         depend_flag =   1'b1;
                         depend_idx  =   entry_idx;
+                        // IF   the address (within 4 bytes offset) of a older store matches this entry
+                        // AND  the mem size matches as well
+                        // ->   Upon dependency, a store to load forwarding is legitimate
+                        if ((lsq_entry_o.addr[C_CHECK_OFFSET-1:0] == lsq_array_i[entry_idx].addr[C_CHECK_OFFSET-1:0])
+                        && (lsq_entry_o.mem_size == lsq_array_i[entry_idx].mem_size)) begin
+                            forward_flag    =   1'b1;
+                        end
                     end
                 end
             end

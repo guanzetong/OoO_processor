@@ -164,12 +164,13 @@ class monitor;
                             // (vif.rt_pc_o[thread_idx][rt_idx] - thread_idx * 'h100));
                             vif.rt_pc_o[thread_idx][rt_idx]);
                         end
-                        inst_cnt++;
                         if (vif.rt_wfi_o[thread_idx][rt_idx] == 1'b1) begin
                             wfi_flag[thread_idx]    =   1'b1;
                             $display("T=%0t [Monitor] WFI instruction retired at PC=%0h, exit thread %0d", 
                             $time, vif.rt_pc_o[thread_idx][rt_idx], thread_idx);
-                        end
+                        end else begin// Not halt instruction so increment.
+                            inst_cnt++;
+                        end // end else
                     end
                 end // for
             end // for
